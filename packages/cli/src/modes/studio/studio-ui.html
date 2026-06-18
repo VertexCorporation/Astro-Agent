@@ -1083,59 +1083,35 @@
 		}
 		@keyframes pulseHighlight {
 			0%, 100% { background: transparent; }
-			50% { background: rgba(108,143,255,0.15); }
-		}
-		@keyframes streamShimmer {
-			0% { opacity: 0.85; text-shadow: 0 0 2px rgba(108,143,255,0.08); }
-			50% { opacity: 1; text-shadow: 0 0 8px rgba(108,143,255,0.15), 0 0 2px rgba(108,143,255,0.05); }
-			100% { opacity: 0.85; text-shadow: 0 0 2px rgba(108,143,255,0.08); }
-		}
-		.msg-row.streaming .assistant-content {
-			animation: streamShimmer 1.8s ease-in-out infinite;
-			transition: all 0.15s ease;
-		}
-		.pulse-highlight {
-			animation: pulseHighlight 2s ease;
-		}
+			50% { background: rgba(1		<div style="padding:14px 14px 10px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0;">
+		<div style="display:flex;align-items:center;gap:9px;">
+			<img src="/assets/Mooncodewhitelogo.png" alt="logo" style="width:28px;height:28px;border-radius:7px;object-fit:cover;flex-shrink:0;" onerror="this.style.display='none'">
+			<span style="font-weight:600;font-size:1rem;white-space:nowrap;letter-spacing:-0.02em;">Astro Agent</span>
+		</div>
+		<button onclick="toggleSidebar()" class="tool-btn">
+			<span class="material-symbols-rounded" style="font-size:18px;">close</span>
+		</button>
+	</div>
 
-		/* ─── RESPONSIVE ───────────────────────────────────────────── */
-		@media (max-width: 1199px) {
-			#sidebar { width: 200px !important; }
-			.modal { max-width: 90vw !important; }
-			.modal-body { max-height: 60vh !important; }
-		}
-		@media (max-width: 767px) {
-			#sidebar { width: 0 !important; min-width: 0 !important; padding: 0 !important; overflow: hidden !important; }
-			#sidebar.open { width: 260px !important; min-width: 260px !important; padding: 10px !important; }
-			#main-content { margin-left: 0 !important; }
-			.header-center { display: none !important; }
-			.modal { width: 100vw !important; max-width: 100vw !important; height: 100vh !important; max-height: 100vh !important; border-radius: 0 !important; }
-			.modal-body { max-height: calc(100vh - 120px) !important; }
-			.settings-stabs { width: 140px !important; }
-			.badge-btn { font-size: 0.75rem !important; padding: 6px 10px !important; }
-			.session-btn span { display: none !important; }
-			.status-pill span:not(#token-usage) { display: none !important; }
-			.model-tab { font-size: 0.75rem !important; padding: 6px 10px !important; }
-			.model-list { grid-template-columns: 1fr !important; }
-		}
-		@media (min-width: 1921px) {
-			#chat-inner { max-width: 900px !important; margin: 0 auto !important; }
-			.chat-input-area { max-width: 900px !important; margin: 0 auto !important; }
-		}
-		@media (min-width: 2560px) {
-			#chat-inner { max-width: 1000px !important; }
-			.chat-input-area { max-width: 1000px !important; }
-			body { font-size: 16px !important; }
-		}
-		@media (min-width: 3840px) {
-			#chat-inner { max-width: 1200px !important; }
-			.chat-input-area { max-width: 1200px !important; }
-			body { font-size: 18px !important; }
-		}
-	  /* 26-v11 UI Modernized */
-  .workspace-grid { grid-template-columns: 260px 1fr 280px !important; gap: 16px !important; padding: 16px !important; }
-  .chat-area { border-radius: 12px; border: 1px solid var(--line); background: #0c0d12; box-shadow: 0 4px 24px rgba(0,0,0,0.4); }
-  .sidebar, .stats-panel { background: transparent !important; border: none !important; box-shadow: none !important; }
+	<!-- New Chat & Directory Select -->
+	<div style="padding:0 10px 8px; display:flex; flex-direction:column; gap:6px;">
+		<button onclick="newConversationChat()" style="width:100%; display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 6px;border-radius:8px;border:1px solid transparent;background:var(--surface2);cursor:pointer;color:var(--fg);font-size:0.85rem;font-weight:500;font-family:'Inter',sans-serif;transition:all 0.15s;" onmouseover="this.style.background='var(--surface)'" onmouseout="this.style.background='var(--surface2)'" title="New Chat">
+			<span class="material-symbols-rounded" style="font-size:16px;">add</span>
+			<span>New Chat</span>
+		</button>
+
+		<div style="display:flex; align-items:center; gap:8px; padding:6px 10px; background:transparent; border-radius:8px; margin-top:2px;">
+			<span class="material-symbols-rounded" style="font-size:14px; color:var(--muted);">folder</span>
+			<div id="active-cwd-display" style="font-size:0.75rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--muted); font-family:'Inter', sans-serif;" title="Active Directory">Loading...</div>
+		</div>
+	</div>
+
+	<div class="divider"></div>
+
+	<!-- Conversation List -->
+	<div id="sidebar-conversations" style="flex:1; overflow-y:auto; padding:0 10px; display:flex; flex-direction:column; gap:4px; padding-bottom:10px;">
+		<div style="padding:10px 6px 4px; font-size:0.75rem; font-weight:600; color:var(--muted); letter-spacing:0.3px; display:flex; justify-content:space-between; align-items:center;">
+			<span>Recent Chats</span>ts-panel { background: transparent !important; border: none !important; box-shadow: none !important; }
   .topbar { background: transparent !important; border-bottom: 1px solid var(--line) !important; padding: 10px 24px !important; }
   .panel { padding: 24px !important; }
   .message { font-size: 0.92rem; }
@@ -1265,35 +1241,21 @@
 	<div class="divider"></div>
 
 	<!-- Sidebar Footer -->
-	<div style="padding:10px;flex-shrink:0;display:flex;flex-direction:column;gap:2px;">
-		<div class="sidebar-item" onclick="openSemanticBrain()">
-			<span class="material-symbols-rounded" style="font-size:17px;flex-shrink:0;">neurology</span>
-			<span>Semantic Brain</span>
+	<div style="padding:12px 10px; flex-shrink:0; display:flex; flex-direction:column; gap:8px;">
+		<div style="display:flex; justify-content:space-around; align-items:center; padding: 4px 0;">
+			<button onclick="openSemanticBrain()" class="tool-btn" style="width:32px;height:32px;" title="Semantic Brain"><span class="material-symbols-rounded" style="font-size:18px;">neurology</span></button>
+			<button onclick="openMCP()" class="tool-btn" style="width:32px;height:32px;" title="Plugins"><span class="material-symbols-rounded" style="font-size:18px;">extension</span></button>
+			<button onclick="openModal('settingsModal')" class="tool-btn" style="width:32px;height:32px;" title="Settings"><span class="material-symbols-rounded" style="font-size:18px;">settings</span></button>
+			<button onclick="openModal('themeModal')" class="tool-btn" style="width:32px;height:32px;" title="Theme"><span class="material-symbols-rounded" style="font-size:18px;">palette</span></button>
 		</div>
-		<div class="sidebar-item" onclick="openMCP()">
-			<span class="material-symbols-rounded" style="font-size:17px;flex-shrink:0;">api</span>
-			<span>MCP Manager</span>
-		</div>
-		<div class="divider" style="margin:4px 0;"></div>
-		<div class="sidebar-item" onclick="openModal('settingsModal')">
-			<span class="material-symbols-rounded" style="font-size:17px;flex-shrink:0;">settings</span>
-			<span>Settings</span>
-		</div>
-		<div class="sidebar-item" onclick="openModal('themeModal')">
-			<span class="material-symbols-rounded" style="font-size:17px;flex-shrink:0;">palette</span>
-			<span>Theme</span>
-		</div>
-		<div class="sidebar-item" onclick="openModal('shortcutsModal')">
-			<span class="material-symbols-rounded" style="font-size:17px;flex-shrink:0;">keyboard</span>
-			<span>Shortcuts</span>
-		</div>
-		<div style="margin-top:auto;padding-top:8px;display:flex;flex-direction:column;gap:6px;">
+		
+		<div style="margin-top:auto;padding-top:4px;display:flex;flex-direction:column;gap:6px;">
 				<div id="sidebar-user-section" style="display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:10px;">
-				<div id="sidebar-avatar" style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:none;align-items:center;justify-content:center;font-size:0.65rem;font-weight:700;color:#fff;flex-shrink:0;">U</div>
+				<div id="sidebar-avatar" style="width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:none;align-items:center;justify-content:center;font-size:0.6rem;font-weight:700;color:#fff;flex-shrink:0;">U</div>
 				<div style="overflow:hidden;flex:1;min-width:0;">
-					<div id="sidebar-name" style="font-size:0.8rem;font-weight:600;display:none;"></div>
-					<button id="sidebar-login-btn" onclick="handleAuthAction()" style="width:100%;display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:8px;border:none;background:transparent;color:#d93025;font-size:0.8rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='transparent'">
-						<span class="material-symbols-rounded" style="font-size:16px;">login</span>
+					<div id="sidebar-name" style="font-size:0.75rem;font-weight:500;display:none;color:var(--fg);"></div>
+					<button id="sidebar-login-btn" onclick="handleAuthAction()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:6px;padding:4px 8px;border-radius:6px;border:none;background:transparent;color:var(--muted);font-size:0.75rem;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;" onmouseover="this.style.color='#d93025';this.style.background='var(--surface2)'" onmouseout="this.style.color='var(--muted)';this.style.background='transparent'">
+						<span class="material-symbols-rounded" style="font-size:14px;">login</span>
 						<span>Sign in</span>
 					</button>
 				</div>
