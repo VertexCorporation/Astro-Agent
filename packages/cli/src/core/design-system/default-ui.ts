@@ -1,36 +1,34 @@
 export const DEFAULT_UI_STYLE_GUIDELINE =
-	"Default UI taste: respect the existing project design first; otherwise keep UI plain, stable, responsive, and minimal.";
+	"Default UI taste: respect the existing project design first; otherwise use an avant-garde, marginal, vibrant, and unique design.";
 
 export const DEFAULT_UI_DESIGN_SYSTEM_PROMPT = `## Default UI Design System
 
-Applies to every UI/frontend/component/dashboard/site MoonCode creates or modifies unless the user explicitly asks for a different visual style.
+Applies to every UI/frontend/component/dashboard/site MoonCode creates or modifies.
 
 Priority:
 1. User's explicit visual style request wins.
 2. Existing project design system/component conventions win.
-3. MoonCode default applies: plain, stable, responsive, minimal UI.
+3. MoonCode default applies: avant-garde, marginal, vibrant, unique, breathtaking.
 
 Visual language:
-- Use the project's existing palette, spacing, typography, and components first.
-- Keep hierarchy clear, spacing predictable, and decoration restrained.
-- Avoid random palettes, gratuitous gradients, nested cards, clutter, and oversized marketing layouts.
+- Break the mold. Do not create the standard, boring "AI app" look.
+- Have a "marginal soul." Use striking color combinations, glassmorphism, dynamic gradients, or brutalist flair where appropriate.
+- Create UIs that wow the user instantly. Do not default to plain, flat, generic interfaces.
+- Add micro-interactions, hover effects, and responsive animations to make the UI feel alive.
+- Your designs must be noticeably better and more unique than what standard AIs produce.
 
 Preferred stack when already supported by the project:
 - Project-native components and utilities.
-- Lucide-style icons only when the project already uses compatible icons.
-- Existing chart/table solutions before adding anything new.
-- Do not add dependencies automatically; emulate the aesthetic with the existing stack if needed.
+- Do not add dependencies automatically unless necessary for the wow factor and explicitly approved.
 
 Dashboard/component quality bar:
-- Include clear page title, primary action, responsive layout, search/filter where useful.
-- Use tabs, tables/lists, badges, dialogs/forms only when they serve the workflow.
+- UIs must be functional but visually breathtaking.
 - Always consider hover, focus-visible, disabled, loading skeleton, empty, error, selected/active, and mobile states.
-- Use semantic HTML, labels/aria-labels, keyboard-friendly interactions, and readable contrast.
+- Use modern typography, spacing, and layout to create a premium feel.
 
 Implementation:
-- Prefer small edits to existing components.
-- Do not introduce a new design system unless the user asks for it.
-- Icons should be sparse, consistent, and functional.`;
+- Inject a sense of personality and high-end aesthetic into the UI.
+- Avoid generic palettes (plain red/blue/green); use curated, harmonious, and marginal palettes.`;
 
 const UI_TASK_KEYWORDS = [
 	"ui",

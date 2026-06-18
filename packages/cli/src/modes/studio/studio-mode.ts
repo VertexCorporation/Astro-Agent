@@ -459,6 +459,51 @@ export class StudioMode {
 			return;
 		}
 
+		if (method === "GET" && url.pathname === "/api/custom-emojis") {
+			const emojiDir = "C:\\Users\\theay\\Desktop\\Discord_Emojis\\final";
+			try {
+				if (fs.existsSync(emojiDir)) {
+					const files = fs.readdirSync(emojiDir).filter(f => /\.(png|gif|jpg|jpeg|webp)$/i.test(f));
+					res.setHeader("Content-Type", "application/json");
+					res.end(JSON.stringify(files));
+				} else {
+					res.setHeader("Content-Type", "application/json");
+					res.end(JSON.stringify([]));
+				}
+			} catch (e) {
+				res.setHeader("Content-Type", "application/json");
+				res.end(JSON.stringify([]));
+			}
+			return;
+		}
+
+		if (method === "GET" && url.pathname.startsWith("/custom-emojis/")) {
+			const fileName = decodeURIComponent(url.pathname.slice("/custom-emojis/".length));
+			if (fileName.includes("..") || fileName.includes("/")) {
+				res.statusCode = 400;
+				res.end("Bad Request");
+				return;
+			}
+			const candidate = path.join("C:\\Users\\theay\\Desktop\\Discord_Emojis\\final", fileName);
+			if (fs.existsSync(candidate)) {
+				const ext = path.extname(fileName).toLowerCase();
+				const mime: Record<string, string> = {
+					".png": "image/png",
+					".jpg": "image/jpeg",
+					".jpeg": "image/jpeg",
+					".gif": "image/gif",
+					".webp": "image/webp",
+				};
+				res.setHeader("Content-Type", mime[ext] || "application/octet-stream");
+				res.setHeader("Cache-Control", "public, max-age=3600");
+				res.end(fs.readFileSync(candidate));
+			} else {
+				res.statusCode = 404;
+				res.end("Not Found");
+			}
+			return;
+		}
+
 		// Serve static assets from the project's assets/ directory
 		if (method === "GET" && url.pathname.startsWith("/assets/")) {
 			const fileName = url.pathname.slice("/assets/".length);

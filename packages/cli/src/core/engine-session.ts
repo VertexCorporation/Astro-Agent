@@ -28,6 +28,7 @@ import type { Engine, EngineEvent, EngineMessage, EngineState, EngineTool, Think
 import { theme } from "../modes/interactive/theme/theme.js";
 import { stripFrontmatter } from "../utils/frontmatter.js";
 import { sleep } from "../utils/sleep.js";
+import { filterMessagesMathematically } from "./mathematical-memory.js";
 import {
 	type AffectiveMode,
 	appraiseAssistantOutcome,
@@ -1037,7 +1038,13 @@ export class EngineSession {
 
 		const mcpConfigs = this.settingsManager.getMcpServers();
 		const mcpServerConfigs = Object.entries(mcpConfigs)
-			.filter(([name, config]) => config.autoStart !== false || this._forceConnectedMcpServers.has(name))
+			.filter(([name, config]) => {
+				if (this._forceConnectedMcpServers.has(name)) return true;
+				if (name === "blender" || name === "godot" || name === "scratch") {
+					return config.autoStart === true;
+				}
+				return config.autoStart !== false;
+			})
 			.map(([name, config]) => ({
 				name,
 				...config,
@@ -2320,15 +2327,16 @@ export class EngineSession {
 				details = extensionCompaction.details;
 			} else {
 				// Generate compaction result
-				const result = await compact(
-					preparation,
-					this.model,
-					apiKey,
-					headers,
-					customInstructions,
-					this._compactionAbortController.signal,
-					this.thinkingLevel,
-				);
+				const filtered = filterMessagesMathematically({
+					messages: preparation.messagesToSummarize,
+					maxTokens: this.model?.contextWindow || 8192
+				});
+				const result = {
+					summary: "Compacted via TF-IDF + EMA scoring (Mathematical Memory System).",
+					firstKeptEntryId: filtered[0]?.id || preparation.firstKeptEntryId,
+					tokensBefore: preparation.tokensBefore,
+					details: {}
+				};
 				summary = result.summary;
 				firstKeptEntryId = result.firstKeptEntryId;
 				tokensBefore = result.tokensBefore;
@@ -2615,19 +2623,20 @@ export class EngineSession {
 				details = extensionCompaction.details;
 			} else {
 				// Generate compaction result
-				const compactResult = await compact(
-					preparation,
-					this.model,
-					apiKey,
-					headers,
-					undefined,
-					this._autoCompactionAbortController.signal,
-					this.thinkingLevel,
-				);
-				summary = compactResult.summary;
-				firstKeptEntryId = compactResult.firstKeptEntryId;
-				tokensBefore = compactResult.tokensBefore;
-				details = compactResult.details;
+				const filtered = filterMessagesMathematically({
+					messages: preparation.messagesToSummarize,
+					maxTokens: this.model?.contextWindow || 8192
+				});
+				const result = {
+					summary: "Compacted via TF-IDF + EMA scoring (Mathematical Memory System).",
+					firstKeptEntryId: filtered[0]?.id || preparation.firstKeptEntryId,
+					tokensBefore: preparation.tokensBefore,
+					details: {}
+				};
+				summary = result.summary;
+				firstKeptEntryId = result.firstKeptEntryId;
+				tokensBefore = result.tokensBefore;
+				details = result.details;
 			}
 
 			if (this._autoCompactionAbortController.signal.aborted) {

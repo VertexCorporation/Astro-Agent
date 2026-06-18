@@ -1,7 +1,8 @@
 <div align="center">
   <br />
-  <h1 style="font-size: 3em; margin-bottom: 0;">Astro Agent</h1>
-  <p><i>Minimal, Otonom ve Gelişmiş Kodlama Asistanı.</i></p>
+  <img src="assets/emojis/zero_two_peeking.gif" width="100" />
+  <h1 style="font-size: 3em; margin-bottom: 0;">Astro Agent (MoonCode)</h1>
+  <p><i>Minimal, Otonom ve Gelişmiş Kodlama Asistanı. <img src="assets/emojis/surprised_pink_anime_girl.png" width="24" /></i></p>
   <br />
   <p>
     <a href="#kavramlar">Kavramlar</a> • 
@@ -9,6 +10,7 @@
     <a href="#kullanım">Kullanım</a>
   </p>
   <br />
+  <img src="assets/emojis/white_hair_anime_girl.png" width="64" /> <img src="assets/emojis/white_cat_smug.png" width="64" /> <img src="assets/emojis/zero_two_peace_sign.png" width="64" />
 </div>
 
 <hr />
