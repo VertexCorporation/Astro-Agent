@@ -57,7 +57,7 @@ const [ollamaModels, lmStudioModels] = [
 
 // Ollama
 const ollamaMap = new Map<string, Model<Api>>();
-const allOllamaIds = ["gemma4:31b-cloud", "nemotron-3-super:cloud", ...ollamaModels];
+const allOllamaIds = ["gemma4:31b-cloud", "nemotron-3-super:cloud", "minimax-m3:cloud", ...ollamaModels];
 for (const id of new Set(allOllamaIds)) {
 	ollamaMap.set(id, {
 		id,
