@@ -1,45 +1,70 @@
-[================================================================]
-                       ASTRO AGENT (v16.0.0)
-[================================================================]
+<div align="center">
+  <br />
+  <h1 style="font-size: 3em; margin-bottom: 0;">Astro Agent</h1>
+  <p><i>Minimal, Otonom ve Gelişmiş Kodlama Asistanı.</i></p>
+  <br />
+  <p>
+    <a href="#kavramlar">Kavramlar</a> • 
+    <a href="#kurulum">Kurulum</a> • 
+    <a href="#kullanım">Kullanım</a>
+  </p>
+  <br />
+</div>
 
-Astro Agent, bilgisayarinizda lokal olarak calisan, gelismis ve
-otonom bir kodlama asistanidir.
+<hr />
 
-[+] Temel Ozellikler
-----------------------------------------------------------------
-> Otonom Calisma: Projenizi inceler, hatalari cozer, kod yazar.
-> Tarayici Kontrolu: Interneti kendi basina acar ve arastirma yapar.
-> Acik Uclu Sistem: Istediginiz yapay zeka modelini kullanabilirsiniz.
-> Kurumsal Guvenlik: Bilgileriniz yerel bilgisayarinizda kalir.
+## 📖 Kavramlar Sözlüğü
 
-[+] Nasil Kurulur?
-----------------------------------------------------------------
-Sadece 2 adimda sisteminize kurabilirsiniz. Baska hicbir seye 
-ihtiyaciniz yok!
+<dl>
+  <dt><b>Astro Agent</b></dt>
+  <dd>Tamamen bilgisayarınızın yerel ortamında çalışan, kodlarınızı analiz eden, hataları tespit edip kendi kendine çözen modern yapay zeka asistanınızdır.</dd>
+  <br />
+  <dt><b>Otonomi Modu</b></dt>
+  <dd>Sizin sürekli komut vermenize gerek kalmadan hedefe kilitlenen, tarayıcıda araştırma yapabilen ve terminal komutlarını çalıştırabilen bağımsız hareket yeteneğidir.</dd>
+  <br />
+  <dt><b>MCP <i>(Model Context Protocol)</i></b></dt>
+  <dd>Astro Agent'ın Blender, harici veri tabanları veya tarayıcılarla iletişim kurarak sisteminize entegre olmasını sağlayan yeni nesil iletişim köprüsüdür.</dd>
+</dl>
 
-[ ADIM 1: Kurulum ]
-Terminali acin ve projenin oldugu klasorde su komutlari yazin:
+---
 
-   npm install
-   npm link
+## ⚡ Kurulum
 
-[ ADIM 2: Calistirma ]
-Kurulum bittikten sonra, bilgisayarinizin HERHANGI bir yerinde 
-terminali acip sadece sunu yazin:
+Astro Agent'ın kurulum felsefesi sadelik üzerine kuruludur. Eski nesil karmaşık `.bat` veya betik dosyaları tamamen kaldırılmıştır. 
 
-   astroagent
+Sadece Node.js yüklü bir bilgisayarda, projenin klasörü içinde bir terminal (CMD/PowerShell) açarak aşağıdaki iki adımı uygulamanız yeterlidir:
 
-VEYA kisa komutlari kullanabilirsiniz:
-   
-   astro
-   asg
+```bash
+# 1. Sistemin çalışması için gereken temel bağımlılıkları indirin:
+npm install
 
-[!] Bilgilendirme
-----------------------------------------------------------------
-* Eski MoonCode surumu tamamen silinmis ve altyapi yenilenmistir.
-* Tum ".bat" betikleri kaldirilmis, modern yapiya gecilmistir.
-* Sadece Node.js yuklu olmasi yeterlidir.
+# 2. Asistanı bilgisayarınızın çekirdeğine entegre edin:
+npm link
+```
 
-[================================================================]
-    Copyright (C) 2026 Vertex Corporation. Tum Haklari Saklidir.
-[================================================================]
+> 💡 **Önemli İpucu:** Kurulum bittikten sonra, asistanın yeni komutları tanıması için açık olan **tüm terminal pencerelerinizi kapatıp baştan açmayı** unutmayın.
+
+---
+
+## 🚀 Kullanım
+
+Astro Agent, bilgisayarınızdaki **herhangi bir klasörde** çalışmaya hazırdır. Sizi uzun komutlar yazmaktan kurtaran kısa yollarla donatılmıştır. 
+
+Terminalinize aşağıdaki komutlardan dilediğinizi yazarak asistanı anında başlatabilirsiniz:
+
+```bash
+# En kısa ve pratik kullanım:
+asg
+
+# Alternatif kullanım:
+astro
+
+# Tam isimle kullanım:
+astroagent
+```
+
+<br />
+
+<div align="center">
+  <p>Tasarım ve felsefesinde sadeliği barındırır.<br><b>Vertex Corporation</b> tarafından gururla geliştirilmiştir.</p>
+</div>
