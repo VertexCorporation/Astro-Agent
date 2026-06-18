@@ -30,19 +30,23 @@
 
 ## ⚡ Kurulum
 
-Astro Agent'ın kurulum felsefesi sadelik üzerine kuruludur. Eski nesil karmaşık `.bat` veya betik dosyaları tamamen kaldırılmıştır. 
-
-Sadece Node.js yüklü bir bilgisayarda, projenin klasörü içinde bir terminal (CMD/PowerShell) açarak aşağıdaki iki adımı uygulamanız yeterlidir:
+Astro Agent'ın kurulum felsefesi sadelik üzerine kuruludur. Kurulumu gerçekleştirmek için Node.js ve Git kurulu bir bilgisayarda terminal (CMD/PowerShell) açarak aşağıdaki adımları sırasıyla uygulamanız yeterlidir:
 
 ```bash
-# 1. Sistemin çalışması için gereken temel bağımlılıkları indirin:
+# 1. Projeyi bilgisayarınıza indirin:
+git clone https://github.com/vertexcorporation/Astro-Agent.git
+
+# 2. İndirilen proje klasörünün içine girin:
+cd Astro-Agent
+
+# 3. Sistemin çalışması için gereken temel bağımlılıkları indirin:
 npm install
 
-# 2. Asistanı bilgisayarınızın çekirdeğine entegre edin:
+# 4. Asistanı bilgisayarınızın sistemine entegre edin:
 npm link
 ```
 
-> 💡 **Önemli İpucu:** Kurulum bittikten sonra, asistanın yeni komutları tanıması için açık olan **tüm terminal pencerelerinizi kapatıp baştan açmayı** unutmayın.
+> 💡 **Önemli İpucu:** Tüm bu komutları sırasıyla girip kurulum bittikten sonra, asistanın komutlarını sistemin tanıması için açık olan **tüm terminal pencerelerinizi kapatıp baştan açmayı** unutmayın.
 
 ---
 
