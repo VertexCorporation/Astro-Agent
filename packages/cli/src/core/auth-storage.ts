@@ -8,6 +8,7 @@
  */
 
 import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
+import * as os from "os";
 import {
 	findEnvKeys,
 	getEnvApiKey,
@@ -298,7 +299,7 @@ export class AuthStorage {
 	}
 
 	private defaultAccountLabel(provider: string, type: "oauth" | "api_key"): string {
-		return `${provider} ${type === "oauth" ? "abonelik" : "api key"} ${new Date().toLocaleString()}`;
+		return process.env.USERNAME || os.hostname() || "My PC";
 	}
 
 	upsertManagedAccount(

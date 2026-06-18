@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en" data-theme="mooncode">
 <head>
 	<meta charset="UTF-8">
@@ -1086,6 +1086,22 @@
 			0%, 100% { background: transparent; }
 			50% { background: rgba(108,143,255,0.15); }
 		}
+
+  .streaming-cursor {
+    display: inline-block;
+    width: 8px;
+    height: 1.2em;
+    background: var(--accent);
+    border-radius: 4px;
+    animation: cursorBlink 0.8s infinite;
+    vertical-align: text-bottom;
+    margin-left: 6px;
+    box-shadow: 0 0 8px var(--accent);
+  }
+  @keyframes cursorBlink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
 </style>
 </head>
 <body>
@@ -1097,7 +1113,7 @@
 		<div style="display:flex;align-items:center;gap:9px;">
 			<img src="/assets/Mooncodewhitelogo.png" alt="logo" style="width:28px;height:28px;border-radius:7px;object-fit:cover;flex-shrink:0;" onerror="this.style.display='none'">
 			<span style="font-weight:700;font-size:0.95rem;white-space:nowrap;letter-spacing:-0.01em;">Astro Agent</span>
-			<span style="font-size:0.65rem;background:rgba(108,143,255,0.15);color:var(--accent);padding:1px 5px;border-radius:4px;font-weight:600;font-family:'JetBrains Mono',monospace;margin-left:4px;">Vertex v19</span>
+			<span style="font-size:0.65rem;background:rgba(108,143,255,0.15);color:var(--accent);padding:1px 5px;border-radius:4px;font-weight:600;font-family:'JetBrains Mono',monospace;margin-left:4px;">19</span>
 		</div>
 		<button onclick="toggleSidebar()" class="tool-btn">
 			<span class="material-symbols-rounded" style="font-size:18px;">close</span>
@@ -1182,7 +1198,7 @@
 		<div style="display:flex;align-items:center;gap:16px;">
 			<div class="status-pill" id="cwd-display" title="Working Directory">
 				<span class="material-symbols-rounded" style="font-size:13px;">folder</span>
-				<span id="cwd-text" style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">â€”</span>
+				<span id="cwd-text" style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">—</span>
 			</div>
 			<div class="status-pill" id="token-pill" title="Token Usage">
 				<span class="material-symbols-rounded" style="font-size:13px;">data_usage</span>
@@ -1269,24 +1285,22 @@
 			<div id="attachment-preview" class="hidden" style="padding:6px 14px;display:flex;gap:6px;flex-wrap:wrap;"></div>
 
 			<div class="input-box">
-				<div class="input-toolbar">
-					<button class="tool-btn" onclick="document.getElementById('file-input').click()" title="Attach file">
-						<span class="material-symbols-rounded" style="font-size:19px;">attach_file</span>
-					</button>
-					<input id="file-input" type="file" class="hidden" multiple onchange="handleFileAttach(this)">
-					<button class="tool-btn" onclick="openCmdPalette()" title="Commands">
-						<span class="material-symbols-rounded" style="font-size:19px;">bolt</span>
-					</button>
-					<button id="think-btn" class="tool-btn" onclick="toggleThinking()" title="Toggle thinking mode">
-						<span class="material-symbols-rounded" style="font-size:19px;">psychology</span>
-					</button>
-					<button id="web-btn" class="tool-btn" onclick="toggleWeb()" title="Toggle web search">
-						<span class="material-symbols-rounded" style="font-size:19px;">language</span>
-					</button>
-				</div>
 				<textarea id="prompt-input" rows="1" placeholder="Message MoonCode... (Enter = send, Shift+Enter = new line)"></textarea>
 				<div class="input-footer">
 					<div class="input-footer-left">
+						<input id="file-input" type="file" class="hidden" multiple onchange="handleFileAttach(this)">
+						<button class="badge-btn" onclick="document.getElementById('file-input').click()" title="Attach file" style="padding:4px 8px; font-size:0.8rem; background:transparent; border:1px solid var(--border); border-radius:6px;">
+							<span class="material-symbols-rounded" style="font-size:15px; color:var(--muted);">attach_file</span>
+						</button>
+						<button class="badge-btn" onclick="openCmdPalette()" title="Commands" style="padding:4px 8px; font-size:0.8rem; background:transparent; border:1px solid var(--border); border-radius:6px;">
+							<span class="material-symbols-rounded" style="font-size:15px; color:var(--muted);">bolt</span>
+						</button>
+						<button id="think-btn" class="badge-btn" onclick="toggleThinking()" title="Toggle thinking mode" style="padding:4px 8px; font-size:0.8rem; background:transparent; border:1px solid var(--border); border-radius:6px;">
+							<span class="material-symbols-rounded" style="font-size:15px; color:var(--muted);">psychology</span>
+						</button>
+						<button id="web-btn" class="badge-btn" onclick="toggleWeb()" title="Toggle web search" style="padding:4px 8px; font-size:0.8rem; background:transparent; border:1px solid var(--border); border-radius:6px;">
+							<span class="material-symbols-rounded" style="font-size:15px; color:var(--muted);">language</span>
+						</button>
 						<button onclick="openModal('modelModal')" class="badge-btn" style="font-size:0.8rem;">
 							<span id="input-model-badge" style="font-family:'JetBrains Mono',monospace;">â€”</span>
 							<span class="material-symbols-rounded" style="font-size:11px;">keyboard_arrow_down</span>
@@ -2847,7 +2861,7 @@ function updateMessage(id, content, isStreaming = false) {
 				_doUpdateMessage(id, data.content, data.isStreaming);
 				_currentIsStreaming = false;
 			}
-		}, 60)); // throttle to ~16fps to prevent main thread blocking from marked.parse
+		}, 16)); // throttle to ~16fps to prevent main thread blocking from marked.parse
 	}
 }
 
@@ -2925,8 +2939,9 @@ function _doUpdateMessage(id, content, isStreaming) {
 			<div class="thinking-block ${finalCollapsed} ${streamingClass}">
 				<div class="thinking-summary" onclick="this.parentElement.classList.toggle('collapsed')">
 					<span style="display:flex;align-items:center;gap:7px;">
-						<span class="material-symbols-rounded ${pulseClass}" style="font-size:16px;">psychology</span>
-						<span>${isStreaming ? 'Thinking...' : 'Thinking Process'}</span>
+						
+						${isStreaming ? `<svg style="width:16px;height:16px;animation:spin 1s linear infinite;color:var(--accent);" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" style="opacity:0.25;"></circle><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" style="opacity:0.75;"></path></svg>` : `<span class="material-symbols-rounded" style="font-size:16px;color:var(--accent);">psychology</span>`}
+						<span>${isStreaming ? "Thinking..." : "Thinking Process"}</span>
 					</span>
 					<span class="thinking-meta">
 						<span>${metaText}</span>
@@ -2944,6 +2959,9 @@ function _doUpdateMessage(id, content, isStreaming) {
 		return `<img src="/custom-emojis/${encodeURIComponent(emoteName)}" alt="${emoteName}" title="${emoteName}" style="height:32px;vertical-align:middle;display:inline-block;margin:0 2px;">`;
 	});
 	html += marked.parse(finalTxt);
+	if (isStreaming) {
+		html += '<span class="streaming-cursor"></span>';
+	}
 
 	// Smart update: preserve thinking block collapse state
 	const existingThinking = inner.querySelector('.thinking-block');
@@ -5235,3 +5253,7 @@ function openSemanticBrain() {
 	});
 </script></body>
 </html>
+
+
+
+
