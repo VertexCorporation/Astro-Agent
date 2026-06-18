@@ -1844,11 +1844,18 @@
 			<div class="divider"></div>
 			<div style="font-size:0.85rem;font-weight:600;margin:14px 0 8px;display:flex;align-items:center;gap:6px;"><span class="material-symbols-rounded" style="font-size:15px;">library_books</span>Built-in MCP Servers</div>
 			<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-				<div class="mcp-builtin-card" onclick="mcpConnect('blender')" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:10px;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
-					<div style="width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,#f59e0b,#d97706);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">B</div>
-					<div>
-						<div style="font-weight:600;font-size:0.85rem;">Blender MCP</div>
-						<div style="font-size:0.7rem;color:var(--muted);">3D modeling & animation via Blender</div>
+				<div style="display:flex;flex-direction:column;gap:8px;">
+					<div class="mcp-builtin-card" onclick="toggleBlenderMcpMenu()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:10px;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+						<div style="width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,#f59e0b,#d97706);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">B</div>
+						<div>
+							<div style="font-weight:600;font-size:0.85rem;">Blender MCP</div>
+							<div style="font-size:0.7rem;color:var(--muted);">3D modeling & animation via Blender</div>
+						</div>
+					</div>
+					<!-- Blender MCP Submenu -->
+					<div id="blender-mcp-menu" style="display:none;flex-direction:column;gap:8px;padding:10px;background:var(--surface);border:1px solid var(--border);border-radius:8px;">
+						<input id="blender-mcp-port" type="number" placeholder="Hangi porta bağlanacak? (Varsayılan: 1050)" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--fg);font-size:0.82rem;box-sizing:border-box;">
+						<button id="blender-mcp-connect-btn" class="btn btn-primary" onclick="connectBlenderMcpWithPort()" style="width:100%;padding:7px;display:flex;align-items:center;justify-content:center;gap:6px;"><span class="material-symbols-rounded" style="font-size:15px;">link</span> Bağlan</button>
 					</div>
 				</div>
 				<div class="mcp-builtin-card" onclick="mcpConnect('scratch')" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:10px;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
@@ -4677,6 +4684,36 @@ async function mcpRemove(name) {
 	if (!confirm('Remove MCP server "'+name+'"?')) return;
 	await mcpAction({ action: 'remove', name });
 }
+function toggleBlenderMcpMenu() {
+	const menu = document.getElementById('blender-mcp-menu');
+	if (menu.style.display === 'none' || !menu.style.display) {
+		menu.style.display = 'flex';
+		setTimeout(() => document.getElementById('blender-mcp-port')?.focus(), 100);
+	} else {
+		menu.style.display = 'none';
+	}
+}
+
+async function connectBlenderMcpWithPort() {
+	const portInput = document.getElementById('blender-mcp-port');
+	const btn = document.getElementById('blender-mcp-connect-btn');
+	const port = portInput ? portInput.value.trim() : '';
+
+	// Start animation
+	const originalHtml = btn.innerHTML;
+	btn.innerHTML = `<span class="material-symbols-rounded spin" style="font-size:15px;">sync</span> Bağlanıyor...`;
+	btn.disabled = true;
+
+	try {
+		await mcpAction({ action: 'connect_builtin', name: 'blender', port });
+	} finally {
+		// End animation
+		btn.innerHTML = originalHtml;
+		btn.disabled = false;
+		document.getElementById('blender-mcp-menu').style.display = 'none';
+	}
+}
+
 function mcpConnect(name) {
 	mcpAction({ action: 'connect_builtin', name });
 }

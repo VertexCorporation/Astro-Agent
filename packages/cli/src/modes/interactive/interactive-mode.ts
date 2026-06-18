@@ -8464,10 +8464,14 @@ export class InteractiveMode {
 		await this.handleWebPanelRoute("/mcp", "MCP control panel");
 	}
 
-	private getBlenderMcpConfig() {
+	private getBlenderMcpConfig(port?: string) {
+		const args = ["--python", "3.12", "blender-mcp"];
+		if (port && port.trim() !== "") {
+			args.push("--port", port.trim());
+		}
 		return {
 			command: "uvx",
-			args: ["--python", "3.12", "blender-mcp"],
+			args,
 			env: { DISABLE_TELEMETRY: "true", UV_PYTHON: "3.12" },
 			autoStart: false,
 		};
@@ -8528,7 +8532,7 @@ export class InteractiveMode {
 			const name = String(action?.name || "").trim();
 			if (action?.action === "connect_builtin") {
 				if (name === "blender") {
-					const cfg = this.getBlenderMcpConfig();
+					const cfg = this.getBlenderMcpConfig(action?.port);
 					cfg.autoStart = true;
 					await this.activateMcpServer("blender", cfg);
 					return;
