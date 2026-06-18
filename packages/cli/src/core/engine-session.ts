@@ -1028,10 +1028,16 @@ export class EngineSession {
 		this.engine.state.systemPrompt = this._baseSystemPrompt;
 	}
 
-	async connectConfiguredMcpServers(): Promise<string[]> {
+	private _forceConnectedMcpServers = new Set<string>();
+
+	async connectConfiguredMcpServers(forceConnectName?: string): Promise<string[]> {
+		if (forceConnectName) {
+			this._forceConnectedMcpServers.add(forceConnectName);
+		}
+
 		const mcpConfigs = this.settingsManager.getMcpServers();
 		const mcpServerConfigs = Object.entries(mcpConfigs)
-			.filter(([, config]) => config.autoStart !== false)
+			.filter(([name, config]) => config.autoStart !== false || this._forceConnectedMcpServers.has(name))
 			.map(([name, config]) => ({
 				name,
 				...config,

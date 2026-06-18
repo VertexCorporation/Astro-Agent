@@ -8464,6 +8464,14 @@ export class InteractiveMode {
 		await this.handleWebPanelRoute("/mcp", "MCP control panel");
 	}
 
+	private getGodotMcpConfig() {
+		return {
+			command: "npx",
+			args: ["-y", "@tugcantopaloglu/godot-mcp"],
+			autoStart: false,
+		};
+	}
+
 	private getBlenderMcpConfig(port?: string) {
 		const args = ["--python", "3.12", "blender-mcp"];
 		if (port && port.trim() !== "") {
@@ -8501,7 +8509,7 @@ export class InteractiveMode {
 	) {
 		this.settingsManager.setMcpServer(name, config);
 		await this.settingsManager.flush();
-		return await this.session.connectConfiguredMcpServers();
+		return await this.session.connectConfiguredMcpServers(name);
 	}
 
 	private buildMcpPanelState(): any {
@@ -8533,7 +8541,6 @@ export class InteractiveMode {
 			if (action?.action === "connect_builtin") {
 				if (name === "blender") {
 					const cfg = this.getBlenderMcpConfig(action?.port);
-					cfg.autoStart = true;
 					await this.activateMcpServer("blender", cfg);
 					return;
 				}
@@ -8544,7 +8551,6 @@ export class InteractiveMode {
 							"Scratch MCP not configured. Set MOON_SCRATCH_MCP_ROOT or place a scmcp folder next to the repo with server/scratch-mcp.js.",
 						);
 					}
-					config.autoStart = true;
 					await this.activateMcpServer("scratch", config);
 					return;
 				}
@@ -8552,7 +8558,7 @@ export class InteractiveMode {
 			}
 			if (action?.action === "connect") {
 				if (!name) throw new Error("Server name is required.");
-				await this.session.connectConfiguredMcpServers();
+				await this.session.connectConfiguredMcpServers(name);
 				return;
 			}
 			if (action?.action === "restart") {

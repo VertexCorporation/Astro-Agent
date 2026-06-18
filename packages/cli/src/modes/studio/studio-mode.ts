@@ -115,6 +115,14 @@ export class StudioMode {
 		});
 	}
 
+	private getGodotMcpConfig() {
+		return {
+			command: "npx",
+			args: ["-y", "@tugcantopaloglu/godot-mcp"],
+			autoStart: false,
+		};
+	}
+
 	private getBlenderMcpConfig(port?: string) {
 		const args = ["--python", "3.12", "blender-mcp"];
 		if (port && port.trim() !== "") {
@@ -196,6 +204,12 @@ export class StudioMode {
 					}
 					config.autoStart = true;
 					await this.activateMcpServer("scratch", config);
+					return;
+				}
+				if (name === "godot") {
+					const cfg = this.getGodotMcpConfig();
+					cfg.autoStart = true;
+					await this.activateMcpServer("godot", cfg);
 					return;
 				}
 				throw new Error("Unknown built-in MCP provider.");
