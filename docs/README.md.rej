@@ -1,0 +1,189 @@
+--- README.md
++++ README.md
+@@ -1,152 +1,67 @@
+ <div align="center">
+-  <img src="assets/Moon-cli-banner.png" alt="MoonCode" width="100%" />
+-  
+-  <br>
+-  
+-  <p align="center">
+-    <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" />
+-    <img src="https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" />
+-    <img src="https://img.shields.io/badge/VectorDB-FF4500?style=for-the-badge&logo=databricks&logoColor=white" />
+-    <img src="https://img.shields.io/badge/Autonomous-Engine-blue?style=for-the-badge" />
+-  </p>
+-  <p align="center"><b>Sürüm: 2026-4</b></p>
+-</div>
+ 
+-<br>
++<img src="https://i.hizliresim.com/q2e03b9.png" width="128" height="128" alt="MoonCode Logo" />
+ 
+-# ✦ MoonCode
++# MoonCode
+ 
+-MoonCode, terminalden çıkmadan bütün projeyi yönetmeni sağlayan otonom bir mühendislik asistanıdır. 
++**Otonom Geliştirici Ortamı & CLI Asistanı**
+ 
+-Sadece kod yazıp bırakmaz; projeni okur, testleri çalıştırır, hataları bulur ve sen onay verene kadar düzeltir. 
++[![GitHub](https://img.shields.io/badge/GitHub-Repository-181717?style=flat-square&logo=github)](https://github.com/theayzek01/MoonCode)
++![Node.js](https://img.shields.io/badge/Node.js-%3E%3D20.0.0-339933?style=flat-square&logo=nodedotjs)
++![License](https://img.shields.io/badge/License-MIT-00599C?style=flat-square)
+ 
+-<br>
++</div>
+ 
+ ---
+ 
+-<br>
+-
+-## ❖ Neden MoonCode?
+-
+-Piyasada bir sürü AI aracı var (Cursor, Claude Code, Windsurf vb.). MoonCode'un onlardan farkı ne?
+-
+-<br>
+-
+-| Özellik | MoonCode | Diğer Araçlar |
+-| :--- | :--- | :--- |
+-| **Otonomi** | **✓** Tam Otonom (Kendi test eder, düzeltir) | **✕** Sadece Kod Önerir |
+-| **Çalışma Ortamı** | **✓** Native Terminal (Çok Hafif) | **✕** Ağır IDE (Electron) |
+-| **Sürü Zekası** | **✓** Paralel Ajanlar (Mimar, Coder) | **✕** Tekil Model |
+-
+-<br>
+-
+-### ◈ Token & Maliyet Karşılaştırması
+-
+-MoonCode, standart bir yapay zeka gibi tüm dosyayı kopyalayıp LLM'e göndermez. **AST tabanlı Semantik Filtreleme** kullanarak sadece ilgili kod parçacıklarını (chunk) seçer.
++## Genel Bakış
+ 
+-<table width="100%">
+-  <tr>
+-    <th align="left">Metrik (2000 satırlık dosya)</th>
+-    <th align="center">MoonCode (VectorDB)</th>
+-    <th align="center">Geleneksel Araçlar (Full Context)</th>
+-  </tr>
+-  <tr>
+-    <td><b>Okunan Token (1 İstek)</b></td>
+-    <td align="center">~ 500 Token</td>
+-    <td align="center">~ 15.000 Token</td>
+-  </tr>
+-  <tr>
+-    <td><b>Maliyet (Yaklaşık)</b></td>
+-    <td align="center"><b>$0.001</b></td>
+-    <td align="center"><b>$0.045</b></td>
+-  </tr>
+-  <tr>
+-    <td><b>Tasarruf Oranı</b></td>
+-    <td align="center" colspan="2"><b>✓ Ortalama %96 Daha Ucuz</b></td>
+-  </tr>
+-</table>
++MoonCode, terminal komutlarını, tarayıcı otonomisini ve akıllı kod düzenlemeyi tek bir platformda birleştiren, yerel makinenizde çalışan otonom bir asistan ve geliştirici ortamıdır. Bağlam (context) şişkinliği yaratmadan token kullanımını optimize eder ve karmaşık görevleri otonom olarak yürütür.
+ 
+-<details>
+-<summary><b>🔍 Nasıl Bu Kadar Tasarruf Ediyor? (Tıkla ve İncele)</b></summary>
+-<p>
+-MoonCode, projenizi ilk açtığınızda bir harita çıkarır. Siz bir fonksiyonu değiştirmek istediğinizde, tüm projeyi LLM'e okutmak yerine sadece o fonksiyonu ve bağlı olduğu modülleri yapay zekaya verir. Bu sayede yapay zeka gereksiz verilerle yorulmaz, hızlanır ve maliyet sıfıra yaklaşır.
+-</p>
+-</details>
+-
+-<br>
++---
+ 
+-**◈ Gerçek Otonomi:** Hata mı çıktı? Kodu yazar, testi koşturur, hata alırsa logları okuyup tekrar dener. Sen sadece en son çıkan doğru koda onay verirsin.
++## Temel Özellikler
+ 
+-<br>
++* **IDE-Docked Arayüzü:** Flush-panel, alta sabitlenmiş yerleşik Web UI. VS Code ve Cursor felsefesine sadık, minimalist ve dikkati dağıtmayan tasarım.
++* **Çoklu Model Desteği:** Claude 3.7 Sonnet, Gemini 2.5 Pro, GPT-4o ve DeepSeek R1/V3 gibi modeller arasında API veya OpenRouter üzerinden dinamik geçiş.
++* **Browser Bridge:** Tarayıcı otonomisi. Otomatik sayfa navigasyonu, DOM analizleri ve görsel teyit için ekran görüntüsü alma yeteneği.
++* **Akıllı Bağlam Yönetimi:** JSONL yerel geçmişi, Session Forking (Dallandırma) ve token koruyucu Session Compaction (Sıkıştırma) motoru.
++* **Komut Paleti:** Hızlı iş akışları için yerleşik `/build`, `/test`, `/review` ve `/compact` kısayolları.
+ 
+ ---
+ 
+-<br>
++## Kurulum
+ 
+-## ❖ Kurulum
+-
+-Sadece birkaç komutla çalışmaya hazır:
++### Windows Hızlı Kurulum
++```bat
++setup.bat install
++```
+ 
++### Manuel Kurulum & Derleme
+ ```bash
+ git clone https://github.com/theayzek01/MoonCode.git
+ cd MoonCode
+-
+ npm install
+ npm run build
+-npm install -g ./packages/cli
++npm install -g .
+ ```
+ 
+-<br>
+-
+----
+-
+-<br>
+-
+-## ❖ Nasıl Kullanılır?
+-
+-Terminale sadece `mooncode` yazman yeterli.
+-
+-**1 ▹ İsteğini söyle:** Örn: _"Kullanıcı giriş sistemini yaz ve testlerini ekle."_
+-**2 ▹ Arkanı yaslan:** MoonCode dosyaları tarar, plan yapar ve kodu yazar.
+-**3 ▹ Onayla:** Ekrana gelen değişiklikleri kontrol et, mantıklıysa terminalden onayla ve dosyalarına işlensin.
+-
+-<br>
+-
+-### ✧ İstasyon Komutları
+-
+-Yapay zekayı yönlendirmek için terminalden bu komutları kullanabilirsin:
+-
+-| Komut | Yetenek | Açıklama |
+-| :--- | :--- | :--- |
+-| **`/swarm`** | **❖** Sürü Zekası | Büyük işleri mimar, coder ve reviewer ajanlarına bölerek paralel çözdürür. |
+-| **`/fix`** | **⚙** Otonom Tamir | Projedeki derleme veya linter hatalarını bulur ve tamamen düzelene kadar loop'a girer. |
+-| **`/evolve`**| **⌬** Meta-Evrim | MoonCode'un kendi kaynak kodunu okuyup kendini geliştirmesini sağlar. |
+-| **`/index`** | **☷** Vektör Dizini | Hızı 10 kat artırmak için projenin AST tabanlı anlamsal (semantic) haritasını çıkarır. |
+-| **`/browser`**| **◧** Web Köprüsü | Terminalden çıkmadan webt'te araştırma yapmasını veya döküman okumasını sağlar. |
+-
+-<br>
+-
+ ---
+ 
+-<br>
++## Kullanım
+ 
+-## ❖ İletişim & Topluluk
+-
+-Projeyle ilgili bir sorun yaşarsan, fikir vermek istersen veya sadece muhabbet etmek istersen buradayız:
+-
+-* **Discord:** [discord.gg/kanser](https://discord.gg/kanser)
+-* **Instagram:** [@theayzek01](https://instagram.com/theayzek01)
++Arayüzü (Web UI) başlatmak için:
++```bash
++mooncode web
++```
+ 
+-<br>
++Doğrudan terminal (TUI) üzerinden başlatmak için:
++```bash
++mooncode
++```
+ 
+ ---
+ 
+-<br>
++## Lisans
+ 
+-<div align="center">
+-  <img src="assets/Moon-cli-logo.png" alt="MoonCode Logo" width="60" />
+-  <br><br>
+-  <b>Hızlı hareket et. Sorunları çöz. Moon kal.</b>
+-  <br><br>
+-  <sub>MIT License | Copyright (c) 2026 Ozen (theayzek01)</sub>
+-</div>
++Bu proje **MIT Lisansı** altında lisanslanmıştır. Kullanım ve geliştirmeye tamamen açıktır.
