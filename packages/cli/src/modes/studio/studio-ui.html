@@ -2110,16 +2110,7 @@ renderer.codespan = function(token) {
 
 marked.setOptions({ renderer, breaks: true, gfm: true });
 
-const originalParse = marked.parse;
-marked.parse = function(src, opt) {
-	let text = src;
-	if (typeof text === 'string') {
-		text = text.replace(/\[emote:([A-Za-z0-9_-]+)\]/gi, (match, emoteName) => {
-			return `<img src="/custom-emojis/${encodeURIComponent(emoteName)}" alt="${emoteName}" title="${emoteName}" style="height:32px;vertical-align:middle;display:inline-block;margin:0 2px;">`;
-		});
-	}
-	return originalParse.call(marked, text, opt);
-};
+
 
 // ─── STATE ────────────────────────────────────────────────────────────────
 const chatInner = document.getElementById('chat-inner');
@@ -3084,7 +3075,11 @@ function _doUpdateMessage(id, content, isStreaming) {
 		// Clean up timing when no thinking in final message
 		thinkingStartTimes.delete(id);
 	}
-	html += marked.parse(text || '');
+	let finalTxt = text || '';
+	finalTxt = finalTxt.replace(/\[emote:([A-Za-z0-9_-]+)\]/gi, (match, emoteName) => {
+		return `<img src="/custom-emojis/${encodeURIComponent(emoteName)}" alt="${emoteName}" title="${emoteName}" style="height:32px;vertical-align:middle;display:inline-block;margin:0 2px;">`;
+	});
+	html += marked.parse(finalTxt);
 
 	// Smart update: preserve thinking block collapse state
 	const existingThinking = inner.querySelector('.thinking-block');
