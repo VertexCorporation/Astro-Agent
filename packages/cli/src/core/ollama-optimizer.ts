@@ -134,6 +134,7 @@ export async function suggestModels(): Promise<OllamaModelTag[]> {
 		"codestral:22b",
 		"llama3.1:8b",
 		"mistral-nemo:12b",
+		"minimax-m3:cloud",
 	];
 	const localNames = new Set(local.map((m) => m.name));
 	return [...local, ...popular.filter((name) => !localNames.has(name)).map((name) => ({ name }))];
