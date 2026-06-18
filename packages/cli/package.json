@@ -1,11 +1,11 @@
 {
 	"name": "astroagent",
 	"version": "16.0.0",
-	"description": "MoonCode terminal coding agent",
+	"description": "Astro Agent terminal coding assistant",
 	"type": "module",
 	"moonConfig": {
-		"name": "MoonCode",
-		"configDir": ".mooncode"
+		"name": "Astro Agent",
+		"configDir": ".astroagent"
 	},
 	"bin": {
 		"astroagent": "dist/cli.js",
@@ -96,7 +96,7 @@
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/theayzek01/MoonCode",
+		"url": "https://github.com/vertexcorporation/Astro-Agent",
 		"directory": "packages/cli"
 	},
 	"engines": {
