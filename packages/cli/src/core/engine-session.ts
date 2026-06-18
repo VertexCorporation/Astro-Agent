@@ -28,7 +28,6 @@ import type { Engine, EngineEvent, EngineMessage, EngineState, EngineTool, Think
 import { theme } from "../modes/interactive/theme/theme.js";
 import { stripFrontmatter } from "../utils/frontmatter.js";
 import { sleep } from "../utils/sleep.js";
-import { filterMessagesMathematically } from "./mathematical-memory.js";
 import {
 	type AffectiveMode,
 	appraiseAssistantOutcome,
@@ -84,6 +83,7 @@ import {
 } from "./extensions/index.js";
 import { emitSessionShutdownEvent } from "./extensions/runner.js";
 import { LearningMemory } from "./learning-memory.js";
+import { filterMessagesMathematically } from "./mathematical-memory.js";
 import { getMemoryPreface, persistMemorySignal, shouldPersistMemorySignal } from "./memory-policy.js";
 import type { BashExecutionMessage, CustomMessage } from "./messages.js";
 import { pickFallbackModel } from "./model-orchestrator.js";
@@ -2329,13 +2329,13 @@ export class EngineSession {
 				// Generate compaction result
 				const filtered = filterMessagesMathematically({
 					messages: preparation.messagesToSummarize,
-					maxTokens: this.model?.contextWindow || 8192
+					maxTokens: this.model?.contextWindow || 8192,
 				});
 				const result = {
 					summary: "Compacted via TF-IDF + EMA scoring (Mathematical Memory System).",
 					firstKeptEntryId: filtered[0]?.id || preparation.firstKeptEntryId,
 					tokensBefore: preparation.tokensBefore,
-					details: {}
+					details: {},
 				};
 				summary = result.summary;
 				firstKeptEntryId = result.firstKeptEntryId;
@@ -2625,13 +2625,13 @@ export class EngineSession {
 				// Generate compaction result
 				const filtered = filterMessagesMathematically({
 					messages: preparation.messagesToSummarize,
-					maxTokens: this.model?.contextWindow || 8192
+					maxTokens: this.model?.contextWindow || 8192,
 				});
 				const result = {
 					summary: "Compacted via TF-IDF + EMA scoring (Mathematical Memory System).",
 					firstKeptEntryId: filtered[0]?.id || preparation.firstKeptEntryId,
 					tokensBefore: preparation.tokensBefore,
-					details: {}
+					details: {},
 				};
 				summary = result.summary;
 				firstKeptEntryId = result.firstKeptEntryId;

@@ -463,7 +463,7 @@ export class StudioMode {
 			const emojiDir = "C:\\Users\\theay\\Desktop\\Discord_Emojis\\final";
 			try {
 				if (fs.existsSync(emojiDir)) {
-					const files = fs.readdirSync(emojiDir).filter(f => /\.(png|gif|jpg|jpeg|webp)$/i.test(f));
+					const files = fs.readdirSync(emojiDir).filter((f) => /\.(png|gif|jpg|jpeg|webp)$/i.test(f));
 					res.setHeader("Content-Type", "application/json");
 					res.end(JSON.stringify(files));
 				} else {
@@ -478,15 +478,24 @@ export class StudioMode {
 		}
 
 		if (method === "GET" && url.pathname.startsWith("/custom-emojis/")) {
-			const fileName = decodeURIComponent(url.pathname.slice("/custom-emojis/".length));
-			if (fileName.includes("..") || fileName.includes("/")) {
+			const queryName = decodeURIComponent(url.pathname.slice("/custom-emojis/".length));
+			if (queryName.includes("..") || queryName.includes("/")) {
 				res.statusCode = 400;
 				res.end("Bad Request");
 				return;
 			}
-			const candidate = path.join("C:\\Users\\theay\\Desktop\\Discord_Emojis\\final", fileName);
-			if (fs.existsSync(candidate)) {
-				const ext = path.extname(fileName).toLowerCase();
+			const emojiDir = "C:\\Users\\theay\\Desktop\\Discord_Emojis\\final";
+			let targetFile = "";
+			if (fs.existsSync(emojiDir)) {
+				const files = fs.readdirSync(emojiDir).filter((f) => /\.(png|gif|jpg|jpeg|webp)$/i.test(f));
+				if (files.length > 0) {
+					const candidate = files.find(f => f.toLowerCase().includes(queryName.toLowerCase()));
+					targetFile = candidate ? candidate : files[Math.floor(Math.random() * files.length)];
+				}
+			}
+			const candidatePath = targetFile ? path.join(emojiDir, targetFile) : "";
+			if (candidatePath && fs.existsSync(candidatePath)) {
+				const ext = path.extname(candidatePath).toLowerCase();
 				const mime: Record<string, string> = {
 					".png": "image/png",
 					".jpg": "image/jpeg",
@@ -496,7 +505,7 @@ export class StudioMode {
 				};
 				res.setHeader("Content-Type", mime[ext] || "application/octet-stream");
 				res.setHeader("Cache-Control", "public, max-age=3600");
-				res.end(fs.readFileSync(candidate));
+				res.end(fs.readFileSync(candidatePath));
 			} else {
 				res.statusCode = 404;
 				res.end("Not Found");

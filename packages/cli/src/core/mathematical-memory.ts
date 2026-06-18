@@ -30,17 +30,18 @@ export function filterMessagesMathematically(options: MathematicalMessageFilterO
 	// Reverse iterate to give higher EMA to recent messages
 	const scoredMessages = targetMessages.reverse().map((msg, idx) => {
 		let score = currentEma;
-		
+
 		// Update EMA
 		currentEma = currentEma * (1 - alpha);
 
 		// TF-IDF Approximation: boost score based on key technical markers
 		const content = typeof msg.content === "string" ? msg.content : JSON.stringify(msg.content);
-		const technicalKeywords = /\b(function|class|const|let|return|import|export|if|else|await|async|try|catch|def|class|file:|Error|Exception)\b/gi;
+		const technicalKeywords =
+			/\b(function|class|const|let|return|import|export|if|else|await|async|try|catch|def|class|file:|Error|Exception)\b/gi;
 		const matches = content.match(technicalKeywords);
-		
+
 		if (matches) {
-			score *= (1 + (matches.length * 0.05)); // 5% boost per keyword
+			score *= 1 + matches.length * 0.05; // 5% boost per keyword
 		}
 
 		// Tool success boost
@@ -57,11 +58,11 @@ export function filterMessagesMathematically(options: MathematicalMessageFilterO
 	// Sort by score descending and take the top N (heuristically picking top 6 for context)
 	// We want to dramatically reduce prompt length
 	scoredMessages.sort((a, b) => b.score - a.score);
-	
+
 	const topScored = scoredMessages.slice(0, 6).map((item) => item.msg);
 
 	// Reconstruct the array in original chronological order
-	const finalOtherMessages = [...targetMessages.filter(m => topScored.includes(m)), ...guaranteedKeep];
+	const finalOtherMessages = [...targetMessages.filter((m) => topScored.includes(m)), ...guaranteedKeep];
 
 	return [...systemMessages, ...finalOtherMessages];
 }

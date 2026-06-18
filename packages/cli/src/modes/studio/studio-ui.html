@@ -2110,20 +2110,16 @@ renderer.codespan = function(token) {
 
 marked.setOptions({ renderer, breaks: true, gfm: true });
 
-// Custom Emojis Logic
-let customEmojis = [];
-fetch('/api/custom-emojis').then(r => r.json()).then(files => { customEmojis = files; }).catch(() => {});
 const originalParse = marked.parse;
 marked.parse = function(src, opt) {
 	let text = src;
-	if (customEmojis.length > 0 && typeof text === 'string') {
+	if (typeof text === 'string') {
 		text = text.replace(/\[emote:([A-Za-z0-9_-]+)\]/gi, (match, emoteName) => {
-			const candidate = customEmojis.find(f => f.toLowerCase().includes(emoteName.toLowerCase()));
-			const fileName = candidate || customEmojis[Math.floor(Math.random() * customEmojis.length)];
-			return `<img src="/custom-emojis/${encodeURIComponent(fileName)}" alt="${emoteName}" title="${emoteName}" style="height:32px;vertical-align:middle;display:inline-block;margin:0 2px;">`;
+			return `<img src="/custom-emojis/${encodeURIComponent(emoteName)}" alt="${emoteName}" title="${emoteName}" style="height:32px;vertical-align:middle;display:inline-block;margin:0 2px;">`;
 		});
 	}
 	return originalParse.call(marked, text, opt);
+};
 };
 
 // ─── STATE ────────────────────────────────────────────────────────────────
