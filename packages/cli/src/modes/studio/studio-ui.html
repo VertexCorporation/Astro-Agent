@@ -1121,7 +1121,7 @@
 		<div style="display:flex;align-items:center;gap:9px;">
 			<img src="/assets/Mooncodewhitelogo.png" alt="logo" style="width:28px;height:28px;border-radius:7px;object-fit:cover;flex-shrink:0;" onerror="this.style.display='none'">
 			<span style="font-weight:700;font-size:0.95rem;white-space:nowrap;letter-spacing:-0.01em;">Astro Agent</span>
-			<span style="font-size:0.65rem;background:rgba(108,143,255,0.15);color:var(--accent);padding:1px 5px;border-radius:4px;font-weight:600;font-family:'JetBrains Mono',monospace;margin-left:4px;">20</span>
+			<span style="font-size:0.65rem;background:rgba(108,143,255,0.15);color:var(--accent);padding:1px 5px;border-radius:4px;font-weight:600;font-family:'JetBrains Mono',monospace;margin-left:4px;">21</span>
 		</div>
 		<button onclick="toggleSidebar()" class="tool-btn">
 			<span class="material-symbols-rounded" style="font-size:18px;">close</span>
@@ -1205,6 +1205,10 @@
 			<button onclick="toggleIDE()" class="tool-btn" title="Toggle IDE Pane" style="background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:4px 10px; display:flex; align-items:center; gap:6px; font-size:0.8rem; font-weight:600;">
 				<span class="material-symbols-rounded" style="font-size:16px;">account_tree</span>
 				IDE
+			</button>
+			<button onclick="openModal('sessionRulesModal'); document.getElementById('session-rules-input').value = window.sessionRulesText || '';" class="tool-btn" title="Session Rules" style="background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:4px 10px; display:flex; align-items:center; gap:6px; font-size:0.8rem; font-weight:600; color:var(--accent2);">
+				<span class="material-symbols-rounded" style="font-size:16px;">rule</span>
+				Kurallar
 			</button>
 		</div>
 
@@ -3317,6 +3321,12 @@ async function sendMessage() {
 		const savedCustom = localStorage.getItem('mc-customization');
 		let customization = null;
 		if (savedCustom) { try { customization = JSON.parse(savedCustom); } catch(e){ console.warn('Silently caught error:', e); } }
+		
+		if (window.sessionRulesText) {
+			if (!customization) customization = {};
+			customization.extraInstructions = (customization.extraInstructions ? customization.extraInstructions + "\\n\\n" : "") + "CRITICAL RULES FOR THIS SESSION ONLY:\\n" + window.sessionRulesText;
+		}
+
 		const res = await fetch('/api/prompt', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
@@ -5222,6 +5232,13 @@ function finishThemeWizard(isAuto = false) {
 function openSemanticBrain() {
 	openModal('semanticBrainModal');
 }
+
+window.sessionRulesText = "";
+function saveSessionRules() {
+	window.sessionRulesText = document.getElementById('session-rules-input').value.trim();
+	closeModal('sessionRulesModal');
+	toast('Sohbet kuralları başarıyla kaydedildi!', 'success');
+}
 </script>
 <!-- WELCOME MODAL -->
 <div id="welcomeModal" class="modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);backdrop-filter:blur(10px);z-index:9999;align-items:center;justify-content:center;opacity:0;transition:opacity 0.4s ease;">
@@ -5248,6 +5265,24 @@ function openSemanticBrain() {
 		</div>
 		
 		<button onclick="closeWelcomeModal()" class="btn btn-primary" style="width:100%;padding:14px;border-radius: 4px;font-size:1.1rem;font-weight:600;letter-spacing:0.5px;">Get Started</button>
+	</div>
+</div>
+
+<!-- SESSION RULES MODAL -->
+<div id="sessionRulesModal" class="modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);z-index:10000;align-items:center;justify-content:center;">
+	<div class="modal-content" style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;width:90%;max-width:500px;box-shadow:var(--shadow-lg);">
+		<h2 style="margin:0 0 10px 0;font-size:1.2rem;color:var(--fg);display:flex;align-items:center;gap:8px;">
+			<span class="material-symbols-rounded" style="color:var(--accent2);">rule</span>
+			Sohbet Kuralları
+		</h2>
+		<p style="margin:0 0 16px 0;font-size:0.85rem;color:var(--muted);line-height:1.4;">
+			Ajanın sadece bu sohbet oturumu boyunca uymasını istediğiniz özel kuralları buraya yazabilirsiniz. (Örn: "Asla browse tool kullanma", "Sadece Türkçe cevap ver", "Dosya oluşturma")
+		</p>
+		<textarea id="session-rules-input" placeholder="Kuralları buraya girin..." style="width:100%;height:150px;background:var(--bg2);color:var(--fg);border:1px solid var(--border);border-radius:8px;padding:12px;font-family:inherit;font-size:0.9rem;resize:vertical;"></textarea>
+		<div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px;">
+			<button onclick="closeModal('sessionRulesModal')" class="btn" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:8px 16px;border-radius:8px;">İptal</button>
+			<button onclick="saveSessionRules()" class="btn btn-primary" style="padding:8px 16px;border-radius:8px;font-weight:600;">Kuralları Kaydet</button>
+		</div>
 	</div>
 </div>
 <script>
