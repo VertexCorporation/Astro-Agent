@@ -2334,7 +2334,7 @@ export class EngineSession {
 					headers,
 					customInstructions,
 					this._compactionAbortController.signal,
-					this.settingsManager.getSettings().thinkingLevel,
+					this.settingsManager.getDefaultThinkingLevel()
 				);
 				summary = result.summary;
 				firstKeptEntryId = result.firstKeptEntryId;
