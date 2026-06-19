@@ -12,7 +12,7 @@ import type { EngineTool } from "moon-engine";
 import { type Static, Type } from "typebox";
 import type { ToolDefinition } from "../extensions/types.js";
 import { resolveToCwd } from "./path-utils.js";
-import { getTextOutput, invalidArgText } from "./render-utils.js";
+import { getTextOutput } from "./render-utils.js";
 
 const digestSchema = Type.Object({
 	path: Type.String({ description: "Path to the file to digest" }),
@@ -88,7 +88,7 @@ export function createDigestToolDefinition(
 		execute: async (input, _context) => {
 			const absPath = resolveToCwd(cwd, input.path);
 			if (!ops.isFile(absPath)) {
-				return invalidArgText("path", `Not a file: ${input.path}`);
+				return { content: [{ type: "text", text: `[digest] Not a file: ${input.path}` }] };
 			}
 
 			const content = ops.readFile(absPath);

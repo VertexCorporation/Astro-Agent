@@ -9,7 +9,7 @@
 import type { EngineTool } from "moon-engine";
 import { type Static, Type } from "typebox";
 import type { ToolDefinition } from "../extensions/types.js";
-import { getTextOutput, invalidArgText } from "./render-utils.js";
+import { getTextOutput } from "./render-utils.js";
 
 export interface TodoItem {
 	id: number;
@@ -51,11 +51,11 @@ export function createTodoToolDefinition(): ToolDefinition<TodoToolInput, TodoTo
 		execute: async (input) => {
 			const { action, text, id } = input;
 
-			switch (action) {
-				case "add": {
-					if (!text || text.trim().length === 0) {
-						return invalidArgText("text", "Required for 'add' action");
-					}
+		switch (action) {
+			case "add": {
+				if (!text || text.trim().length === 0) {
+					return err("text", "Required for 'add' action");
+				}
 					const item: TodoItem = {
 						id: nextId++,
 						text: text.trim(),
@@ -89,14 +89,14 @@ export function createTodoToolDefinition(): ToolDefinition<TodoToolInput, TodoTo
 					};
 				}
 
-				case "check": {
-					if (id === undefined || id === null) {
-						return invalidArgText("id", "Required for 'check' action");
-					}
-					const checkItem = todoStore.get(id);
-					if (!checkItem) {
-						return invalidArgText("id", `Task #${id} not found`);
-					}
+			case "check": {
+				if (id === undefined || id === null) {
+					return err("id", "Required for 'check' action");
+				}
+				const checkItem = todoStore.get(id);
+				if (!checkItem) {
+					return err("id", `Task #${id} not found`);
+				}
 					checkItem.done = true;
 					return {
 						content: [{ type: "text", text: `[todo] ✓ #${id} ${checkItem.text}` }],
@@ -104,14 +104,14 @@ export function createTodoToolDefinition(): ToolDefinition<TodoToolInput, TodoTo
 					};
 				}
 
-				case "uncheck": {
-					if (id === undefined || id === null) {
-						return invalidArgText("id", "Required for 'uncheck' action");
-					}
-					const uncheckItem = todoStore.get(id);
-					if (!uncheckItem) {
-						return invalidArgText("id", `Task #${id} not found`);
-					}
+			case "uncheck": {
+				if (id === undefined || id === null) {
+					return err("id", "Required for 'uncheck' action");
+				}
+				const uncheckItem = todoStore.get(id);
+				if (!uncheckItem) {
+					return err("id", `Task #${id} not found`);
+				}
 					uncheckItem.done = false;
 					return {
 						content: [{ type: "text", text: `[todo] ○ #${id} ${uncheckItem.text}` }],
@@ -119,14 +119,14 @@ export function createTodoToolDefinition(): ToolDefinition<TodoToolInput, TodoTo
 					};
 				}
 
-				case "remove": {
-					if (id === undefined || id === null) {
-						return invalidArgText("id", "Required for 'remove' action");
-					}
-					const removed = todoStore.get(id);
-					if (!removed) {
-						return invalidArgText("id", `Task #${id} not found`);
-					}
+			case "remove": {
+				if (id === undefined || id === null) {
+					return err("id", "Required for 'remove' action");
+				}
+				const removed = todoStore.get(id);
+				if (!removed) {
+					return err("id", `Task #${id} not found`);
+				}
 					todoStore.delete(id);
 					return {
 						content: [{ type: "text", text: `[todo] - #${id} ${removed.text}` }],
@@ -143,8 +143,8 @@ export function createTodoToolDefinition(): ToolDefinition<TodoToolInput, TodoTo
 					};
 				}
 
-				default:
-					return invalidArgText("action", `Unknown action: ${action}`);
+			default:
+				return err("action", `Unknown action: ${action}`);
 			}
 		},
 		render: (content, details) => {
@@ -181,5 +181,12 @@ export function createTodoTool(): EngineTool<TodoToolInput> {
 	return {
 		name: definition.name,
 		execute: (input) => definition.execute(input, {}),
+	};
+}
+
+function err(param: string, msg: string) {
+	return {
+		content: [{ type: "text" as const, text: `[todo] ${param}: ${msg}` }],
+		details: { count: todoStore.size, done: countDone() },
 	};
 }
