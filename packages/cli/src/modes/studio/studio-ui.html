@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" data-theme="mooncode">
 <head>
 	<meta charset="UTF-8">
@@ -1102,6 +1102,14 @@
     0%, 100% { opacity: 1; }
     50% { opacity: 0; }
   }
+  .ide-item { display:flex; align-items:center; gap:6px; padding:4px 6px; cursor:pointer; border-radius:8px; color:var(--fg); transition:background 0.1s; }
+  .ide-item:hover { background:var(--surface); }
+  .ide-folder { font-weight:600; color:var(--muted); }
+  .ide-file { color:var(--fg); }
+  .ide-indent { margin-left: 14px; border-left: 1px solid var(--border); padding-left: 4px; }
+  .msg-wrap { border-radius: 18px !important; }
+  .msg-content { border-radius: 18px !important; }
+  #chat-inner { border-radius: 18px; }
 </style>
 </head>
 <body>
@@ -1183,6 +1191,8 @@
 </div>
 
 <!-- ———————————————————————————————————————————————————————————————— MAIN —————————————————————————————————————————————————————————————————— -->
+<!-- SPLIT CONTAINER -->
+<div id="split-container" style="display:flex; flex:1; width:100%; min-width:0; overflow:hidden;">
 <div id="main">
 
 	<!-- Header -->
@@ -1196,7 +1206,7 @@
 		</div>
 
 		<div style="display:flex;align-items:center;gap:16px;">
-			<div class="status-pill" id="cwd-display" title="Working Directory">
+			<div class="status-pill" id="cwd-display" title="Working Directory" onclick="toggleIDE()" style="cursor:pointer; border-radius:12px; transition:transform 0.1s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
 				<span class="material-symbols-rounded" style="font-size:13px;">folder</span>
 				<span id="cwd-text" style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">—</span>
 			</div>
@@ -1331,6 +1341,29 @@
 		</div>
 	</div>
 </div>
+<!-- Resizer -->
+<div id="ide-resizer" style="width:6px; cursor:col-resize; background:transparent; transition:background 0.2s; z-index:100;" onmouseover="this.style.background='var(--border)'" onmouseout="this.style.background='transparent'"></div>
+<!-- IDE Pane -->
+<div id="ide-pane" style="display:none; flex-direction:column; background:var(--bg); border-left:1px solid var(--border); width: 350px; flex-shrink:0; border-radius: 16px 0 0 16px;">
+	<div style="padding:10px 12px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background:var(--surface2); border-radius: 16px 0 0 0;">
+		<span style="font-weight:600; font-size:0.85rem; color:var(--muted);"><span class="material-symbols-rounded" style="font-size:16px;vertical-align:middle;margin-right:4px;">account_tree</span>Explorer</span>
+		<div style="display:flex; gap:4px;">
+			<button onclick="fetchIDETree()" class="tool-btn" style="padding:4px; border-radius:8px;"><span class="material-symbols-rounded" style="font-size:16px;">refresh</span></button>
+			<button onclick="toggleIDE()" class="tool-btn" style="padding:4px; border-radius:8px;"><span class="material-symbols-rounded" style="font-size:16px;">close</span></button>
+		</div>
+	</div>
+	<div id="ide-file-tree" style="flex:1; overflow-y:auto; padding:8px; font-size:0.82rem; font-family:'Inter',sans-serif; border-bottom:1px solid var(--border);"></div>
+	<div id="ide-code-container" style="flex:1; display:none; flex-direction:column; background:var(--code-bg); overflow:hidden; border-radius: 16px; margin: 4px; box-shadow: 0 -4px 12px rgba(0,0,0,0.1);">
+		<div style="padding:6px 12px; background:var(--surface); border-bottom:1px solid var(--border); font-size:0.8rem; display:flex; justify-content:space-between; align-items:center; border-radius: 16px 16px 0 0;">
+			<span id="ide-code-title" style="font-family:'JetBrains Mono',monospace; color:var(--accent);">file.ts</span>
+			<button onclick="document.getElementById('ide-code-container').style.display='none'; document.getElementById('ide-file-tree').style.flex='1';" class="tool-btn" style="padding:2px; border-radius:6px;"><span class="material-symbols-rounded" style="font-size:14px;">close</span></button>
+		</div>
+		<div style="flex:1; overflow:auto; padding:10px;">
+			<pre style="margin:0;"><code id="ide-code-viewer" class="hljs" style="font-family:'JetBrains Mono',monospace; font-size:0.8rem; background:transparent;"></code></pre>
+		</div>
+	</div>
+</div>
+</div> <!-- /split-container -->
 
 <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• MODALS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
 
@@ -5251,6 +5284,96 @@ function openSemanticBrain() {
 			}
 		}, 600);
 	});
+
+	// IDE Pane Logic
+	window.toggleIDE = function() {
+		const pane = document.getElementById('ide-pane');
+		if(pane.style.display === 'none') {
+			pane.style.display = 'flex';
+			fetchIDETree();
+		} else {
+			pane.style.display = 'none';
+		}
+	};
+
+	window.fetchIDETree = async function() {
+		const treeDiv = document.getElementById('ide-file-tree');
+		treeDiv.innerHTML = '<div style="padding:10px;color:var(--muted);">Loading...</div>';
+		try {
+			const res = await fetch('/api/fs/tree');
+			const tree = await res.json();
+			treeDiv.innerHTML = '';
+			treeDiv.appendChild(renderTree(tree));
+		} catch(e) {
+			treeDiv.innerHTML = `<div style="color:#ff6464;">Error: ${e.message}</div>`;
+		}
+	};
+
+	function renderTree(node) {
+		const div = document.createElement('div');
+		const item = document.createElement('div');
+		item.className = 'ide-item ' + (node.type === 'directory' ? 'ide-folder' : 'ide-file');
+		const icon = document.createElement('span');
+		icon.className = 'material-symbols-rounded';
+		icon.style.fontSize = '14px';
+		icon.innerText = node.type === 'directory' ? 'folder' : 'description';
+		const name = document.createElement('span');
+		name.innerText = node.name;
+		item.appendChild(icon);
+		item.appendChild(name);
+		div.appendChild(item);
+
+		if(node.type === 'directory') {
+			const childrenDiv = document.createElement('div');
+			childrenDiv.className = 'ide-indent';
+			childrenDiv.style.display = 'none';
+			if(node.children) node.children.forEach(c => childrenDiv.appendChild(renderTree(c)));
+			div.appendChild(childrenDiv);
+			item.onclick = () => {
+				childrenDiv.style.display = childrenDiv.style.display === 'none' ? 'block' : 'none';
+				icon.innerText = childrenDiv.style.display === 'none' ? 'folder' : 'folder_open';
+			};
+		} else {
+			item.onclick = async () => {
+				document.getElementById('ide-code-container').style.display = 'flex';
+				document.getElementById('ide-code-title').innerText = node.name;
+				const codeViewer = document.getElementById('ide-code-viewer');
+				codeViewer.innerText = 'Loading...';
+				codeViewer.className = 'hljs'; // reset
+				try {
+					const res = await fetch('/api/fs/read?path=' + encodeURIComponent(node.path));
+					const data = await res.json();
+					codeViewer.textContent = data.content;
+					hljs.highlightElement(codeViewer);
+				} catch(e) {
+					codeViewer.innerText = 'Failed to load file.';
+				}
+			};
+		}
+		return div;
+	}
+
+	// Resizer logic
+	const resizer = document.getElementById('ide-resizer');
+	const idePane = document.getElementById('ide-pane');
+	let isResizing = false;
+	if(resizer && idePane) {
+		resizer.addEventListener('mousedown', (e) => {
+			isResizing = true;
+			document.body.style.cursor = 'col-resize';
+		});
+		document.addEventListener('mousemove', (e) => {
+			if (!isResizing) return;
+			const newWidth = document.body.clientWidth - e.clientX;
+			if (newWidth > 200 && newWidth < 800) {
+				idePane.style.width = newWidth + 'px';
+			}
+		});
+		document.addEventListener('mouseup', () => {
+			isResizing = false;
+			document.body.style.cursor = '';
+		});
+	}
 </script></body>
 </html>
 

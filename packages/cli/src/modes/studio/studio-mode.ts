@@ -1609,6 +1609,46 @@ export class StudioMode {
 			}
 			return;
 		}
+		if (method === "GET" && url.pathname === "/api/fs/tree") {
+			try {
+				const dir = url.searchParams.get("dir") || this.runtime.cwd;
+				const getTree = (currentPath: string): any => {
+					const stats = fs.statSync(currentPath);
+					if (stats.isDirectory()) {
+						const children = fs.readdirSync(currentPath)
+							.filter(f => f !== "node_modules" && f !== ".git" && f !== "dist" && f !== ".mooncode")
+							.map(f => getTree(path.join(currentPath, f)));
+						children.sort((a, b) => {
+							if (a.type === b.type) return a.name.localeCompare(b.name);
+							return a.type === "directory" ? -1 : 1;
+						});
+						return { name: path.basename(currentPath), path: currentPath, type: "directory", children };
+					}
+					return { name: path.basename(currentPath), path: currentPath, type: "file" };
+				};
+				const tree = getTree(dir);
+				res.setHeader("Content-Type", "application/json");
+				res.end(JSON.stringify(tree));
+			} catch (e: any) {
+				res.statusCode = 500;
+				res.end(JSON.stringify({ error: e.message }));
+			}
+			return;
+		}
+
+		if (method === "GET" && url.pathname === "/api/fs/read") {
+			try {
+				const filePath = url.searchParams.get("path");
+				if (!filePath) throw new Error("Path required");
+				const content = fs.readFileSync(filePath, "utf-8");
+				res.setHeader("Content-Type", "application/json");
+				res.end(JSON.stringify({ content }));
+			} catch (e: any) {
+				res.statusCode = 500;
+				res.end(JSON.stringify({ error: e.message }));
+			}
+			return;
+		}
 
 		res.statusCode = 404;
 		res.end("Not Found");
