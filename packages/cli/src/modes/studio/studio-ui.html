@@ -5337,11 +5337,36 @@ function openSemanticBrain() {
 			const childrenDiv = document.createElement('div');
 			childrenDiv.className = 'ide-indent';
 			childrenDiv.style.display = 'none';
-			if(node.children) node.children.forEach(c => childrenDiv.appendChild(renderTree(c)));
+			
+			let loaded = false;
+			if(node.children && node.children.length > 0) {
+				node.children.forEach(c => childrenDiv.appendChild(renderTree(c)));
+				loaded = true;
+			}
 			div.appendChild(childrenDiv);
-			item.onclick = () => {
-				childrenDiv.style.display = childrenDiv.style.display === 'none' ? 'block' : 'none';
-				icon.innerText = childrenDiv.style.display === 'none' ? 'folder' : 'folder_open';
+			
+			item.onclick = async () => {
+				if(childrenDiv.style.display === 'none') {
+					childrenDiv.style.display = 'block';
+					icon.innerText = 'folder_open';
+					if(!loaded) {
+						childrenDiv.innerHTML = '<div style="padding:4px;color:var(--muted);font-size:0.75rem;">Loading...</div>';
+						try {
+							const res = await fetch('/api/fs/tree?dir=' + encodeURIComponent(node.path));
+							const data = await res.json();
+							childrenDiv.innerHTML = '';
+							if(data.children) {
+								data.children.forEach(c => childrenDiv.appendChild(renderTree(c)));
+							}
+							loaded = true;
+						} catch(e) {
+							childrenDiv.innerHTML = '<div style="color:#ff6464;padding:4px;font-size:0.75rem;">Error loading folder</div>';
+						}
+					}
+				} else {
+					childrenDiv.style.display = 'none';
+					icon.innerText = 'folder';
+				}
 			};
 		} else {
 			item.onclick = async () => {

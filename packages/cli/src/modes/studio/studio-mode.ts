@@ -1612,23 +1612,40 @@ export class StudioMode {
 		if (method === "GET" && url.pathname === "/api/fs/tree") {
 			try {
 				const dir = url.searchParams.get("dir") || this.runtime.cwd;
-				const getTree = (currentPath: string): any => {
-					const stats = fs.statSync(currentPath);
-					if (stats.isDirectory()) {
-						const children = fs.readdirSync(currentPath)
-							.filter(f => f !== "node_modules" && f !== ".git" && f !== "dist" && f !== ".mooncode")
-							.map(f => getTree(path.join(currentPath, f)));
-						children.sort((a, b) => {
-							if (a.type === b.type) return a.name.localeCompare(b.name);
-							return a.type === "directory" ? -1 : 1;
-						});
-						return { name: path.basename(currentPath), path: currentPath, type: "directory", children };
-					}
-					return { name: path.basename(currentPath), path: currentPath, type: "file" };
-				};
-				const tree = getTree(dir);
+				const stats = fs.statSync(dir);
+				if (!stats.isDirectory()) {
+					res.setHeader("Content-Type", "application/json");
+					res.end(JSON.stringify({ name: path.basename(dir), path: dir, type: "file" }));
+					return;
+				}
+				
+				let childrenPaths: string[] = [];
+				try {
+					childrenPaths = fs.readdirSync(dir);
+				} catch(e) {
+					// Ignore unreadable directories
+				}
+				
+				const children = childrenPaths
+					.filter(f => !["node_modules", ".git", "dist", ".mooncode"].includes(f))
+					.map(f => {
+						const childPath = path.join(dir, f);
+						try {
+							const cStats = fs.statSync(childPath);
+							return { name: f, path: childPath, type: cStats.isDirectory() ? "directory" : "file" };
+						} catch(e) {
+							return null;
+						}
+					})
+					.filter(Boolean);
+					
+				children.sort((a: any, b: any) => {
+					if (a.type === b.type) return a.name.localeCompare(b.name);
+					return a.type === "directory" ? -1 : 1;
+				});
+				
 				res.setHeader("Content-Type", "application/json");
-				res.end(JSON.stringify(tree));
+				res.end(JSON.stringify({ name: path.basename(dir), path: dir, type: "directory", children }));
 			} catch (e: any) {
 				res.statusCode = 500;
 				res.end(JSON.stringify({ error: e.message }));
