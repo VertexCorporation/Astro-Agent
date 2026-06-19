@@ -1,6 +1,6 @@
 {
 	"name": "astroagent",
-	"version": "21.0.0",
+	"version": "23.0.0",
 	"description": "Astro Agent terminal coding assistant",
 	"type": "module",
 	"moonConfig": {
