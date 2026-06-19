@@ -14,6 +14,7 @@ import type { AddressInfo } from "node:net";
 import { dirname, extname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { getEngineDir, getSessionsDir } from "../config.js";
+import { getTodoSnapshot } from "./tools/todo.js";
 
 const INDEX_HTML = `
 <!doctype html>
@@ -2218,6 +2219,95 @@ function readJsonFileSafe(file: string): unknown {
 	}
 }
 
+const TODO_PANEL_HTML = `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Todo — MoonCode</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0d1117; color: #e6edf3;
+      padding: 24px; min-height: 100vh;
+    }
+    .app { max-width: 560px; margin: 0 auto; }
+    h1 { font-size: 20px; font-weight: 600; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+    h1 small { font-size: 13px; font-weight: 400; color: #8b949e; }
+    .stats { display: flex; gap: 16px; margin-bottom: 20px; }
+    .stat { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 12px 16px; flex: 1; }
+    .stat .num { font-size: 24px; font-weight: 700; color: #58a6ff; }
+    .stat .label { font-size: 12px; color: #8b949e; margin-top: 2px; }
+    .list { display: flex; flex-direction: column; gap: 6px; }
+    .item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; background: #161b22;
+      border: 1px solid #30363d; border-radius: 8px;
+      transition: border-color .15s;
+    }
+    .item:hover { border-color: #58a6ff; }
+    .item.done { opacity: .6; }
+    .item.done .text { text-decoration: line-through; color: #8b949e; }
+    .cb {
+      width: 18px; height: 18px; border-radius: 4px;
+      border: 2px solid #58a6ff; background: transparent;
+      cursor: pointer; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      transition: all .12s;
+    }
+    .cb:hover { background: #1f6feb33; }
+    .cb.checked { background: #1f6feb; border-color: #1f6feb; }
+    .cb.checked::after { content: "✓"; color: #fff; font-size: 12px; font-weight: 700; }
+    .text { flex: 1; font-size: 14px; line-height: 1.4; }
+    .del {
+      background: none; border: none; color: #8b949e;
+      cursor: pointer; font-size: 16px; padding: 2px 4px;
+      opacity: 0; transition: opacity .12s;
+    }
+    .item:hover .del { opacity: 1; }
+    .del:hover { color: #f85149; }
+    .empty { text-align: center; padding: 40px 0; color: #8b949e; font-size: 14px; }
+    .footer { margin-top: 20px; font-size: 12px; color: #484f58; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <h1>Todo <small id="count">0</small></h1>
+    <div class="stats">
+      <div class="stat"><div class="num" id="total-num">0</div><div class="label">Total</div></div>
+      <div class="stat"><div class="num" id="done-num">0</div><div class="label">Done</div></div>
+      <div class="stat"><div class="num" id="pct-num">0%</div><div class="label">Progress</div></div>
+    </div>
+    <div class="list" id="list"></div>
+    <div class="footer">Tasks are managed by the AI via the <code>todo</code> tool. This panel auto-refreshes.</div>
+  </div>
+  <script>
+    async function load() {
+      const data = await fetch('/api/todo', { cache: 'no-store' }).then(r => r.json());
+      const list = document.getElementById('list');
+      const items = data.items || [];
+      document.getElementById('total-num').textContent = data.count;
+      document.getElementById('done-num').textContent = data.done;
+      document.getElementById('pct-num').textContent = data.count > 0 ? Math.round(data.done / data.count * 100) + '%' : '0%';
+      document.getElementById('count').textContent = data.done + '/' + data.count;
+      if (items.length === 0) {
+        list.innerHTML = '<div class="empty">No tasks yet. Ask the AI to add some!</div>';
+        return;
+      }
+      list.innerHTML = items.map(item => '<div class="item' + (item.done ? ' done' : '') + '">' +
+        '<span class="cb' + (item.done ? ' checked' : '') + '" data-id="' + item.id + '"></span>' +
+        '<span class="text">' + esc(item.text) + '</span>' +
+        '<button class="del" data-id="' + item.id + '">×</button>' +
+        '</div>').join('');
+    }
+    function esc(s) { const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+    load();
+    setInterval(load, 3000);
+  </script>
+</body>
+</html>`;
+
 const BRAIN_PANEL_HTML = `<!doctype html>
 <html lang="en">
 <head>
@@ -2477,6 +2567,9 @@ export function startWebUiServer(options: { port?: number; staticRoot?: string }
 			const entries = readJsonl(file);
 			return json(res, { file, entries, stats: { entries: entries.length } });
 		}
+		if (url.pathname === "/api/todo") {
+			return json(res, getTodoSnapshot());
+		}
 		if (url.pathname.startsWith("/api/stream/")) {
 			res.writeHead(200, {
 				"Content-Type": "text/event-stream",
@@ -2505,6 +2598,11 @@ export function startWebUiServer(options: { port?: number; staticRoot?: string }
 		if (url.pathname === "/brain") {
 			res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
 			res.end(BRAIN_PANEL_HTML);
+			return;
+		}
+		if (url.pathname === "/todo") {
+			res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+			res.end(TODO_PANEL_HTML);
 			return;
 		}
 		if (serveAsset(res, url.pathname)) return;

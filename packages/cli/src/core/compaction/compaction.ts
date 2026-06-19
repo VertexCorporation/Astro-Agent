@@ -115,6 +115,7 @@ export interface CompactionResult<T = unknown> {
 
 export interface CompactionSettings {
 	enabled: boolean;
+	profile?: "nuclear" | "aggressive" | "balanced" | "off";
 	reserveTokens: number;
 	keepRecentTokens: number;
 }
@@ -224,15 +225,34 @@ export function shouldCompact(contextTokens: number, contextWindow: number, sett
 	// Some provider definitions do not expose a context window. Use a conservative
 	// default instead of either never compacting or compacting every turn.
 	const effectiveWindow = Number.isFinite(contextWindow) && contextWindow > 0 ? contextWindow : 128_000;
-	const reserve = Math.max(4_096, Math.min(settings.reserveTokens ?? 16384, Math.floor(effectiveWindow * 0.5)));
 
-	// If we want nearly 0 cost, we should aggressively compact when context reaches a ceiling.
-	// We set a hard ceiling depending on the compaction profile:
-	// - aggressive: compact if context reaches 4,000 tokens (highly optimized for low cost & fast speed)
-	// - balanced: compact if context reaches 25,000 tokens
-	// - default/conservative: wait until window limit
+	// Profile-aware reserve minimum:
+	// - nuclear:  512 tokens (bare minimum for a short response)
+	// - aggressive: 2,048 tokens
+	// - balanced:  4,096 tokens
+	// - default:  4,096 tokens
+	let minReserve: number;
+	if (settings.profile === "nuclear") {
+		minReserve = 512;
+	} else if (settings.profile === "aggressive") {
+		minReserve = 2_048;
+	} else {
+		minReserve = 4_096;
+	}
+	const reserve = Math.max(
+		minReserve,
+		Math.min(settings.reserveTokens ?? minReserve * 2, Math.floor(effectiveWindow * 0.5)),
+	);
+
+	// Profile ceilings determine when auto-compaction triggers based on estimated context:
+	// - nuclear:   1,500 tokens (compact almost every turn)
+	// - aggressive: 4,000 tokens (compact frequently)
+	// - balanced:  25,000 tokens (compact occasionally)
+	// - fallback:  never via ceiling, only via window-reserve boundary
 	let profileCeiling = Infinity;
-	if (settings.profile === "aggressive") {
+	if (settings.profile === "nuclear") {
+		profileCeiling = 1_500;
+	} else if (settings.profile === "aggressive") {
 		profileCeiling = 4_000;
 	} else if (settings.profile === "balanced" || !settings.profile) {
 		profileCeiling = 25_000;

@@ -85,7 +85,7 @@ import { emitSessionShutdownEvent } from "./extensions/runner.js";
 import { LearningMemory } from "./learning-memory.js";
 import { filterMessagesMathematically } from "./mathematical-memory.js";
 import { getMemoryPreface, persistMemorySignal, shouldPersistMemorySignal } from "./memory-policy.js";
-import type { BashExecutionMessage, CustomMessage } from "./messages.js";
+import { type BashExecutionMessage, type CustomMessage, compactMessageForStorage } from "./messages.js";
 import { pickFallbackModel } from "./model-orchestrator.js";
 import type { ModelRegistry } from "./model-registry.js";
 import { OmegaKernel } from "./omega-kernel.js";
@@ -632,6 +632,20 @@ export class EngineSession {
 					QuotaManager.getInstance().addCost(cost);
 				}
 			}
+
+			// ★ Storage-level truncation: cap tool results, assistant thinking/text, user messages,
+			// and bash execution output at sensible limits BEFORE they hit engine state + session.
+			// This is the primary defense against unbounded token explosion.
+			if (
+				event.message.role === "toolResult" ||
+				event.message.role === "assistant" ||
+				event.message.role === "user" ||
+				event.message.role === "bashExecution"
+			) {
+				const compacted = compactMessageForStorage(event.message);
+				Object.assign(event.message, compacted);
+			}
+
 			// Check if this is a custom message from extensions
 			if (event.message.role === "custom") {
 				// Persist as CustomMessageEntry
@@ -1305,7 +1319,7 @@ export class EngineSession {
 	private _determineActiveToolsForPrompt(_text: string): string[] {
 		const defaultTools = this._baseToolsOverride
 			? Object.keys(this._baseToolsOverride)
-			: ["read", "bash", "edit", "write", "git_ship", "browser_tabs", "browser_page"];
+			: ["read", "bash", "edit", "write", "digest", "todo", "git_ship", "browser_tabs", "browser_page"];
 
 		return [...new Set([...defaultTools, ...this.getActiveToolNames()])];
 	}
@@ -2334,7 +2348,7 @@ export class EngineSession {
 					headers,
 					customInstructions,
 					this._compactionAbortController.signal,
-					this.settingsManager.getDefaultThinkingLevel()
+					this.settingsManager.getDefaultThinkingLevel(),
 				);
 				summary = result.summary;
 				firstKeptEntryId = result.firstKeptEntryId;
@@ -3076,6 +3090,8 @@ export class EngineSession {
 					"bash",
 					"edit",
 					"write",
+					"digest",
+					"todo",
 					"git_ship",
 					"browser_tabs",
 					"browser_page",

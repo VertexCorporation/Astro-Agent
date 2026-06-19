@@ -1121,7 +1121,7 @@
 		<div style="display:flex;align-items:center;gap:9px;">
 			<img src="/assets/Mooncodewhitelogo.png" alt="logo" style="width:28px;height:28px;border-radius:7px;object-fit:cover;flex-shrink:0;" onerror="this.style.display='none'">
 			<span style="font-weight:700;font-size:0.95rem;white-space:nowrap;letter-spacing:-0.01em;">Astro Agent</span>
-			<span style="font-size:0.65rem;background:rgba(108,143,255,0.15);color:var(--accent);padding:1px 5px;border-radius:4px;font-weight:600;font-family:'JetBrains Mono',monospace;margin-left:4px;">24</span>
+			<span style="font-size:0.65rem;background:rgba(108,143,255,0.15);color:var(--accent);padding:1px 5px;border-radius:4px;font-weight:600;font-family:'JetBrains Mono',monospace;margin-left:4px;">25</span>
 		</div>
 		<button onclick="toggleSidebar()" class="tool-btn">
 			<span class="material-symbols-rounded" style="font-size:18px;">close</span>
@@ -1169,8 +1169,9 @@
 	<!-- Sidebar Footer -->
 	<div style="padding:12px 10px; flex-shrink:0; display:flex; flex-direction:column; gap:8px;">
 		<div style="display:flex; justify-content:space-around; align-items:center; padding: 4px 0;">
-			<button onclick="openSemanticBrain()" class="tool-btn" style="width:32px;height:32px;" title="Semantic Brain"><span class="material-symbols-rounded" style="font-size:18px;">neurology</span></button>
+<button onclick="openSemanticBrain()" class="tool-btn" style="width:32px;height:32px;" title="Semantic Brain"><span class="material-symbols-rounded" style="font-size:18px;">neurology</span></button>
 			<button onclick="openMCP()" class="tool-btn" style="width:32px;height:32px;" title="Plugins"><span class="material-symbols-rounded" style="font-size:18px;">extension</span></button>
+			<button onclick="openTodo()" class="tool-btn" style="width:32px;height:32px;" title="Todo"><span class="material-symbols-rounded" style="font-size:18px;">checklist</span></button>
 			<button onclick="openModal('settingsModal')" class="tool-btn" style="width:32px;height:32px;" title="Settings"><span class="material-symbols-rounded" style="font-size:18px;">settings</span></button>
 			<button onclick="openModal('themeModal')" class="tool-btn" style="width:32px;height:32px;" title="Theme"><span class="material-symbols-rounded" style="font-size:18px;">palette</span></button>
 		</div>
@@ -2156,6 +2157,9 @@ function openModal(id) {
 }
 function openMCP() {
 	openModal('mcpModal');
+}
+function openTodo() {
+	window.open('http://127.0.0.1:3131/todo', '_blank', 'width=600,height=700');
 }
 function closeModal(id) {
 	if (id) document.getElementById(id)?.classList.remove('active');

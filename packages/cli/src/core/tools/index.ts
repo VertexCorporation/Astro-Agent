@@ -23,6 +23,11 @@ export {
 } from "./browser.js";
 export { createCodebaseIndexTool, createCodebaseIndexToolDefinition } from "./codebase_index.js";
 export {
+	createDigestTool,
+	createDigestToolDefinition,
+	type DigestToolInput,
+} from "./digest.js";
+export {
 	createDiscordGetChannelsTool,
 	createDiscordListGuildsTool,
 	createDiscordManageChannelTool,
@@ -115,6 +120,7 @@ import {
 	createBrowserTabsToolDefinition,
 } from "./browser.js";
 import { createCodebaseIndexTool, createCodebaseIndexToolDefinition } from "./codebase_index.js";
+import { createDigestTool, createDigestToolDefinition } from "./digest.js";
 import {
 	createDiscordGetChannelsTool,
 	createDiscordListGuildsTool,
@@ -134,6 +140,7 @@ import { createReadTool, createReadToolDefinition, type ReadToolOptions } from "
 import { createSemanticSearchTool, createSemanticSearchToolDefinition } from "./semantic_search.js";
 import { createSnapshotTool, createSnapshotToolDefinition } from "./snapshot.js";
 import { createTaskTool, createTaskToolDefinition } from "./task.js";
+import { createTodoTool, createTodoToolDefinition } from "./todo.js";
 import { createUserProfileTool, createUserProfileToolDefinition } from "./update_user_profile.js";
 import { createWriteTool, createWriteToolDefinition, type WriteToolOptions } from "./write.js";
 
@@ -161,7 +168,9 @@ export type ToolName =
 	| "discord_manage_channel"
 	| "snapshot"
 	| "update_user_profile"
-	| "message_agent";
+	| "message_agent"
+	| "digest"
+	| "todo";
 
 export const allToolNames: Set<ToolName> = new Set([
 	"read",
@@ -186,6 +195,8 @@ export const allToolNames: Set<ToolName> = new Set([
 	"snapshot",
 	"update_user_profile",
 	"message_agent",
+	"digest",
+	"todo",
 ]);
 
 export interface ToolsOptions {
@@ -244,6 +255,10 @@ export function createToolDefinition(toolName: ToolName, cwd: string, options?: 
 			return createUserProfileToolDefinition();
 		case "message_agent":
 			return createMessageAgentToolDefinition();
+		case "digest":
+			return createDigestToolDefinition(cwd);
+		case "todo":
+			return createTodoToolDefinition();
 		default:
 			throw new Error(`Unknown tool name: ${toolName}`);
 	}
@@ -295,6 +310,10 @@ export function createTool(toolName: ToolName, cwd: string, options?: ToolsOptio
 			return createUserProfileTool();
 		case "message_agent":
 			return createMessageAgentTool();
+		case "digest":
+			return createDigestTool(cwd);
+		case "todo":
+			return createTodoTool();
 		default:
 			throw new Error(`Unknown tool name: ${toolName}`);
 	}
@@ -349,6 +368,8 @@ export function createAllToolDefinitions(cwd: string, options?: ToolsOptions): R
 		snapshot: createSnapshotToolDefinition(cwd),
 		update_user_profile: createUserProfileToolDefinition(),
 		message_agent: createMessageAgentToolDefinition(),
+		digest: createDigestToolDefinition(cwd),
+		todo: createTodoToolDefinition(),
 		...Object.fromEntries(createDiscordToolDefinitions(options?.discord).map((tool) => [tool.name, tool])),
 	};
 }
@@ -406,5 +427,7 @@ export function createAllTools(cwd: string, options?: ToolsOptions): Record<Tool
 		snapshot: createSnapshotTool(cwd),
 		update_user_profile: createUserProfileTool(),
 		message_agent: createMessageAgentTool(),
+		digest: createDigestTool(cwd),
+		todo: createTodoTool(),
 	};
 }

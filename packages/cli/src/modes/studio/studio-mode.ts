@@ -12,6 +12,7 @@ import type { EngineSessionRuntime } from "../../core/engine-session-runtime.js"
 import { buildSessionInfo, listSessionsFromDir, SessionManager } from "../../core/session-manager.js";
 import { BUILTIN_SLASH_COMMANDS } from "../../core/slash-commands.js";
 import { getMcpPanelState, setMcpPanelStateProvider, webUiMcpActionListeners } from "../../core/web-ui-server.js";
+import { getTodoSnapshot } from "../../core/tools/todo.js";
 import type { InteractiveModeOptions } from "../interactive/interactive-mode.js";
 
 const execAsync = promisify(exec);
@@ -1618,32 +1619,32 @@ export class StudioMode {
 					res.end(JSON.stringify({ name: path.basename(dir), path: dir, type: "file" }));
 					return;
 				}
-				
+
 				let childrenPaths: string[] = [];
 				try {
 					childrenPaths = fs.readdirSync(dir);
-				} catch(e) {
+				} catch (e) {
 					// Ignore unreadable directories
 				}
-				
+
 				const children = childrenPaths
-					.filter(f => !["node_modules", ".git", "dist", ".mooncode"].includes(f))
-					.map(f => {
+					.filter((f) => !["node_modules", ".git", "dist", ".mooncode"].includes(f))
+					.map((f) => {
 						const childPath = path.join(dir, f);
 						try {
 							const cStats = fs.statSync(childPath);
 							return { name: f, path: childPath, type: cStats.isDirectory() ? "directory" : "file" };
-						} catch(e) {
+						} catch (e) {
 							return null;
 						}
 					})
 					.filter(Boolean);
-					
+
 				children.sort((a: any, b: any) => {
 					if (a.type === b.type) return a.name.localeCompare(b.name);
 					return a.type === "directory" ? -1 : 1;
 				});
-				
+
 				res.setHeader("Content-Type", "application/json");
 				res.end(JSON.stringify({ name: path.basename(dir), path: dir, type: "directory", children }));
 			} catch (e: any) {
@@ -1658,19 +1659,19 @@ export class StudioMode {
 				const filePath = url.searchParams.get("path");
 				const raw = url.searchParams.get("raw") === "true";
 				if (!filePath) throw new Error("Path required");
-				
+
 				if (raw) {
 					const ext = path.extname(filePath).toLowerCase();
 					let mime = "application/octet-stream";
-					if(ext===".png") mime="image/png";
-					else if(ext===".jpg" || ext===".jpeg") mime="image/jpeg";
-					else if(ext===".svg") mime="image/svg+xml";
-					else if(ext===".gif") mime="image/gif";
-					else if(ext===".webp") mime="image/webp";
-					
+					if (ext === ".png") mime = "image/png";
+					else if (ext === ".jpg" || ext === ".jpeg") mime = "image/jpeg";
+					else if (ext === ".svg") mime = "image/svg+xml";
+					else if (ext === ".gif") mime = "image/gif";
+					else if (ext === ".webp") mime = "image/webp";
+
 					const buffer = fs.readFileSync(filePath);
 					res.setHeader("Content-Type", "application/json");
-					res.end(JSON.stringify({ content: "data:" + mime + ";base64," + buffer.toString('base64') }));
+					res.end(JSON.stringify({ content: "data:" + mime + ";base64," + buffer.toString("base64") }));
 				} else {
 					const content = fs.readFileSync(filePath, "utf-8");
 					res.setHeader("Content-Type", "application/json");
@@ -1680,6 +1681,12 @@ export class StudioMode {
 				res.statusCode = 500;
 				res.end(JSON.stringify({ error: e.message }));
 			}
+			return;
+		}
+
+		if (method === "GET" && url.pathname === "/api/todo") {
+			res.setHeader("Content-Type", "application/json");
+			res.end(JSON.stringify(getTodoSnapshot()));
 			return;
 		}
 

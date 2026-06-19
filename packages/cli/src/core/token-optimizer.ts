@@ -23,9 +23,9 @@ const JSONISH_BLOCK = /^\s*[[{][\s\S]*[\]}]\s*$/;
 const LOG_TIMESTAMP = /\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?/g;
 
 const REPEATED_LOG_LINE_THRESHOLD = 3;
-const CAPSULE_MIN_CHARS = 6_000;
-const CAPSULE_MAX_RAW_CHARS = 3_000;
-const CAPSULE_MAX_LINES = 40;
+const CAPSULE_MIN_CHARS = 4_000;
+const CAPSULE_MAX_RAW_CHARS = 2_000;
+const CAPSULE_MAX_LINES = 30;
 
 // ── Tool block trimming ────────────────────────────────────────────────────────
 function trimLongToolBlock(block: string): string {
@@ -38,7 +38,7 @@ function trimLongToolBlock(block: string): string {
 }
 
 // ── Stack trace trimming ───────────────────────────────────────────────────────
-function trimStackTraces(text: string, maxFrames = 3): string {
+function trimStackTraces(text: string, maxFrames = 2): string {
 	const lines = text.split("\n");
 	let frames = 0;
 	return lines
@@ -179,7 +179,7 @@ export function compressCognitiveVector(text: string): string {
 
 	// 2. Aggressive terminal output/log compression: keep only errors, warnings, stack traces, and commands
 	const lines = compressed.split("\n");
-	if (lines.length > 50) {
+	if (lines.length > 30) {
 		let isLogOrOutput = false;
 		let logLineCount = 0;
 		for (const line of lines) {
@@ -192,7 +192,7 @@ export function compressCognitiveVector(text: string): string {
 				logLineCount++;
 			}
 		}
-		if (logLineCount > lines.length * 0.4) {
+		if (logLineCount > lines.length * 0.3) {
 			isLogOrOutput = true;
 		}
 

@@ -18,19 +18,85 @@ export const BRANCH_SUMMARY_PREFIX = `Branch context:\n<summary>\n`;
 
 export const BRANCH_SUMMARY_SUFFIX = `\n</summary>`;
 
-const USER_CONTEXT_MAX_CHARS = 6_000;
-const ASSISTANT_CONTEXT_MAX_CHARS = 3_000;
-const TOOL_RESULT_CONTEXT_MAX_CHARS = 2_000;
-const CUSTOM_CONTEXT_MAX_CHARS = 3_000;
+// ── LLM context limits (applied by convertToLlm before sending to provider) ──
+const USER_CONTEXT_MAX_CHARS = 4_000;
+const ASSISTANT_CONTEXT_MAX_CHARS = 2_000;
+const TOOL_RESULT_CONTEXT_MAX_CHARS = 1_500;
+const CUSTOM_CONTEXT_MAX_CHARS = 2_000;
+
+// ── Storage limits (applied at engine state + session persistence level) ──
+/** Tool results stored in engine state are capped — prevents unbounded session bloat */
+export const MAX_STORED_TOOL_RESULT_CHARS = 2_000;
+/** User messages at rest are capped to avoid storing huge prompts */
+export const MAX_STORED_USER_CHARS = 3_000;
+/** Assistant text (excluding thinking) stored in engine state */
+export const MAX_STORED_ASSISTANT_CHARS = 2_000;
+/** Bash execution output stored in engine state */
+export const MAX_STORED_BASH_OUTPUT_CHARS = 1_500;
+
+/**
+ * Truncate a message for persistent storage (engine state + session file).
+ * This prevents token explosion from accumulating full tool results, bash output, etc.
+ * The display layer still works — it renders whatever is stored.
+ */
+export function compactMessageForStorage(message: EngineMessage): EngineMessage {
+	if (!message || typeof message !== "object") return message;
+	try {
+		switch (message.role) {
+			case "toolResult": {
+				return {
+					...message,
+					content: compactTextContent(message.content, MAX_STORED_TOOL_RESULT_CHARS),
+				};
+			}
+			case "assistant": {
+				return {
+					...message,
+					content: message.content
+						.filter((part) => part.type !== "thinking")
+						.map((part) => {
+							if (part.type === "text") {
+								return { ...part, text: compactContextText(part.text, MAX_STORED_ASSISTANT_CHARS) };
+							}
+							return part;
+						}),
+				};
+			}
+			case "user": {
+				if (typeof message.content === "string") {
+					return { ...message, content: compactContextText(message.content, MAX_STORED_USER_CHARS) };
+				}
+				return { ...message, content: compactTextContent(message.content, MAX_STORED_USER_CHARS) };
+			}
+			case "bashExecution": {
+				const bashMsg = message as BashExecutionMessage;
+				if (bashMsg.output && bashMsg.output.length > MAX_STORED_BASH_OUTPUT_CHARS) {
+					const optimized = optimizePromptText(bashMsg.output).optimizedText;
+					return {
+						...bashMsg,
+						output: compactContextText(optimized, MAX_STORED_BASH_OUTPUT_CHARS),
+						truncated: true,
+					};
+				}
+				return bashMsg;
+			}
+			default:
+				return message;
+		}
+	} catch {
+		return message;
+	}
+}
 
 function compactContextText(text: string, maxChars: number): string {
 	const optimized = optimizePromptText(text).optimizedText;
 	if (optimized.length <= maxChars) return optimized;
 
-	const headChars = Math.floor(maxChars * 0.65);
+	// Keep more tail than head — recent content is most relevant for continuation
+	const headChars = Math.floor(maxChars * 0.35);
 	const tailChars = maxChars - headChars;
 	const skippedChars = optimized.length - maxChars;
-	return `${optimized.slice(0, headChars)}\n\n...[${skippedChars} chars trimmed for context stability]...\n\n${optimized.slice(-tailChars)}`;
+	return `${optimized.slice(0, headChars)}\n\n…[${skippedChars}ch trimmed]…\n\n${optimized.slice(-tailChars)}`;
 }
 
 function compactTextContent<T extends { type: string; text?: string }>(content: T[], maxChars: number): T[] {
