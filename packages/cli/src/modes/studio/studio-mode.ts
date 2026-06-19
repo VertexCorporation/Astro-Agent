@@ -1656,10 +1656,26 @@ export class StudioMode {
 		if (method === "GET" && url.pathname === "/api/fs/read") {
 			try {
 				const filePath = url.searchParams.get("path");
+				const raw = url.searchParams.get("raw") === "true";
 				if (!filePath) throw new Error("Path required");
-				const content = fs.readFileSync(filePath, "utf-8");
-				res.setHeader("Content-Type", "application/json");
-				res.end(JSON.stringify({ content }));
+				
+				if (raw) {
+					const ext = path.extname(filePath).toLowerCase();
+					let mime = "application/octet-stream";
+					if(ext===".png") mime="image/png";
+					else if(ext===".jpg" || ext===".jpeg") mime="image/jpeg";
+					else if(ext===".svg") mime="image/svg+xml";
+					else if(ext===".gif") mime="image/gif";
+					else if(ext===".webp") mime="image/webp";
+					
+					const buffer = fs.readFileSync(filePath);
+					res.setHeader("Content-Type", "application/json");
+					res.end(JSON.stringify({ content: "data:" + mime + ";base64," + buffer.toString('base64') }));
+				} else {
+					const content = fs.readFileSync(filePath, "utf-8");
+					res.setHeader("Content-Type", "application/json");
+					res.end(JSON.stringify({ content }));
+				}
 			} catch (e: any) {
 				res.statusCode = 500;
 				res.end(JSON.stringify({ error: e.message }));

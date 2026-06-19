@@ -4207,9 +4207,11 @@ es.onmessage = (e) => {
 		} else if (data.type === 'tool_execution_start' || data.type === 'tool_execution_step') {
 			setGeneratingState(true);
 			renderTool(data.toolCallId, data.toolName, data.args, 'running', null);
+			if (typeof updateFileActivity === 'function') updateFileActivity(data.toolName, data.args, 'running');
 
 		} else if (data.type === 'tool_execution_end') {
 			renderTool(data.toolCallId, data.toolName, data.args, 'done', data.result);
+			if (typeof updateFileActivity === 'function') updateFileActivity(data.toolName, data.args, 'done');
 
 		} else if (data.type === 'clear_chat') {
 			currentAssistantMsgId = null;
@@ -5306,6 +5308,70 @@ function openSemanticBrain() {
 		}
 	};
 
+	window.activeToolTargets = {}; // path -> { type, color, icon }
+	
+	window.updateFileActivity = function(toolName, args, status) {
+		let targetPath = null;
+		let icon = '';
+		let color = '';
+		const nameLC = (toolName || '').toLowerCase();
+		
+		if (args) {
+			if (args.TargetFile) targetPath = args.TargetFile;
+			else if (args.AbsolutePath) targetPath = args.AbsolutePath;
+			else if (args.SearchPath) targetPath = args.SearchPath;
+			else if (args.Cwd) targetPath = args.Cwd;
+		}
+		if (!targetPath) return;
+
+		if (status === 'done' || status === 'error') {
+			delete window.activeToolTargets[targetPath];
+		} else {
+			if (nameLC.includes('bash') || nameLC.includes('run_command')) { icon = 'terminal'; color = '#00ffaa'; }
+			else if (nameLC.includes('view') || nameLC.includes('read') || nameLC.includes('list')) { icon = 'visibility'; color = '#50b8ff'; }
+			else if (nameLC.includes('edit') || nameLC.includes('replace') || nameLC.includes('write')) { icon = 'edit_document'; color = '#ffcf50'; }
+			else if (nameLC.includes('search') || nameLC.includes('grep')) { icon = 'search'; color = '#d950ff'; }
+			else { icon = 'build'; color = 'var(--muted)'; }
+			
+			window.activeToolTargets[targetPath] = { icon, color };
+		}
+		
+		if(typeof refreshTreeActivityUI === 'function') refreshTreeActivityUI();
+	};
+	
+	window.refreshTreeActivityUI = function() {
+		const items = document.querySelectorAll('.ide-item');
+		items.forEach(item => {
+			const path = item.getAttribute('data-path');
+			let activitySpan = item.querySelector('.ide-activity-icon');
+			if (!path) return;
+			
+			let act = null;
+			Object.keys(window.activeToolTargets).forEach(p => {
+				if (path === p || path.startsWith(p + '/') || path.startsWith(p + '\\\\')) {
+					act = window.activeToolTargets[p];
+				}
+			});
+
+			if (act) {
+				if (!activitySpan) {
+					const s = document.createElement('span');
+					s.className = 'material-symbols-rounded ide-activity-icon';
+					s.style.fontSize = '14px';
+					s.style.marginLeft = 'auto';
+					s.style.color = act.color;
+					s.innerText = act.icon;
+					item.appendChild(s);
+				} else {
+					activitySpan.style.color = act.color;
+					activitySpan.innerText = act.icon;
+				}
+			} else {
+				if (activitySpan) activitySpan.remove();
+			}
+		});
+	};
+
 	window.fetchIDETree = async function() {
 		const treeDiv = document.getElementById('ide-file-tree');
 		treeDiv.innerHTML = '<div style="padding:10px;color:var(--muted);">Loading...</div>';
@@ -5314,6 +5380,7 @@ function openSemanticBrain() {
 			const tree = await res.json();
 			treeDiv.innerHTML = '';
 			treeDiv.appendChild(renderTree(tree));
+			refreshTreeActivityUI();
 		} catch(e) {
 			treeDiv.innerHTML = `<div style="color:#ff6464;">Error: ${e.message}</div>`;
 		}
@@ -5323,13 +5390,34 @@ function openSemanticBrain() {
 		const div = document.createElement('div');
 		const item = document.createElement('div');
 		item.className = 'ide-item ' + (node.type === 'directory' ? 'ide-folder' : 'ide-file');
-		const icon = document.createElement('span');
-		icon.className = 'material-symbols-rounded';
-		icon.style.fontSize = '14px';
-		icon.innerText = node.type === 'directory' ? 'folder' : 'description';
+		item.setAttribute('data-path', node.path);
+
+		const isImage = /\\.(png|jpe?g|gif|svg|webp|ico)$/i.test(node.name);
+		
+		if (isImage && node.type === 'file') {
+			const imgIcon = document.createElement('img');
+			imgIcon.style.width = '14px';
+			imgIcon.style.height = '14px';
+			imgIcon.style.objectFit = 'cover';
+			imgIcon.style.borderRadius = '2px';
+			item.appendChild(imgIcon);
+			
+			fetch('/api/fs/read?raw=true&path=' + encodeURIComponent(node.path))
+				.then(r => r.json())
+				.then(d => { if(d.content) imgIcon.src = d.content; else imgIcon.style.display = 'none'; })
+				.catch(e => { imgIcon.style.display = 'none'; });
+		} else {
+			const icon = document.createElement('span');
+			icon.className = 'material-symbols-rounded';
+			icon.style.fontSize = '14px';
+			icon.innerText = node.type === 'directory' ? 'folder' : 'description';
+			item.appendChild(icon);
+		}
+
 		const name = document.createElement('span');
 		name.innerText = node.name;
-		item.appendChild(icon);
+		name.style.color = 'color-mix(in srgb, var(--accent) 20%, #ffffff 80%)';
+		
 		item.appendChild(name);
 		div.appendChild(item);
 
@@ -5359,6 +5447,7 @@ function openSemanticBrain() {
 								data.children.forEach(c => childrenDiv.appendChild(renderTree(c)));
 							}
 							loaded = true;
+							refreshTreeActivityUI();
 						} catch(e) {
 							childrenDiv.innerHTML = '<div style="color:#ff6464;padding:4px;font-size:0.75rem;">Error loading folder</div>';
 						}
