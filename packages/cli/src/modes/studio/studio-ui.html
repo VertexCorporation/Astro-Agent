@@ -1171,7 +1171,7 @@
 		<div style="display:flex; justify-content:space-around; align-items:center; padding: 4px 0;">
 <button onclick="openSemanticBrain()" class="tool-btn" style="width:32px;height:32px;" title="Semantic Brain"><span class="material-symbols-rounded" style="font-size:18px;">neurology</span></button>
 			<button onclick="openMCP()" class="tool-btn" style="width:32px;height:32px;" title="Plugins"><span class="material-symbols-rounded" style="font-size:18px;">extension</span></button>
-			<button onclick="openTodo()" class="tool-btn" style="width:32px;height:32px;" title="Todo"><span class="material-symbols-rounded" style="font-size:18px;">checklist</span></button>
+			<button onclick="toggleTodoPanel()" class="tool-btn" style="width:32px;height:32px;" title="Plan"><span class="material-symbols-rounded" style="font-size:18px;">checklist</span></button>
 			<button onclick="openModal('settingsModal')" class="tool-btn" style="width:32px;height:32px;" title="Settings"><span class="material-symbols-rounded" style="font-size:18px;">settings</span></button>
 			<button onclick="openModal('themeModal')" class="tool-btn" style="width:32px;height:32px;" title="Theme"><span class="material-symbols-rounded" style="font-size:18px;">palette</span></button>
 		</div>
@@ -1355,12 +1355,32 @@
 <div id="ide-pane" style="display:flex; flex-direction:column; background:var(--bg); border-left:1px solid var(--border); width: 350px; flex-shrink:0; border-radius: 16px 0 0 16px;">
 	<div style="padding:10px 12px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background:var(--surface2); border-radius: 16px 0 0 0;">
 		<span style="font-weight:600; font-size:0.85rem; color:var(--muted);"><span class="material-symbols-rounded" style="font-size:16px;vertical-align:middle;margin-right:4px;">account_tree</span>Explorer</span>
-		<div style="display:flex; gap:4px;">
-			<button onclick="fetchIDETree()" class="tool-btn" style="padding:4px; border-radius:8px;"><span class="material-symbols-rounded" style="font-size:16px;">refresh</span></button>
-			<button onclick="toggleIDE()" class="tool-btn" style="padding:4px; border-radius:8px;"><span class="material-symbols-rounded" style="font-size:16px;">close</span></button>
+		<div style="display:flex; gap:2px;">
+			<button onclick="toggleTodoPanel()" class="tool-btn" style="padding:4px; border-radius:8px;" title="Plan"><span class="material-symbols-rounded" style="font-size:16px;">checklist</span></button>
+			<button onclick="fetchIDETree()" class="tool-btn" style="padding:4px; border-radius:8px;" title="Refresh"><span class="material-symbols-rounded" style="font-size:16px;">refresh</span></button>
+			<button onclick="toggleIDE()" class="tool-btn" style="padding:4px; border-radius:8px;" title="Close"><span class="material-symbols-rounded" style="font-size:16px;">close</span></button>
 		</div>
 	</div>
 	<div id="ide-file-tree" style="flex:1; overflow-y:auto; padding:8px; font-size:0.82rem; font-family:'Inter',sans-serif; border-bottom:1px solid var(--border);"></div>
+	<div id="todo-panel" style="flex:1; display:none; flex-direction:column; overflow-y:auto; padding:0; font-size:0.82rem;">
+		<style>
+			.todo-header { padding:12px 16px; border-bottom:1px solid var(--border); font-weight:600; font-size:0.85rem; color:var(--fg); display:flex; align-items:center; gap:8px; background:var(--surface2); }
+			.todo-stats { margin-left:auto; color:var(--muted); font-weight:500; font-size:0.75rem; background:var(--bg); padding:2px 8px; border-radius:999px; }
+			.todo-timeline { padding:16px 12px; flex:1; display:flex; flex-direction:column; gap:0; }
+			.todo-empty { color:var(--muted); text-align:center; padding:40px 20px; font-size:0.82rem; line-height:1.6; }
+			.todo-stop { display:flex; align-items:flex-start; gap:10px; position:relative; padding:4px 0; min-height:40px; }
+			.todo-dot { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; z-index:1; background:var(--bg); border:2px solid var(--border); color:var(--muted); }
+			.todo-stop.current .todo-dot { border-color:var(--accent); color:var(--accent); background:rgba(108,143,255,0.1); }
+			.todo-stop.done .todo-dot { border-color:var(--accent2); color:var(--accent2); background:rgba(50,215,75,0.1); }
+			.todo-line { position:absolute; left:17px; top:30px; bottom:-2px; width:2px; background:var(--border); }
+			.todo-stop:last-child .todo-line { display:none; }
+			.todo-text { padding-top:3px; flex:1; min-width:0; }
+			.todo-label { color:var(--fg); font-size:0.82rem; line-height:1.4; display:block; }
+			.todo-stop.done .todo-label { color:var(--muted); text-decoration:line-through; }
+		</style>
+		<div class="todo-header"><span class="material-symbols-rounded" style="font-size:18px;">checklist</span> Plan <span class="todo-stats">0/0</span></div>
+		<div class="todo-timeline"><div class="todo-empty">Henüz plan öğesi yok.<br>AI yeni bir göreve başladığında burada görünecek.</div></div>
+	</div>
 	<div id="ide-code-container" style="flex:1; display:none; flex-direction:column; background:var(--code-bg); overflow:hidden; border-radius: 16px; margin: 4px; box-shadow: 0 -4px 12px rgba(0,0,0,0.1);">
 		<div style="padding:6px 12px; background:var(--surface); border-bottom:1px solid var(--border); font-size:0.8rem; display:flex; justify-content:space-between; align-items:center; border-radius: 16px 16px 0 0;">
 			<span id="ide-code-title" style="font-family:'JetBrains Mono',monospace; color:var(--accent);">file.ts</span>
@@ -2158,9 +2178,45 @@ function openModal(id) {
 function openMCP() {
 	openModal('mcpModal');
 }
-function openTodo() {
-	window.open('http://127.0.0.1:3131/todo', '_blank', 'width=600,height=700');
+function toggleTodoPanel() {
+	const pane = document.getElementById('ide-pane');
+	const panel = document.getElementById('todo-panel');
+	const tree = document.getElementById('ide-file-tree');
+	const code = document.getElementById('ide-code-container');
+	// If panel is visible, hide it and show tree
+	if (panel && panel.style.display !== 'none') {
+		panel.style.display = 'none';
+		if (tree) tree.style.display = 'block';
+		return;
+	}
+	// Ensure IDE pane is open
+	if (pane && (pane.style.display === 'none' || !pane.offsetParent)) {
+		pane.style.display = 'flex';
+	}
+	panel.style.display = 'flex';
+	if (tree) tree.style.display = 'none';
+	if (code) code.style.display = 'none';
+	fetchTodoList();
 }
+function fetchTodoList() {
+	const panel = document.getElementById('todo-panel');
+	if (!panel || panel.style.display === 'none') return;
+	fetch('/api/todo', { cache: 'no-store' }).then(r => r.json()).then(data => {
+		const items = data.items || [];
+		const total = data.count || 0;
+		const done = data.done || 0;
+		panel.innerHTML = `<div class="todo-header"><span class="material-symbols-rounded" style="font-size:18px;">checklist</span> Plan <span class="todo-stats">${done}/${total}</span></div><div class="todo-timeline">${items.length === 0 ? '<div class="todo-empty">Henüz plan öğesi yok.<br>AI yeni bir göreve başladığında burada görünecek.</div>' : items.map((item, i) => {
+			const cls = item.done ? 'todo-stop done' : i === 0 ? 'todo-stop current' : 'todo-stop';
+			const icon = item.done ? 'check_circle' : i === 0 ? 'radio_button_checked' : 'radio_button_unchecked';
+			return `<div class="${cls}"><div class="todo-dot"><span class="material-symbols-rounded" style="font-size:${item.done ? '14px' : '16px'};">${icon}</span></div><div class="todo-line"></div><div class="todo-text"><span class="todo-label">${escHtml(item.text)}</span></div></div>`;
+		}).join('')}</div>`;
+	}).catch(() => {});
+}
+// Auto-refresh todo every 5s when panel is visible
+setInterval(() => {
+	const panel = document.getElementById('todo-panel');
+	if (panel && panel.style.display !== 'none') fetchTodoList();
+}, 5000);
 function closeModal(id) {
 	if (id) document.getElementById(id)?.classList.remove('active');
 	else document.querySelectorAll('.modal-overlay').forEach(el => el.classList.remove('active'));
