@@ -8,7 +8,6 @@
  */
 
 import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
-import * as os from "os";
 import {
 	findEnvKeys,
 	getEnvApiKey,
@@ -17,6 +16,7 @@ import {
 	type OAuthProviderId,
 } from "moon-core";
 import { getOAuthApiKey, getOAuthProvider, getOAuthProviders } from "moon-core/oauth";
+import * as os from "os";
 import { dirname, join } from "path";
 import lockfile from "proper-lockfile";
 import { getEngineDir } from "../config.js";

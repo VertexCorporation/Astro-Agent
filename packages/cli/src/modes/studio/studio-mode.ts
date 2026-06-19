@@ -489,7 +489,7 @@ export class StudioMode {
 			if (fs.existsSync(emojiDir)) {
 				const files = fs.readdirSync(emojiDir).filter((f) => /\.(png|gif|jpg|jpeg|webp)$/i.test(f));
 				if (files.length > 0) {
-					const candidate = files.find(f => f.toLowerCase().includes(queryName.toLowerCase()));
+					const candidate = files.find((f) => f.toLowerCase().includes(queryName.toLowerCase()));
 					targetFile = candidate ? candidate : files[Math.floor(Math.random() * files.length)];
 				}
 			}

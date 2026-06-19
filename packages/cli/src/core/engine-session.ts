@@ -2327,16 +2327,15 @@ export class EngineSession {
 				details = extensionCompaction.details;
 			} else {
 				// Generate compaction result
-				const filtered = filterMessagesMathematically({
-					messages: preparation.messagesToSummarize,
-					maxTokens: this.model?.contextWindow || 8192,
-				});
-				const result = {
-					summary: "Compacted via TF-IDF + EMA scoring (Mathematical Memory System).",
-					firstKeptEntryId: filtered[0]?.id || preparation.firstKeptEntryId,
-					tokensBefore: preparation.tokensBefore,
-					details: {},
-				};
+				const result = await compact(
+					preparation,
+					this.model!,
+					apiKey,
+					headers,
+					customInstructions,
+					this._compactionAbortController.signal,
+					this.settingsManager.getSettings().thinkingLevel,
+				);
 				summary = result.summary;
 				firstKeptEntryId = result.firstKeptEntryId;
 				tokensBefore = result.tokensBefore;
@@ -2623,16 +2622,15 @@ export class EngineSession {
 				details = extensionCompaction.details;
 			} else {
 				// Generate compaction result
-				const filtered = filterMessagesMathematically({
-					messages: preparation.messagesToSummarize,
-					maxTokens: this.model?.contextWindow || 8192,
-				});
-				const result = {
-					summary: "Compacted via TF-IDF + EMA scoring (Mathematical Memory System).",
-					firstKeptEntryId: filtered[0]?.id || preparation.firstKeptEntryId,
-					tokensBefore: preparation.tokensBefore,
-					details: {},
-				};
+				const result = await compact(
+					preparation,
+					this.model!,
+					apiKey,
+					headers,
+					undefined,
+					this._autoCompactionAbortController.signal,
+					this.settingsManager.getSettings().thinkingLevel,
+				);
 				summary = result.summary;
 				firstKeptEntryId = result.firstKeptEntryId;
 				tokensBefore = result.tokensBefore;
