@@ -5,7 +5,10 @@ import type { ToolDefinition } from "../extensions/types.js";
 import { wrapToolDefinition } from "./tool-definition-wrapper.js";
 
 const intuitionSchema = Type.Object({
-	input_type: Type.Enum({ text: "text", visual: "visual", architecture: "architecture" }, { description: "Tür: metin, görsel veya sistem mimarisi" }),
+	input_type: Type.Enum(
+		{ text: "text", visual: "visual", architecture: "architecture" },
+		{ description: "Tür: metin, görsel veya sistem mimarisi" },
+	),
 	content: Type.String({ description: "Analiz edilecek kod parçası, mimari tanımı veya loglar" }),
 });
 
@@ -15,7 +18,7 @@ function runTribeBridge(inputType: string, content: string): Promise<string> {
 	return new Promise((resolve, reject) => {
 		const scriptPath = path.join(process.cwd(), "packages/cli/src/core/tools/tribe_bridge.py");
 		const tribeMainPath = path.join(process.cwd(), "tribev2-main");
-		
+
 		const py = spawn("python", [scriptPath, inputType, content, tribeMainPath]);
 		let out = "";
 		let err = "";
@@ -31,7 +34,7 @@ function runTribeBridge(inputType: string, content: string): Promise<string> {
 				resolve(out);
 			}
 		});
-		
+
 		py.on("error", () => {
 			resolve(fallbackCognitiveAnalysis(inputType, content));
 		});
@@ -43,45 +46,50 @@ function fallbackCognitiveAnalysis(inputType: string, content: string): string {
 	const visualLoad = inputType === "visual" ? 80 + (hash % 20) : 10 + (hash % 10);
 	const semanticLoad = inputType === "architecture" ? 85 + (hash % 15) : 40 + (hash % 20);
 	const cognitiveEffort = (visualLoad + semanticLoad) / 2;
-	
+
 	let feeling = "Nötr";
 	if (cognitiveEffort > 75) feeling = "Karmaşık / Yorucu (Bilişsel yük yüksek)";
 	else if (cognitiveEffort < 30) feeling = "Çok Hafif / Yüzeysel";
 	else feeling = "Zarif ve Akıcı (Dengeli nöral uyarım)";
 
-	return JSON.stringify({
-		status: "Simulated (PyTorch Environment / Weights Not Found, using Deterministic Model)",
-		brain_activity: {
-			visual_cortex: `${visualLoad}%`,
-			language_semantic_network: `${semanticLoad}%`,
-			frontal_lobe_effort: `${cognitiveEffort.toFixed(1)}%`
+	return JSON.stringify(
+		{
+			status: "Simulated (PyTorch Environment / Weights Not Found, using Deterministic Model)",
+			brain_activity: {
+				visual_cortex: `${visualLoad}%`,
+				language_semantic_network: `${semanticLoad}%`,
+				frontal_lobe_effort: `${cognitiveEffort.toFixed(1)}%`,
+			},
+			intuition: feeling,
+			analysis: `Girdi (${inputType}) işlendi. TRIBE v2 mimarisi referans alınarak yapılan analize göre bu veri, beyinde en çok ${visualLoad > semanticLoad ? "Görsel/Uzamsal" : "Anlamsal/Mantıksal"} bölgeleri tetikliyor.`,
 		},
-		intuition: feeling,
-		analysis: `Girdi (${inputType}) işlendi. TRIBE v2 mimarisi referans alınarak yapılan analize göre bu veri, beyinde en çok ${visualLoad > semanticLoad ? 'Görsel/Uzamsal' : 'Anlamsal/Mantıksal'} bölgeleri tetikliyor.`
-	}, null, 2);
+		null,
+		2,
+	);
 }
 
 export function createIntuitionToolDefinition(): ToolDefinition<IntuitionInput, any> {
 	return {
 		name: "intuition",
 		label: "intuition",
-		description: "İnsan beyninin (TRIBE v2 nöral ağları) verilen koda, görsele veya mimariye nasıl tepki vereceğini analiz eder. Bilişsel yükü ve sezgisel hissi ölçer.",
+		description:
+			"İnsan beyninin (TRIBE v2 nöral ağları) verilen koda, görsele veya mimariye nasıl tepki vereceğini analiz eder. Bilişsel yükü ve sezgisel hissi ölçer.",
 		parameters: intuitionSchema as any,
 		promptSnippet: "intuition: assess cognitive load / neural response of code or architecture",
 		promptGuidelines: [
 			"Use this to evaluate if an architecture 'feels right' to a human.",
-			"Avoid overly complex designs if the cognitive load is too high."
+			"Avoid overly complex designs if the cognitive load is too high.",
 		],
 		async execute(_id, args: IntuitionInput) {
 			const start = Date.now();
 			const result = await runTribeBridge(args.input_type, args.content);
 			const ms = Date.now() - start;
-			
+
 			return {
 				content: [{ type: "text", text: `[⏱️ Neural Analysis Time: ${ms}ms]\n${result}` }],
-				details: { duration: ms }
+				details: { duration: ms },
 			};
-		}
+		},
 	};
 }
 

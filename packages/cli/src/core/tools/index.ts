@@ -61,6 +61,7 @@ export {
 	type GrepToolInput,
 	type GrepToolOptions,
 } from "./grep.js";
+export { createIntuitionTool, createIntuitionToolDefinition } from "./intuition.js";
 export {
 	createInvokeSubagentTool,
 	createInvokeSubagentToolDefinition,
@@ -74,7 +75,6 @@ export {
 	type LsToolInput,
 	type LsToolOptions,
 } from "./ls.js";
-export { createIntuitionTool, createIntuitionToolDefinition } from "./intuition.js";
 export { createMessageAgentTool, createMessageAgentToolDefinition, type MessageAgentInput } from "./message_agent.js";
 export {
 	createReadTool,

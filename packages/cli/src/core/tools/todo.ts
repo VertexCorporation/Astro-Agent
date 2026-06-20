@@ -31,7 +31,7 @@ function loadStore() {
 		if (fs.existsSync(MEMORY_FILE)) {
 			const data = JSON.parse(fs.readFileSync(MEMORY_FILE, "utf-8"));
 			todoStore.clear();
-				saveStore();
+			saveStore();
 			let maxId = 0;
 			for (const item of data) {
 				todoStore.set(item.id, item);
@@ -99,7 +99,7 @@ export function createTodoToolDefinition(): ToolDefinition<TodoToolInput, TodoTo
 						createdAt: Date.now(),
 					};
 					todoStore.set(item.id, item);
-				saveStore();
+					saveStore();
 					return {
 						content: [{ type: "text", text: `[todo] + ${item.text} (#${item.id})` }],
 						details: { count: todoStore.size, done: countDone() },
@@ -135,7 +135,7 @@ export function createTodoToolDefinition(): ToolDefinition<TodoToolInput, TodoTo
 						return err("id", `Task #${id} not found`);
 					}
 					checkItem.done = true;
-				saveStore();
+					saveStore();
 					return {
 						content: [{ type: "text", text: `[todo] ✓ #${id} ${checkItem.text}` }],
 						details: { count: todoStore.size, done: countDone() },
@@ -151,7 +151,7 @@ export function createTodoToolDefinition(): ToolDefinition<TodoToolInput, TodoTo
 						return err("id", `Task #${id} not found`);
 					}
 					uncheckItem.done = false;
-				saveStore();
+					saveStore();
 					return {
 						content: [{ type: "text", text: `[todo] ○ #${id} ${uncheckItem.text}` }],
 						details: { count: todoStore.size, done: countDone() },
@@ -167,7 +167,7 @@ export function createTodoToolDefinition(): ToolDefinition<TodoToolInput, TodoTo
 						return err("id", `Task #${id} not found`);
 					}
 					todoStore.delete(id);
-				saveStore();
+					saveStore();
 					return {
 						content: [{ type: "text", text: `[todo] - #${id} ${removed.text}` }],
 						details: { count: todoStore.size, done: countDone() },
@@ -176,7 +176,7 @@ export function createTodoToolDefinition(): ToolDefinition<TodoToolInput, TodoTo
 
 				case "clear": {
 					todoStore.clear();
-				saveStore();
+					saveStore();
 					nextId = 1;
 					return {
 						content: [{ type: "text", text: "[todo] cleared" }],

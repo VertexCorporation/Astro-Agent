@@ -768,7 +768,9 @@ export async function compact(
 	const { firstKeptEntryId, tokensBefore, fileOps } = preparation;
 
 	// ULTRA-COMPACT (0 Token Mode)
-	const filesStr = Array.from(fileOps.values()).map((f) => `- ${f.path} [${f.status}]`).join("\n");
+	const filesStr = Array.from(fileOps.values())
+		.map((f) => `- ${f.path} [${f.status}]`)
+		.join("\n");
 	const summary = `<summary>
 [Context cleared manually. 0-token compact.]
 ${customInstructions ? `Custom Instructions: ${customInstructions}\n` : ""}
@@ -778,4 +780,3 @@ ${filesStr || "No files edited."}
 
 	return { summary, firstKeptEntryId, tokensBefore };
 }
-

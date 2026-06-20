@@ -412,8 +412,17 @@ export function createBashToolDefinition(
 								meta: { cwd, mode: policy.mode },
 							});
 							const executionDurationMs = Date.now() - executionStartTime;
-						resolve({ content: [{ type: "text", text: `[⏱️ Execution Time: ${executionDurationMs}ms]
-` + outputText }], details });
+							resolve({
+								content: [
+									{
+										type: "text",
+										text:
+											`[⏱️ Execution Time: ${executionDurationMs}ms]
+` + outputText,
+									},
+								],
+								details,
+							});
 						}
 					})
 					.catch((err: Error) => {
