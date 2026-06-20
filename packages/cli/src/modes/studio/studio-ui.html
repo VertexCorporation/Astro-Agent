@@ -3243,6 +3243,7 @@ function renderTool(toolCallId, name, args, status, result) {
 		}
 	}
 	
+	highlightFileTree(name, typeof args === 'string' ? JSON.parse(args || '{}') : args, status);
 	const subTool = el.subTools.find(t => t.id === toolCallId);
 	if (subTool) {
 		subTool.args = args;
