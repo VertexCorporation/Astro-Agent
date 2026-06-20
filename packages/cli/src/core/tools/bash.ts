@@ -293,6 +293,7 @@ export function createBashToolDefinition(
 			onUpdate?,
 			_ctx?,
 		) {
+			const executionStartTime = Date.now();
 			const resolvedCommand = commandPrefix ? `${commandPrefix}\n${command}` : command;
 			const spawnContext = resolveSpawnContext(resolvedCommand, cwd, spawnHook);
 			if (onUpdate) {
@@ -410,7 +411,9 @@ export function createBashToolDefinition(
 								target: spawnContext.command,
 								meta: { cwd, mode: policy.mode },
 							});
-							resolve({ content: [{ type: "text", text: outputText }], details });
+							const executionDurationMs = Date.now() - executionStartTime;
+						resolve({ content: [{ type: "text", text: `[⏱️ Execution Time: ${executionDurationMs}ms]
+` + outputText }], details });
 						}
 					})
 					.catch((err: Error) => {

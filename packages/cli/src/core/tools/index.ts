@@ -74,6 +74,7 @@ export {
 	type LsToolInput,
 	type LsToolOptions,
 } from "./ls.js";
+export { createIntuitionTool, createIntuitionToolDefinition } from "./intuition.js";
 export { createMessageAgentTool, createMessageAgentToolDefinition, type MessageAgentInput } from "./message_agent.js";
 export {
 	createReadTool,
@@ -314,6 +315,8 @@ export function createTool(toolName: ToolName, cwd: string, options?: ToolsOptio
 			return createDigestTool(cwd);
 		case "todo":
 			return createTodoTool();
+		case "intuition":
+			return createIntuitionTool();
 		default:
 			throw new Error(`Unknown tool name: ${toolName}`);
 	}
@@ -325,7 +328,6 @@ export function createCodingToolDefinitions(cwd: string, options?: ToolsOptions)
 		createBashToolDefinition(cwd, options?.bash),
 		createEditToolDefinition(cwd, options?.edit),
 		createWriteToolDefinition(cwd, options?.write),
-		createCodebaseIndexToolDefinition(cwd),
 		createBrowserTabsToolDefinition(),
 		createBrowserPageToolDefinition(),
 		createAskQuestionToolDefinition(),
@@ -335,6 +337,7 @@ export function createCodingToolDefinitions(cwd: string, options?: ToolsOptions)
 		createSnapshotToolDefinition(cwd),
 		createUserProfileToolDefinition(),
 		createMessageAgentToolDefinition(),
+		createIntuitionToolDefinition(),
 	];
 }
 
@@ -344,7 +347,6 @@ export function createReadOnlyToolDefinitions(cwd: string, options?: ToolsOption
 		createGrepToolDefinition(cwd, options?.grep),
 		createFindToolDefinition(cwd, options?.find),
 		createLsToolDefinition(cwd, options?.ls),
-		createSemanticSearchToolDefinition(cwd),
 	];
 }
 
@@ -380,7 +382,6 @@ export function createCodingTools(cwd: string, options?: ToolsOptions): Tool[] {
 		createBashTool(cwd, options?.bash),
 		createEditTool(cwd, options?.edit),
 		createWriteTool(cwd, options?.write),
-		createCodebaseIndexTool(cwd),
 		createBrowserTabsTool(),
 		createBrowserPageTool(options?.getModelVisionSupport),
 		createAskQuestionTool(),
@@ -399,7 +400,6 @@ export function createReadOnlyTools(cwd: string, options?: ToolsOptions): Tool[]
 		createGrepTool(cwd, options?.grep),
 		createFindTool(cwd, options?.find),
 		createLsTool(cwd, options?.ls),
-		createSemanticSearchTool(cwd),
 	];
 }
 
@@ -429,5 +429,6 @@ export function createAllTools(cwd: string, options?: ToolsOptions): Record<Tool
 		message_agent: createMessageAgentTool(),
 		digest: createDigestTool(cwd),
 		todo: createTodoTool(),
+		intuition: createIntuitionTool(),
 	};
 }

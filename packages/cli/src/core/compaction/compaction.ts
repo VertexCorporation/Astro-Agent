@@ -765,117 +765,17 @@ export async function compact(
 	signal?: AbortSignal,
 	thinkingLevel?: ThinkingLevel,
 ): Promise<CompactionResult> {
-	const {
-		firstKeptEntryId,
-		messagesToSummarize,
-		turnPrefixMessages,
-		isSplitTurn,
-		tokensBefore,
-		previousSummary,
-		fileOps,
-		settings,
-	} = preparation;
+	const { firstKeptEntryId, tokensBefore, fileOps } = preparation;
 
-	// Generate summaries (can be parallel if both needed) and merge into one
-	let summary: string;
+	// ULTRA-COMPACT (0 Token Mode)
+	const filesStr = Array.from(fileOps.values()).map((f) => `- ${f.path} [${f.status}]`).join("\n");
+	const summary = `<summary>
+[Context cleared manually. 0-token compact.]
+${customInstructions ? `Custom Instructions: ${customInstructions}\n` : ""}
+Recent File Ops:
+${filesStr || "No files edited."}
+</summary>`;
 
-	if (isSplitTurn && turnPrefixMessages.length > 0) {
-		// Generate both summaries in parallel
-		const [historyResult, turnPrefixResult] = await Promise.all([
-			messagesToSummarize.length > 0
-				? generateSummary(
-						messagesToSummarize,
-						model,
-						settings.reserveTokens,
-						apiKey,
-						headers,
-						signal,
-						customInstructions,
-						previousSummary,
-						thinkingLevel,
-					)
-				: Promise.resolve("No prior history."),
-			generateTurnPrefixSummary(
-				turnPrefixMessages,
-				model,
-				settings.reserveTokens,
-				apiKey,
-				headers,
-				signal,
-				thinkingLevel,
-			),
-		]);
-		// Merge into single summary
-		summary = `${historyResult}\n\n---\n\n**Turn Context (split turn):**\n\n${turnPrefixResult}`;
-	} else {
-		// Just generate history summary
-		summary = await generateSummary(
-			messagesToSummarize,
-			model,
-			settings.reserveTokens,
-			apiKey,
-			headers,
-			signal,
-			customInstructions,
-			previousSummary,
-			thinkingLevel,
-		);
-	}
-
-	// Compute file lists and append to summary
-	const { readFiles, modifiedFiles } = computeFileLists(fileOps);
-	summary += formatFileOperations(readFiles, modifiedFiles);
-
-	if (!firstKeptEntryId) {
-		throw new Error("First kept entry has no UUID - session may need migration");
-	}
-
-	return {
-		summary,
-		firstKeptEntryId,
-		tokensBefore,
-		details: { readFiles, modifiedFiles } as CompactionDetails,
-	};
+	return { summary, firstKeptEntryId, tokensBefore };
 }
 
-/**
- * Generate a summary for a turn prefix (when splitting a turn).
- */
-async function generateTurnPrefixSummary(
-	messages: EngineMessage[],
-	model: Model<any>,
-	reserveTokens: number,
-	apiKey: string,
-	headers?: Record<string, string>,
-	signal?: AbortSignal,
-	thinkingLevel?: ThinkingLevel,
-): Promise<string> {
-	const maxTokens = Math.min(4096, Math.floor(0.35 * reserveTokens));
-	const llmMessages = convertToLlm(messages);
-	const conversationText = serializeConversation(llmMessages);
-	const promptText = `<conversation>\n${conversationText}\n</conversation>\n\n${TURN_PREFIX_SUMMARIZATION_PROMPT}`;
-	const summarizationMessages = [
-		{
-			role: "user" as const,
-			content: [{ type: "text" as const, text: promptText }],
-			timestamp: Date.now(),
-		},
-	];
-
-	const response = await completeSimple(
-		model,
-		{ systemPrompt: SUMMARIZATION_SYSTEM_PROMPT, messages: summarizationMessages },
-		model.reasoning && thinkingLevel && thinkingLevel !== "off"
-			? { maxTokens, signal, apiKey, headers, reasoning: thinkingLevel }
-			: { maxTokens, signal, apiKey, headers },
-	);
-
-	if (response.stopReason === "error") {
-		throw new Error(`Turn prefix summarization failed: ${response.errorMessage || "Unknown error"}`);
-	}
-
-	return response.content
-		.filter((c): c is { type: "text"; text: string } => c.type === "text")
-		.map((c) => c.text)
-		.join("\n");
-}

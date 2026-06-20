@@ -13,6 +13,7 @@ import { type Static, Type } from "typebox";
 import type { ToolDefinition } from "../extensions/types.js";
 import { resolveToCwd } from "./path-utils.js";
 import { getTextOutput } from "./render-utils.js";
+import { wrapToolDefinition } from "./tool-definition-wrapper.js";
 
 const digestSchema = Type.Object({
 	path: Type.String({ description: "Path to the file to digest" }),
@@ -78,6 +79,7 @@ export function createDigestToolDefinition(
 
 	const definition: ToolDefinition<DigestToolInput, DigestToolDetails> = {
 		name: "digest",
+		label: "digest",
 		description:
 			"Read a compact overview of a file: first N lines + structural signatures. MUCH cheaper than `read`. Use this first to understand file shape, then `read` specific sections.",
 		parameters: digestSchema,
@@ -85,8 +87,8 @@ export function createDigestToolDefinition(
 		promptGuidelines: [
 			"Prefer `digest` over `read` when exploring unfamiliar files — it returns structure (function/class/type signatures) at a fraction of the token cost.",
 		],
-		execute: async (input, _context) => {
-			const absPath = resolveToCwd(cwd, input.path);
+		execute: async (_toolCallId, input, _signal, _onUpdate, _context) => {
+			const absPath = resolveToCwd(input.path, cwd);
 			if (!ops.isFile(absPath)) {
 				return { content: [{ type: "text", text: `[digest] Not a file: ${input.path}` }] };
 			}
@@ -181,9 +183,5 @@ export function createDigestToolDefinition(
 }
 
 export function createDigestTool(cwd: string, operations?: DigestOperations): EngineTool<DigestToolInput> {
-	const definition = createDigestToolDefinition(cwd, operations);
-	return {
-		name: definition.name,
-		execute: (input) => definition.execute(input, {}),
-	};
+	return wrapToolDefinition(createDigestToolDefinition(cwd, operations));
 }

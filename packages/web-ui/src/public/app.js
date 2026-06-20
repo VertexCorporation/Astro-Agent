@@ -149,7 +149,7 @@ async function loadSession(id){
         </div>`;
       }
       const roleClass = role === 'user' ? 'user-msg' : 'assistant-msg';
-      const roleName = role === 'user' ? 'User' : 'MoonCode';
+      const roleName = role === 'user' ? 'User' : 'Astro Agent v28 🚀 Ultra';
       return `<div class="msg ${roleClass}">
         <div class="role">${roleName}</div>
         <pre>${escapeHtml(contentStr)}</pre>
@@ -201,7 +201,7 @@ function generatePrompt(preset, h, s, l, code) {
     'MOONCODE DETAILED THEME APPLICATION AND REFACTORING BRIEF',
     '======================================================================',
     '',
-    'Hey MoonCode! Using the color palette, HSL matrix, and design rules below, refresh both the TUI (Terminal User Interface) and Web UI (Dashboard) across the project.',
+    'Hey Astro Agent v28 🚀 Ultra! Using the color palette, HSL matrix, and design rules below, refresh both the TUI (Terminal User Interface) and Web UI (Dashboard) across the project.',
     '',
     'Selected Style Preset: ' + preset.toUpperCase(),
     'HSL Settings: Hue: ' + h + '°, Saturation: ' + s + '%, Lightness: ' + l + '%',

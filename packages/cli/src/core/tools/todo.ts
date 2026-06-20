@@ -6,10 +6,13 @@
  * State persists in-memory for the lifetime of the process.
  * Useful for tracking multi-step plans, code review items, and session goals.
  */
+import * as fs from "node:fs";
+import * as path from "node:path";
 import type { EngineTool } from "moon-engine";
 import { type Static, Type } from "typebox";
 import type { ToolDefinition } from "../extensions/types.js";
 import { getTextOutput } from "./render-utils.js";
+import { wrapToolDefinition } from "./tool-definition-wrapper.js";
 
 export interface TodoItem {
 	id: number;
@@ -18,9 +21,41 @@ export interface TodoItem {
 	createdAt: number;
 }
 
-// ── Module-level store (shared across sessions) ──
+// ── Persistent store ──
+const MEMORY_FILE = path.join(process.cwd(), ".mooncode-memory.json");
 const todoStore: Map<number, TodoItem> = new Map();
 let nextId = 1;
+
+function loadStore() {
+	try {
+		if (fs.existsSync(MEMORY_FILE)) {
+			const data = JSON.parse(fs.readFileSync(MEMORY_FILE, "utf-8"));
+			todoStore.clear();
+				saveStore();
+			let maxId = 0;
+			for (const item of data) {
+				todoStore.set(item.id, item);
+				saveStore();
+				if (item.id > maxId) maxId = item.id;
+			}
+			nextId = maxId + 1;
+		}
+	} catch (err) {
+		// ignore
+	}
+}
+
+function saveStore() {
+	try {
+		const items = Array.from(todoStore.values()).sort((a, b) => a.id - b.id);
+		fs.writeFileSync(MEMORY_FILE, JSON.stringify(items, null, 2), "utf-8");
+	} catch (err) {
+		// ignore
+	}
+}
+
+// Hydrate on load
+loadStore();
 
 const todoSchema = Type.Object({
 	action: Type.Enum(
@@ -41,6 +76,7 @@ export interface TodoToolDetails {
 export function createTodoToolDefinition(): ToolDefinition<TodoToolInput, TodoToolDetails> {
 	const definition: ToolDefinition<TodoToolInput, TodoToolDetails> = {
 		name: "todo",
+		label: "todo",
 		description:
 			"Manage an in-memory todo list. Add tasks, mark them done, or remove them. Use this to track multi-step plans, review items, and session goals without cluttering conversation history.",
 		parameters: todoSchema,
@@ -48,14 +84,14 @@ export function createTodoToolDefinition(): ToolDefinition<TodoToolInput, TodoTo
 		promptGuidelines: [
 			"Use `todo` to track multi-step plans rather than listing steps in conversation — it saves tokens and persists across turns.",
 		],
-		execute: async (input) => {
+		execute: async (_toolCallId, input, _signal, _onUpdate, _context) => {
 			const { action, text, id } = input;
 
-		switch (action) {
-			case "add": {
-				if (!text || text.trim().length === 0) {
-					return err("text", "Required for 'add' action");
-				}
+			switch (action) {
+				case "add": {
+					if (!text || text.trim().length === 0) {
+						return err("text", "Required for 'add' action");
+					}
 					const item: TodoItem = {
 						id: nextId++,
 						text: text.trim(),
@@ -63,6 +99,7 @@ export function createTodoToolDefinition(): ToolDefinition<TodoToolInput, TodoTo
 						createdAt: Date.now(),
 					};
 					todoStore.set(item.id, item);
+				saveStore();
 					return {
 						content: [{ type: "text", text: `[todo] + ${item.text} (#${item.id})` }],
 						details: { count: todoStore.size, done: countDone() },
@@ -89,45 +126,48 @@ export function createTodoToolDefinition(): ToolDefinition<TodoToolInput, TodoTo
 					};
 				}
 
-			case "check": {
-				if (id === undefined || id === null) {
-					return err("id", "Required for 'check' action");
-				}
-				const checkItem = todoStore.get(id);
-				if (!checkItem) {
-					return err("id", `Task #${id} not found`);
-				}
+				case "check": {
+					if (id === undefined || id === null) {
+						return err("id", "Required for 'check' action");
+					}
+					const checkItem = todoStore.get(id);
+					if (!checkItem) {
+						return err("id", `Task #${id} not found`);
+					}
 					checkItem.done = true;
+				saveStore();
 					return {
 						content: [{ type: "text", text: `[todo] ✓ #${id} ${checkItem.text}` }],
 						details: { count: todoStore.size, done: countDone() },
 					};
 				}
 
-			case "uncheck": {
-				if (id === undefined || id === null) {
-					return err("id", "Required for 'uncheck' action");
-				}
-				const uncheckItem = todoStore.get(id);
-				if (!uncheckItem) {
-					return err("id", `Task #${id} not found`);
-				}
+				case "uncheck": {
+					if (id === undefined || id === null) {
+						return err("id", "Required for 'uncheck' action");
+					}
+					const uncheckItem = todoStore.get(id);
+					if (!uncheckItem) {
+						return err("id", `Task #${id} not found`);
+					}
 					uncheckItem.done = false;
+				saveStore();
 					return {
 						content: [{ type: "text", text: `[todo] ○ #${id} ${uncheckItem.text}` }],
 						details: { count: todoStore.size, done: countDone() },
 					};
 				}
 
-			case "remove": {
-				if (id === undefined || id === null) {
-					return err("id", "Required for 'remove' action");
-				}
-				const removed = todoStore.get(id);
-				if (!removed) {
-					return err("id", `Task #${id} not found`);
-				}
+				case "remove": {
+					if (id === undefined || id === null) {
+						return err("id", "Required for 'remove' action");
+					}
+					const removed = todoStore.get(id);
+					if (!removed) {
+						return err("id", `Task #${id} not found`);
+					}
 					todoStore.delete(id);
+				saveStore();
 					return {
 						content: [{ type: "text", text: `[todo] - #${id} ${removed.text}` }],
 						details: { count: todoStore.size, done: countDone() },
@@ -136,6 +176,7 @@ export function createTodoToolDefinition(): ToolDefinition<TodoToolInput, TodoTo
 
 				case "clear": {
 					todoStore.clear();
+				saveStore();
 					nextId = 1;
 					return {
 						content: [{ type: "text", text: "[todo] cleared" }],
@@ -143,8 +184,8 @@ export function createTodoToolDefinition(): ToolDefinition<TodoToolInput, TodoTo
 					};
 				}
 
-			default:
-				return err("action", `Unknown action: ${action}`);
+				default:
+					return err("action", `Unknown action: ${action}`);
 			}
 		},
 		render: (content, details) => {
@@ -177,11 +218,7 @@ export function getTodoSnapshot(): { items: TodoItem[]; count: number; done: num
 }
 
 export function createTodoTool(): EngineTool<TodoToolInput> {
-	const definition = createTodoToolDefinition();
-	return {
-		name: definition.name,
-		execute: (input) => definition.execute(input, {}),
-	};
+	return wrapToolDefinition(createTodoToolDefinition());
 }
 
 function err(param: string, msg: string) {

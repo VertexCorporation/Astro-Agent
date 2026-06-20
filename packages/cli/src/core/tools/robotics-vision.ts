@@ -35,7 +35,7 @@ export function createRoboticsDetectToolDefinition(options?: {
 				Type.Number({ description: "Maksimum tespit edilecek nesne sayısı. Varsayılan: 10" }),
 			),
 		}),
-		execute: async (args: { image_path: string; queries?: string[]; max_objects?: number }) => {
+		execute: async (_toolCallId, args: { image_path: string; queries?: string[]; max_objects?: number }) => {
 			const capture = new ImageCapture();
 			const pipeline = new VisionPipeline({
 				model: options?.visionModel,
@@ -85,7 +85,7 @@ export function createRoboticsBboxToolDefinition(options?: {
 			image_path: Type.String({ description: "Görüntü dosya yolu veya URL" }),
 			max_objects: Type.Optional(Type.Number({ description: "Maksimum nesne sayısı. Varsayılan: 25" })),
 		}),
-		execute: async (args: { image_path: string; max_objects?: number }) => {
+		execute: async (_toolCallId, args: { image_path: string; max_objects?: number }) => {
 			const capture = new ImageCapture();
 			const pipeline = new VisionPipeline({
 				model: options?.visionModel,
@@ -140,7 +140,10 @@ export function createRoboticsTrajectoryToolDefinition(options?: {
 			instruction: Type.String({ description: "Hareket talimatı (ör: 'düzenleyicinin üstüne taşı')" }),
 			num_points: Type.Optional(Type.Number({ description: "Yörünge nokta sayısı. Varsayılan: 15" })),
 		}),
-		execute: async (args: { image_path: string; start_object: string; instruction: string; num_points?: number }) => {
+		execute: async (
+			_toolCallId,
+			args: { image_path: string; start_object: string; instruction: string; num_points?: number },
+		) => {
 			const capture = new ImageCapture();
 			const pipeline = new VisionPipeline({
 				model: options?.visionModel,
@@ -186,7 +189,7 @@ export function createRoboticsAnalyzeToolDefinition(options?: {
 			image_path: Type.String({ description: "Görüntü dosya yolu" }),
 			question: Type.Optional(Type.String({ description: "Sahne hakkında serbest soru (opsiyonel)" })),
 		}),
-		execute: async (args: { image_path: string; question?: string }) => {
+		execute: async (_toolCallId, args: { image_path: string; question?: string }) => {
 			const capture = new ImageCapture();
 			const pipeline = new VisionPipeline({
 				model: options?.visionModel,
@@ -240,7 +243,7 @@ export function createRoboticsPlanToolDefinition(options?: {
 				Type.String({ description: "Robot function-definition JSON path (optional; read from settings)" }),
 			),
 		}),
-		execute: async (args: { instruction: string; image_path?: string; functions_path?: string }) => {
+		execute: async (_toolCallId, args: { instruction: string; image_path?: string; functions_path?: string }) => {
 			const { OllamaVision } = await import("../robotics/ollama-vision.js");
 			const { TaskPlanner } = await import("../robotics/task-planner.js");
 

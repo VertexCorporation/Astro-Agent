@@ -462,7 +462,7 @@ export class Editor implements Component, Focusable {
 
 		if (textIsEmpty) {
 			// Elegant placeholder text inside the input field
-			const placeholder = "Message MoonCode…  / commands · ! bash";
+			const placeholder = "Message Astro v28 🚀 Ultra…  / commands · ! bash";
 			let lineText = this.borderColor(placeholder);
 			const lineLen = visibleWidth(placeholder);
 

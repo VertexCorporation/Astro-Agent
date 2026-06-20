@@ -1,6 +1,6 @@
 {
 	"name": "moon-core",
-	"version": "16.0.0",
+	"version": "28.0.0",
 	"description": "Unified Core Engine for Modern Apps",
 	"type": "module",
 	"main": "./dist/index.js",
