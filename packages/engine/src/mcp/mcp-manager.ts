@@ -79,22 +79,33 @@ class HeaderStdioMcpClient {
 		this.proc.stdout.on("data", (chunk) => this.read(chunk));
 		this.proc.stderr.on("data", (chunk) => {
 			const text = chunk.toString();
-			// Only surface ERROR-level lines, suppress noisy INFO/WARNING/DEBUG
 			for (const rawLine of text.split("\n")) {
 				const line = rawLine.trim();
 				if (!line) continue;
-				// Suppress verbose info patterns from Python logging
+
+				// Skip all INFO lines — pure noise
 				if (/ - INFO - /.test(line)) continue;
-				if (/blender-mcp-telemetry.*WARNING/.test(line)) continue;
-				if (/Telemetry disabled/.test(line)) continue;
-				if (/Processing request of type/.test(line)) continue;
-				if (/Command sent, waiting/.test(line)) continue;
-				if (/Received (complete response|[\d]+ bytes)/.test(line)) continue;
-				if (/Response parsed, status: success/.test(line)) continue;
-				if (/Created new persistent connection/.test(line)) continue;
-				if (/Connected to Blender at/.test(line)) continue;
-				if (/Successfully connected to Blender/.test(line)) continue;
-				console.error(`[MCP:${this.name}] ${line}`);
+
+				// Skip known noisy WARNING patterns
+				if (/ - WARNING - /.test(line)) {
+					// Only show meaningful warnings (not telemetry/startup noise)
+					if (
+						/Telemetry disabled/.test(line) ||
+						/blender-mcp-telemetry/.test(line) ||
+						/Make sure the Blender addon is running before using/.test(line)
+					) continue;
+					// Yellow for real warnings
+					process.stderr.write(`\x1b[33m[MCP:${this.name}] ${line}\x1b[0m\n`);
+					continue;
+				}
+
+				// Red for ERROR lines
+				if (/ - ERROR - /.test(line)) {
+					process.stderr.write(`\x1b[31m[MCP:${this.name}] \x1b[1m${line}\x1b[0m\n`);
+					continue;
+				}
+
+				// Any other unrecognized line — skip silently
 			}
 		});
 		this.proc.on("exit", (code) => {
