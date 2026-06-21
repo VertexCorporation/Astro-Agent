@@ -1223,10 +1223,7 @@
 				<span class="material-symbols-rounded" style="font-size:16px;">rule</span>
 				Kurallar
 			</button>
-			<button onclick="openToolsManager()" class="tool-btn" title="Araç Yöneticisi" style="background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:4px 10px; display:flex; align-items:center; gap:6px; font-size:0.8rem; font-weight:600; color:#50b8ff;">
-				<span class="material-symbols-rounded" style="font-size:16px;">handyman</span>
-				Araçlar (<span id="tools-count">...</span>)
-			</button>
+			
 		</div>
 
 		<div style="display:flex;align-items:center;gap:16px;">
@@ -1236,7 +1233,7 @@
 			</div>
 			<div class="status-pill" id="token-pill" title="Token Usage">
 				<span class="material-symbols-rounded" style="font-size:13px;">data_usage</span>
-				<span id="token-usage">0 / 0</span>
+				<span id="token-usage">Hazır</span>
 			</div>
 			<!-- Browser Bridge Status -->
 			<div class="bridge-pill" id="bridge-pill" onclick="openModal('bridgeModal')" title="Browser Bridge">
@@ -2222,6 +2219,7 @@ function refreshTodoHeader(count, done) {
 		if (stats) stats.textContent = `${done}/${count}`;
 	}
 }
+let _lastTodoCount = 0;
 function fetchTodoList() {
 	fetch('/api/todo', { cache: 'no-store' }).then(r => r.json()).then(data => {
 		const items = data.items || [];
@@ -2230,11 +2228,16 @@ function fetchTodoList() {
 		const content = document.getElementById('todo-content');
 		if (!content) return;
 		refreshTodoHeader(total, done);
+		if (items.length > 0 && _lastTodoCount === 0) {
+			const panel = document.getElementById('todo-panel');
+			if (panel && panel.style.display === 'none') toggleTodoPanel();
+		}
+		_lastTodoCount = items.length;
 		content.innerHTML = items.length === 0
 			? '<div class="todo-empty">Henüz plan öğesi yok.<br>AI yeni bir göreve başladığında burada görünecek.</div>'
 			: items.map((item, i) => {
 				const cls = item.done ? 'todo-stop done' : i === 0 ? 'todo-stop current' : 'todo-stop';
-				const icon = item.done ? 'check_circle' : i === 0 ? 'radio_button_checked' : 'radio_button_unchecked';
+				const icon = item.done ? 'check' : i === 0 ? 'hourglass_bottom' : 'horizontal_rule';
 				return `<div class="${cls}"><div class="todo-dot"><span class="material-symbols-rounded" style="font-size:22px;">${icon}</span></div><div class="todo-text"><span class="todo-label">${escHtml(item.text)}</span></div></div>`;
 			}).join('');
 	}).catch(() => {});
@@ -4425,7 +4428,7 @@ es.onmessage = (e) => {
 					if (footer) {
 						footer.style.display = 'flex';
 						footer.innerHTML = [
-							`<span class="material-symbols-rounded" style="font-size:12px;vertical-align:middle;">data_usage</span><span style="margin-left:3px;">I:${msgInput.toLocaleString()} O:${effectiveTokens.toLocaleString()}</span>`,
+							`<span class="material-symbols-rounded" style="font-size:12px;vertical-align:middle;">data_usage</span><span style="margin-left:3px;">Optimum</span>`,
 							speed ? `<span class="material-symbols-rounded" style="font-size:12px;vertical-align:middle;">bolt</span><span style="margin-left:3px;">${speed} tok/s</span>` : '',
 							`<span class="material-symbols-rounded" style="font-size:12px;vertical-align:middle;">timer</span><span style="margin-left:3px;">${elapsed.toFixed(2)}s</span>`
 						].filter(Boolean).join('');
@@ -4480,7 +4483,7 @@ es.onmessage = (e) => {
 			if (data.state?.tokens) {
 				const tIn = data.state.tokens.in || 0;
 				const tOut = data.state.tokens.out || 0;
-				document.getElementById('token-usage').textContent = `I:${tIn.toLocaleString()} O:${tOut.toLocaleString()}`;
+				document.getElementById('token-usage').textContent = `Sistem Aktif`;
 				document.getElementById('token-pill').title = `Input: ${tIn.toLocaleString()} | Output: ${tOut.toLocaleString()}`;
 				currentMsgTokens = tOut;
 			}
