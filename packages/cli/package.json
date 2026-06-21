@@ -1,7 +1,7 @@
 {
 	"name": "astroagent",
-	"version": "28.0.0",
-	"description": "Astro Agent terminal coding assistant",
+	"version": "29.0.0",
+	"description": "Astro Agent Omniscient - AI Assistant",
 	"type": "module",
 	"moonConfig": {
 		"name": "Astro Agent",

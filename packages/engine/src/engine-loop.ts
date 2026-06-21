@@ -47,9 +47,14 @@ export function engineLoop(
 		},
 		signal,
 		streamFn,
-	).then((messages) => {
-		stream.end(messages);
-	});
+	)
+		.then((messages) => {
+			stream.end(messages);
+		})
+		.catch((err) => {
+			console.error("[engine-loop] Fatal error in engineLoop:", err);
+			stream.end([]);
+		});
 
 	return stream;
 }
@@ -86,9 +91,14 @@ export function engineLoopContinue(
 		},
 		signal,
 		streamFn,
-	).then((messages) => {
-		stream.end(messages);
-	});
+	)
+		.then((messages) => {
+			stream.end(messages);
+		})
+		.catch((err) => {
+			console.error("[engine-loop] Fatal error in engineLoopContinue:", err);
+			stream.end([]);
+		});
 
 	return stream;
 }
@@ -410,6 +420,9 @@ async function executeToolCallsSequential(
 	const messages: ToolResultMessage[] = [];
 
 	for (const toolCall of toolCalls) {
+		if (signal?.aborted) {
+			break;
+		}
 		await emit({
 			type: "tool_execution_start",
 			toolCallId: toolCall.id,
@@ -481,6 +494,7 @@ async function executeToolCallsParallel(
 		}
 
 		finalizedCalls.push(async () => {
+			if (signal?.aborted) throw new Error("Tool execution aborted");
 			const executed = await executePreparedToolCall(preparation, signal, emit);
 			const finalized = await finalizeExecutedToolCall(
 				currentContext,
@@ -615,7 +629,7 @@ async function executePreparedToolCall(
 	const updateEvents: Promise<void>[] = [];
 
 	try {
-		const result = await prepared.tool.execute(
+		let executionPromise = prepared.tool.execute(
 			prepared.toolCall.id,
 			prepared.args as never,
 			signal,
@@ -633,6 +647,19 @@ async function executePreparedToolCall(
 				);
 			},
 		);
+
+		if (signal) {
+			const abortPromise = new Promise<never>((_, reject) => {
+				if (signal.aborted) {
+					reject(new Error("Tool execution aborted by user"));
+				} else {
+					signal.addEventListener("abort", () => reject(new Error("Tool execution aborted by user")), { once: true });
+				}
+			});
+			executionPromise = Promise.race([executionPromise, abortPromise]);
+		}
+
+		const result = await executionPromise;
 		await Promise.all(updateEvents);
 		return { result, isError: false };
 	} catch (error) {

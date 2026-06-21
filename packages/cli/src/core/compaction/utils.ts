@@ -133,7 +133,10 @@ export function serializeConversation(messages: Message[]): string {
 				} else if (block.type === "toolCall") {
 					const args = block.arguments as Record<string, unknown>;
 					const argsStr = Object.entries(args)
-						.map(([k, v]) => `${k}=${JSON.stringify(v)}`)
+						.map(([k, v]) => {
+							const valStr = JSON.stringify(v);
+							return `${k}=${valStr.length > 100 ? valStr.slice(0, 100) + '...[truncated]' : valStr}`;
+						})
 						.join(", ");
 					toolCalls.push(`${block.name}(${argsStr})`);
 				}

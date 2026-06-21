@@ -177,7 +177,7 @@ export class StudioMode {
 		return {
 			servers,
 			clients,
-			tools: this.runtime.session.getActiveToolNames().filter((tool) => tool.includes("_")).length,
+			tools: this.runtime.session.getActiveToolNames(),
 			market: ["https://mcp.so/?tab=latest", "https://mcpmarket.com/search"],
 		};
 	}
@@ -449,7 +449,16 @@ export class StudioMode {
 		const method = req.method;
 		const url = new URL(req.url || "/", `http://127.0.0.1:${this.port}`);
 
-		res.setHeader("Access-Control-Allow-Origin", "*");
+		const origin = req.headers.origin || "";
+		const host = req.headers.host || "";
+		if ((origin && !origin.includes("localhost") && !origin.includes("127.0.0.1") && !origin.startsWith("file://")) || 
+		    (host && !host.includes("localhost") && !host.includes("127.0.0.1"))) {
+			res.statusCode = 403;
+			res.end("Forbidden");
+			return;
+		}
+
+		res.setHeader("Access-Control-Allow-Origin", origin || "*");
 
 		if (method === "GET" && url.pathname === "/") {
 			res.setHeader("Content-Type", "text/html; charset=utf-8");
@@ -620,6 +629,7 @@ export class StudioMode {
 					usage: stats.tokens,
 					isGenerating: this.runtime.session.isStreaming,
 					authUrl: this.webUiServerInstance ? this.webUiServerInstance.url : "http://127.0.0.1:3131",
+					tools: this.runtime.session.getActiveToolNames()
 				}),
 			);
 			return;

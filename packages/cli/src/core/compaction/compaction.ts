@@ -245,17 +245,17 @@ export function shouldCompact(contextTokens: number, contextWindow: number, sett
 	);
 
 	// Profile ceilings determine when auto-compaction triggers based on estimated context:
-	// - nuclear:   1,500 tokens (compact almost every turn)
-	// - aggressive: 4,000 tokens (compact frequently)
-	// - balanced:  25,000 tokens (compact occasionally)
+	// - nuclear:   1,000 tokens (compact almost every turn)
+	// - aggressive: 2,500 tokens (compact frequently)
+	// - balanced:  15,000 tokens (compact occasionally)
 	// - fallback:  never via ceiling, only via window-reserve boundary
 	let profileCeiling = Infinity;
 	if (settings.profile === "nuclear") {
-		profileCeiling = 1_500;
+		profileCeiling = 1_000;
 	} else if (settings.profile === "aggressive") {
-		profileCeiling = 4_000;
+		profileCeiling = 2_500;
 	} else if (settings.profile === "balanced" || !settings.profile) {
-		profileCeiling = 25_000;
+		profileCeiling = 15_000;
 	}
 
 	// Trigger at the safer of: reserved-output boundary or profile ceiling.

@@ -65,10 +65,21 @@ export function createInvokeSubagentToolDefinition(
 			});
 
 			try {
+				const onAbort = () => {
+					engine.abort();
+				};
+				if (_signal) {
+					if (_signal.aborted) onAbort();
+					else _signal.addEventListener("abort", onAbort, { once: true });
+				}
+
 				await engine.prompt(Task);
 
 				// Await completion
 				await engine.waitForIdle();
+
+				if (_signal) _signal.removeEventListener("abort", onAbort);
+				if (_signal?.aborted) throw new Error("Sub-agent execution aborted by user.");
 
 				const finalMessages = engine.state.messages;
 				const assistantMessages = finalMessages.filter((m) => m.role === "assistant");

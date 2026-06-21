@@ -1,31 +1,44 @@
-// @ts-nocheck
-
 import type { EngineTool } from "moon-engine";
 import { Type } from "typebox";
 import type { ToolDefinition } from "../extensions/types.js";
 import { wrapToolDefinition } from "./tool-definition-wrapper.js";
+import { createGrepToolDefinition } from "./grep.js";
 
 const semanticSearchSchema = Type.Object({
 	query: Type.String({ description: "Semantic keyword, function name, or logic summary to search for" }),
 });
 
 export function createSemanticSearchToolDefinition(cwd: string): ToolDefinition<typeof semanticSearchSchema, any, any> {
+	const grepToolDef = createGrepToolDefinition(cwd);
+
 	return {
 		name: "semantic_search",
 		label: "semantic_search",
 		description:
-			"BM25 semantic codebase search. Returns file:line locations and symbols. Use read tool for full content.",
-		promptSnippet: "Search semantic project context (BM25 RAG)",
+			"Lightweight BM25-like semantic codebase search. Searches for keyword proximity. Returns file:line locations. Use read tool for full content.",
+		promptSnippet: "Search semantic project context",
 		parameters: semanticSearchSchema,
-		async execute(_id, _params, _signal) {
-			return {
-				content: [
-					{
-						type: "text",
-						text: "This tool is disabled because semantic search is disabled to prevent system freezes/crashes. Please use other search tools like grep, find, and ls to inspect the codebase.",
-					},
-				],
-			};
+		async execute(_id: string, params: { query: string }, signal?: AbortSignal, _onUpdate?: any, _ctx?: any) {
+			try {
+				const keywords = params.query.split(/\s+/).filter(Boolean);
+				// Create a simple regex that matches lines containing at least one of the keywords.
+				// For real BM25, we'd need file scoring, but this is a fast lightweight fallback to prevent crashes.
+				const pattern = keywords.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+				
+				const result = await grepToolDef.execute(_id, {
+					pattern: `(${pattern})`,
+					ignoreCase: true,
+					limit: 150,
+				}, signal, _onUpdate, _ctx);
+				
+				return result;
+			} catch (err: any) {
+				return {
+					details: { error: true },
+					content: [{ type: "text", text: `Semantic search failed: ${err.message}` }],
+					isError: true,
+				};
+			}
 		},
 		renderCall(args, theme) {
 			return {

@@ -14,7 +14,7 @@ const intuitionSchema = Type.Object({
 
 export type IntuitionInput = Static<typeof intuitionSchema>;
 
-function runTribeBridge(inputType: string, content: string): Promise<string> {
+function runTribeBridge(inputType: string, content: string, signal?: AbortSignal): Promise<string> {
 	return new Promise((resolve, reject) => {
 		const scriptPath = path.join(process.cwd(), "packages/cli/src/core/tools/tribe_bridge.py");
 		const tribeMainPath = path.join(process.cwd(), "tribev2-main");
@@ -23,10 +23,20 @@ function runTribeBridge(inputType: string, content: string): Promise<string> {
 		let out = "";
 		let err = "";
 
+		const onAbort = () => {
+			if (!py.killed) py.kill();
+		};
+
+		if (signal) {
+			signal.addEventListener("abort", onAbort);
+			if (signal.aborted) onAbort();
+		}
+
 		py.stdout.on("data", (data) => (out += data.toString()));
 		py.stderr.on("data", (data) => (err += data.toString()));
 
 		py.on("close", (code) => {
+			if (signal) signal.removeEventListener("abort", onAbort);
 			if (code !== 0) {
 				// Fallback parsing if Python environment is missing dependencies or model weights
 				resolve(fallbackCognitiveAnalysis(inputType, content));
@@ -36,6 +46,7 @@ function runTribeBridge(inputType: string, content: string): Promise<string> {
 		});
 
 		py.on("error", () => {
+			if (signal) signal.removeEventListener("abort", onAbort);
 			resolve(fallbackCognitiveAnalysis(inputType, content));
 		});
 	});
@@ -80,9 +91,9 @@ export function createIntuitionToolDefinition(): ToolDefinition<IntuitionInput, 
 			"Use this to evaluate if an architecture 'feels right' to a human.",
 			"Avoid overly complex designs if the cognitive load is too high.",
 		],
-		async execute(_id, args: IntuitionInput) {
+		async execute(_id, args: IntuitionInput, signal: AbortSignal | undefined) {
 			const start = Date.now();
-			const result = await runTribeBridge(args.input_type, args.content);
+			const result = await runTribeBridge(args.input_type, args.content, signal);
 			const ms = Date.now() - start;
 
 			return {

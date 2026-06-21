@@ -1,13 +1,14 @@
 <div align="center">
   <br />
   <img src="assets/emojis/zero_two_peeking.gif" width="100" />
-  <h1 style="font-size: 3em; margin-bottom: 0;">Astro Agent (MoonCode)</h1>
-  <p><i>Minimal, Otonom ve Gelişmiş Kodlama Asistanı. <img src="assets/emojis/surprised_pink_anime_girl.png" width="24" /></i></p>
+  <h1 style="font-size: 3.5em; margin-bottom: 0;">Astro Agent v29 🚀 Ultra</h1>
+  <p><i>Dünyanın En Gelişmiş, Otonom ve "Profesör Zekasına" Sahip Yapay Zeka Kodlama Asistanı. <img src="assets/emojis/surprised_pink_anime_girl.png" width="24" /></i></p>
   <br />
   <p>
-    <a href="#kavramlar">Kavramlar</a> • 
-    <a href="#kurulum">Kurulum</a> • 
-    <a href="#kullanım">Kullanım</a>
+    <a href="#-nedir">Nedir?</a> • 
+    <a href="#-devrimsel-özellikler">Özellikler</a> • 
+    <a href="#-kurulum">Kurulum</a> • 
+    <a href="#-kullanım">Kullanım</a>
   </p>
   <br />
   <img src="assets/emojis/white_hair_anime_girl.png" width="64" /> <img src="assets/emojis/white_cat_smug.png" width="64" /> <img src="assets/emojis/zero_two_peace_sign.png" width="64" />
@@ -15,62 +16,58 @@
 
 <hr />
 
-## 📖 Kavramlar Sözlüğü
+## 🌌 Nedir?
 
-<dl>
-  <dt><b>Astro Agent</b></dt>
-  <dd>Tamamen bilgisayarınızın yerel ortamında çalışan, kodlarınızı analiz eden, hataları tespit edip kendi kendine çözen modern yapay zeka asistanınızdır.</dd>
-  <br />
-  <dt><b>Otonomi Modu</b></dt>
-  <dd>Sizin sürekli komut vermenize gerek kalmadan hedefe kilitlenen, tarayıcıda araştırma yapabilen ve terminal komutlarını çalıştırabilen bağımsız hareket yeteneğidir.</dd>
-  <br />
-  <dt><b>MCP <i>(Model Context Protocol)</i></b></dt>
-  <dd>Astro Agent'ın Blender, harici veri tabanları veya tarayıcılarla iletişim kurarak sisteminize entegre olmasını sağlayan yeni nesil iletişim köprüsüdür.</dd>
-</dl>
+**Astro Agent v29 Ultra**, sadece basit kod tamamlama yapan bir yapay zeka değil; devasa projeleri sıfırdan mimari eden, hataları `Node VM Sandbox` üzerinde çalışan sanal makineler ile test eden, ve tam **%100 matematiksel kesinlik** ile çalışan bir *Ajan Sistemidir*. Tamamen bilgisayarınızın yerel ortamında, güvenle ve otonom olarak çalışır.
 
 ---
 
-## ⚡ Kurulum
+## ⚡ Devrimsel Özellikler
 
-Astro Agent'ın kurulum felsefesi sadelik üzerine kuruludur. Kurulumu gerçekleştirmek için Node.js ve Git kurulu bir bilgisayarda terminal (CMD/PowerShell) açarak aşağıdaki adımları sırasıyla uygulamanız yeterlidir:
+- 🧠 **Profesör Zekası (Genius Professor Level):** Astro Agent, karmaşık problemleri sistem yaklaşımıyla çözer. Yeni formüller icat edebilir ve sıfır-hata matematiği (`katex/math_evaluate`) sayesinde sayısal işlemlerde asla halüsinasyon görmez.
+- 🚀 **Otonom Eylem:** Sizin sürekli komut vermenize gerek kalmadan tarayıcıyı kontrol edebilir, terminalde araştırma yapabilir ve kodları bağımsız olarak derleyebilir.
+- 🛡️ **Kırılmaz Hafıza (Compaction Engine):** Yüz binlerce satırlık veri işlemesinde sistemin çökmesini engelleyen özel "Compaction" motoruna sahiptir. Asla token şişmesi yaşamazsınız.
+- 🔌 **MCP (Model Context Protocol):** Blender, Harici Veritabanları, Tarayıcı Uzantıları ve çok daha fazlası ile direkt bağlantı kurabilen yeni nesil veri köprüsü.
+
+---
+
+## 🛠️ Kurulum
+
+Astro Agent'ın kurulum felsefesi güçlü ancak son derece sadedir. Node.js ve Git kurulu sisteminizde şu adımları izleyin:
 
 ```bash
-# 1. Projeyi bilgisayarınıza indirin:
+# 1. Projeyi bilgisayarınıza kopyalayın:
 git clone https://github.com/vertexcorporation/Astro-Agent.git
 
-# 2. İndirilen proje klasörünün içine girin:
+# 2. Kurulum klasörüne geçiş yapın:
 cd Astro-Agent
 
-# 3. Sistemin çalışması için gereken temel bağımlılıkları indirin:
+# 3. Yüksek hızlı bağımlılıkları indirin:
 npm install
 
-# 4. Asistanı bilgisayarınızın sistemine entegre edin:
+# 4. Asistanı işletim sisteminize kalıcı olarak entegre edin:
 npm link
 ```
 
-> 💡 **Önemli İpucu:** Tüm bu komutları sırasıyla girip kurulum bittikten sonra, asistanın komutlarını sistemin tanıması için açık olan **tüm terminal pencerelerinizi kapatıp baştan açmayı** unutmayın.
+> 💡 **Önemli İpucu:** Kurulum bittikten sonra asistan komutlarının işletim sisteminize işlemesi için **açık olan tüm terminallerinizi kapatıp yeniden açın.**
 
 ---
 
-## 🚀 Kullanım
+## 💻 Kullanım
 
-Astro Agent, bilgisayarınızdaki **herhangi bir klasörde** çalışmaya hazırdır. Sizi uzun komutlar yazmaktan kurtaran kısa yollarla donatılmıştır. 
-
-Terminalinize aşağıdaki komutlardan dilediğinizi yazarak asistanı anında başlatabilirsiniz:
+Bilgisayarınızdaki **herhangi bir projede** veya klasörde terminalinizi açın ve asistanınızı uyandırın:
 
 ```bash
-# En kısa ve pratik kullanım:
+# Astro Agent'ı Başlat (En Hızlı Kısayol)
 asg
 
-# Alternatif kullanım:
+# Alternatif komutlar
 astro
-
-# Tam isimle kullanım:
 astroagent
 ```
 
 <br />
 
 <div align="center">
-  <p>Tasarım ve felsefesinde sadeliği barındırır.<br><b>Vertex Corporation</b> tarafından gururla geliştirilmiştir.</p>
+  <p>Tasarım ve felsefesinde mutlak gücü ve sadeliği barındırır.<br><b>Vertex Corporation</b> tarafından gururla geliştirilmiştir. 💫</p>
 </div>

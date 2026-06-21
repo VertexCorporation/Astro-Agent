@@ -101,6 +101,7 @@ export {
 	createUserProfileToolDefinition,
 	type UserProfileToolInput,
 } from "./update_user_profile.js";
+export { createMathEvaluateTool, createMathEvaluateToolDefinition, type MathEvaluateToolDetails, type MathEvaluateToolInput } from "./math_evaluate.js";
 export {
 	createWriteTool,
 	createWriteToolDefinition,
@@ -144,6 +145,7 @@ import { createTaskTool, createTaskToolDefinition } from "./task.js";
 import { createTodoTool, createTodoToolDefinition } from "./todo.js";
 import { createUserProfileTool, createUserProfileToolDefinition } from "./update_user_profile.js";
 import { createWriteTool, createWriteToolDefinition, type WriteToolOptions } from "./write.js";
+import { createMathEvaluateTool, createMathEvaluateToolDefinition } from "./math_evaluate.js";
 
 export type Tool = EngineTool<any>;
 export type ToolDef = ToolDefinition<any, any>;
@@ -338,6 +340,7 @@ export function createCodingToolDefinitions(cwd: string, options?: ToolsOptions)
 		createUserProfileToolDefinition(),
 		createMessageAgentToolDefinition(),
 		createIntuitionToolDefinition(),
+		createMathEvaluateToolDefinition(),
 	];
 }
 
@@ -372,6 +375,7 @@ export function createAllToolDefinitions(cwd: string, options?: ToolsOptions): R
 		message_agent: createMessageAgentToolDefinition(),
 		digest: createDigestToolDefinition(cwd),
 		todo: createTodoToolDefinition(),
+		math_evaluate: createMathEvaluateToolDefinition(),
 		...Object.fromEntries(createDiscordToolDefinitions(options?.discord).map((tool) => [tool.name, tool])),
 	};
 }
@@ -391,6 +395,7 @@ export function createCodingTools(cwd: string, options?: ToolsOptions): Tool[] {
 		createSnapshotTool(cwd),
 		createUserProfileTool(),
 		createMessageAgentTool(),
+		createMathEvaluateTool(),
 	];
 }
 
@@ -427,6 +432,7 @@ export function createAllTools(cwd: string, options?: ToolsOptions): Record<Tool
 		snapshot: createSnapshotTool(cwd),
 		update_user_profile: createUserProfileTool(),
 		message_agent: createMessageAgentTool(),
+		math_evaluate: createMathEvaluateTool(),
 		digest: createDigestTool(cwd),
 		todo: createTodoTool(),
 		intuition: createIntuitionTool(),

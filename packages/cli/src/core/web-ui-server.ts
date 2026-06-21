@@ -2345,10 +2345,20 @@ export function startWebUiServer(options: { port?: number; staticRoot?: string }
 	const server = createServer((req, res) => {
 		const url = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
 
-		// Allow CORS preflight requests
+		const origin = req.headers.origin || "";
+		const host = req.headers.host || "";
+		// Prevent CSRF from malicious websites by enforcing localhost origin/host
+		if ((origin && !origin.includes("localhost") && !origin.includes("127.0.0.1") && !origin.startsWith("file://")) || 
+		    (host && !host.includes("localhost") && !host.includes("127.0.0.1"))) {
+			res.writeHead(403);
+			res.end("Forbidden");
+			return;
+		}
+
+		// Allow CORS preflight requests only for safe origins
 		if (req.method === "OPTIONS") {
 			res.writeHead(200, {
-				"Access-Control-Allow-Origin": "*",
+				"Access-Control-Allow-Origin": origin || "*",
 				"Access-Control-Allow-Methods": "POST, GET, OPTIONS",
 				"Access-Control-Allow-Headers": "Content-Type",
 			});
@@ -2380,13 +2390,13 @@ export function startWebUiServer(options: { port?: number; staticRoot?: string }
 
 					res.writeHead(200, {
 						"Content-Type": "application/json",
-						"Access-Control-Allow-Origin": "*",
+						"Access-Control-Allow-Origin": origin || "*",
 					});
 					res.end(JSON.stringify({ ok: true, message: `Action '${actionName}' sent to TUI agent.` }));
 				} catch (err: any) {
 					res.writeHead(400, {
 						"Content-Type": "application/json",
-						"Access-Control-Allow-Origin": "*",
+						"Access-Control-Allow-Origin": origin || "*",
 					});
 					res.end(JSON.stringify({ ok: false, error: err.message }));
 				}

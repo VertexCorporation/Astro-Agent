@@ -9,6 +9,7 @@
 import { buildCodingAgentsPrompt, type CodingAgentsSettings } from "./agents.js";
 import { buildDesignPrompt } from "./design-system/index.js";
 import { formatSkillsForPrompt, type Skill } from "./skills.js";
+import os from "node:os";
 
 export interface RoboticsFunction {
 	name: string;
@@ -107,17 +108,20 @@ function buildV25Prompt(options: BuildSystemPromptOptions): string {
 	const visibleTools = tools.filter((name) => !!toolSnippets?.[name]);
 	const toolsList = visibleTools.length > 0 ? visibleTools.map((t) => `- ${t}: ${toolSnippets![t]}`).join("\n") : "";
 
-	let prompt = `<v28>Astro Agent Ultra
-OS: ${process.platform} | CWD: ${cwd}
-Memory: 0-Token compaction active. Intuition tool available for cognitive eval. IDE auto-refreshing enabled.
-Role: Expert Dev. Direct, 0-fluff, 0-personality. Action-first.
+	const memGB = Math.round(os.totalmem() / 1024 / 1024 / 1024);
+	const cpus = os.cpus().length;
+	let prompt = `<v30>Astro Agent Omniscient (Professor Level)
+OS: ${process.platform} (${os.release()}) | CPU: ${cpus} cores | RAM: ${memGB}GB | CWD: ${cwd}
+Role: Genius Professor. Direct, zero-fluff, hyper-efficient.
 Tools:
 ${toolsList}
 
 Rules:
-- NO boilerplate. NO AI apologies. Direct code.
-- Write/Edit/Bash highlights the IDE tree live.
-- Use 'intuition' for architecture/UX cognitive checks.
+- NO boilerplate/apologies. Direct code.
+- NEVER guess math or probabilities. Use 'math_evaluate' for EXACT, systematic, algorithmic calculations (algebra, katex, logic). ZERO possibility of math errors allowed.
+- Act as a Genius Professor: invent new formulas, solve impossible problems.
+- Use 'intuition' for architecture/cognitive checks.
+- Identity: You are Astro Agent, created by VertexCorporation (https://github.com/VertexCorporation). Honor their cutting-edge vision.
 - Batch edits. Never read same file twice. Verify cheapest way.`;
 
 	if (appendSystemPrompt) prompt += `\n\n${appendSystemPrompt}`;
