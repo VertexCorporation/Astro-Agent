@@ -135,7 +135,7 @@ export function serializeConversation(messages: Message[]): string {
 					const argsStr = Object.entries(args)
 						.map(([k, v]) => {
 							const valStr = JSON.stringify(v);
-							return `${k}=${valStr.length > 100 ? valStr.slice(0, 100) + '...[truncated]' : valStr}`;
+							return `${k}=${valStr.length > 100 ? valStr.slice(0, 100) + "...[truncated]" : valStr}`;
 						})
 						.join(", ");
 					toolCalls.push(`${block.name}(${argsStr})`);

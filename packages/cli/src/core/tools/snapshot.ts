@@ -53,7 +53,12 @@ export function createSnapshotToolDefinition(cwd: string): ToolDefinition<typeof
 					if (existsSync(targetDir)) {
 						resultText = `Snapshot '${name}' already exists.`;
 					} else {
-						cpSync(cwd, targetDir, { recursive: true, filter: filterFunc });
+						mkdirSync(targetDir, { recursive: true });
+						const items = readdirSync(cwd);
+						for (const item of items) {
+							if (["node_modules", ".git", ".mooncode", "dist"].includes(item)) continue;
+							cpSync(join(cwd, item), join(targetDir, item), { recursive: true, filter: filterFunc });
+						}
 						resultText = `Snapshot '${name}' created successfully at .mooncode/snapshots/${name}`;
 					}
 				} else if (action === "restore") {

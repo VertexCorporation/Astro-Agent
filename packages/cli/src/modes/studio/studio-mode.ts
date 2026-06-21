@@ -451,8 +451,10 @@ export class StudioMode {
 
 		const origin = req.headers.origin || "";
 		const host = req.headers.host || "";
-		if ((origin && !origin.includes("localhost") && !origin.includes("127.0.0.1") && !origin.startsWith("file://")) || 
-		    (host && !host.includes("localhost") && !host.includes("127.0.0.1"))) {
+		if (
+			(origin && !origin.includes("localhost") && !origin.includes("127.0.0.1") && !origin.startsWith("file://")) ||
+			(host && !host.includes("localhost") && !host.includes("127.0.0.1"))
+		) {
 			res.statusCode = 403;
 			res.end("Forbidden");
 			return;
@@ -629,7 +631,7 @@ export class StudioMode {
 					usage: stats.tokens,
 					isGenerating: this.runtime.session.isStreaming,
 					authUrl: this.webUiServerInstance ? this.webUiServerInstance.url : "http://127.0.0.1:3131",
-					tools: this.runtime.session.getActiveToolNames()
+					tools: this.runtime.session.getActiveToolNames(),
 				}),
 			);
 			return;

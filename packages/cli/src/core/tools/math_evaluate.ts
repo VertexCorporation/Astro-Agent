@@ -1,7 +1,7 @@
+import vm from "node:vm";
 import type { EngineTool } from "moon-engine";
 import type { ToolDefinition } from "../extensions/types.js";
 import { wrapToolDefinition } from "./tool-definition-wrapper.js";
-import vm from "node:vm";
 
 export interface MathEvaluateToolInput {
 	expression: string;
@@ -30,7 +30,13 @@ export function createMathEvaluateToolDefinition(): ToolDefinition<typeof mathSc
 		description:
 			"Evaluate a mathematical expression. Use this for all numerical calculations, probability, statistics, geometry, or UI/layout pixel math. NEVER guess math. Supported: +, -, *, /, %, **, Math.* methods (e.g. Math.sqrt).",
 		parameters: mathSchema,
-		execute: async (toolCallId: string, input: MathEvaluateToolInput, signal?: AbortSignal, _onUpdate?: any, _ctx?: any) => {
+		execute: async (
+			toolCallId: string,
+			input: MathEvaluateToolInput,
+			signal?: AbortSignal,
+			_onUpdate?: any,
+			_ctx?: any,
+		) => {
 			try {
 				if (signal?.aborted) {
 					throw new Error("Tool execution aborted by user");

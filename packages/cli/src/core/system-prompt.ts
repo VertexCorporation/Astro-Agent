@@ -6,10 +6,10 @@
  * Every character is deliberate. No personality fluff, no redundant boilerplate.
  */
 
+import os from "node:os";
 import { buildCodingAgentsPrompt, type CodingAgentsSettings } from "./agents.js";
 import { buildDesignPrompt } from "./design-system/index.js";
 import { formatSkillsForPrompt, type Skill } from "./skills.js";
-import os from "node:os";
 
 export interface RoboticsFunction {
 	name: string;
@@ -103,7 +103,7 @@ export function buildSystemPrompt(options: BuildSystemPromptOptions): string {
  */
 function buildV25Prompt(options: BuildSystemPromptOptions): string {
 	const { cwd, selectedTools, toolSnippets, appendSystemPrompt, contextFiles, agents, designMode } = options;
-	
+
 	const tools = selectedTools || ["read", "bash", "edit", "write"];
 	const visibleTools = tools.filter((name) => !!toolSnippets?.[name]);
 	const toolsList = visibleTools.length > 0 ? visibleTools.map((t) => `- ${t}: ${toolSnippets![t]}`).join("\n") : "";
@@ -118,6 +118,7 @@ ${toolsList}
 
 Rules:
 - NO boilerplate/apologies. Direct code.
+- ALWAYS use the 'task' tool to create a comprehensive to-do list before starting any new feature, project, or complex objective. Plan thoroughly.
 - NEVER guess math or probabilities. Use 'math_evaluate' for EXACT, systematic, algorithmic calculations (algebra, katex, logic). ZERO possibility of math errors allowed.
 - Act as a Genius Professor: invent new formulas, solve impossible problems.
 - Use 'intuition' for architecture/cognitive checks.
@@ -126,10 +127,10 @@ Rules:
 
 	if (appendSystemPrompt) prompt += `\n\n${appendSystemPrompt}`;
 	if (agents) prompt += buildCodingAgentsPrompt(agents);
-	
+
 	const ctxFiles = contextFiles ?? [];
 	if (ctxFiles.length > 0) {
-		prompt += "\n\n# Context\n" + ctxFiles.map(f => `## ${f.path}\n` + f.content).join("\n\n");
+		prompt += "\n\n# Context\n" + ctxFiles.map((f) => `## ${f.path}\n` + f.content).join("\n\n");
 	}
 
 	return prompt;

@@ -1,6 +1,6 @@
-import type { EngineSession } from "../engine-session.js";
 import type { EngineTool } from "moon-engine";
 import { Type } from "typebox";
+import type { EngineSession } from "../engine-session.js";
 import type { ToolDefinition } from "../extensions/types.js";
 import { wrapToolDefinition } from "./tool-definition-wrapper.js";
 
@@ -12,7 +12,9 @@ const compactSchema = Type.Object({
 	),
 });
 
-export function getCompactContextToolDefinition(session: EngineSession): ToolDefinition<typeof compactSchema, any, any> {
+export function getCompactContextToolDefinition(
+	session: EngineSession,
+): ToolDefinition<typeof compactSchema, any, any> {
 	return {
 		name: "compact_context",
 		label: "Sıkıştır",
@@ -20,7 +22,13 @@ export function getCompactContextToolDefinition(session: EngineSession): ToolDef
 			"Sıkıştırma aracı. Eğer context çok büyüdüyse eski mesajları tek bir özete sıkıştırarak token kullanımını azaltır. Sadece belirgin bir token baskısı varsa çağırın.",
 		promptSnippet: "Compact session context to save tokens",
 		parameters: compactSchema,
-		async execute(_toolCallId: string, params: { instructions?: string }, signal?: AbortSignal, _onUpdate?: any, _ctx?: any) {
+		async execute(
+			_toolCallId: string,
+			params: { instructions?: string },
+			signal?: AbortSignal,
+			_onUpdate?: any,
+			_ctx?: any,
+		) {
 			if (!signal) {
 				return {
 					content: [{ type: "text", text: "Hata: İptal sinyali (signal) eksik." }],

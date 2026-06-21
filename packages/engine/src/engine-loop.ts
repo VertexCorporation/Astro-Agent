@@ -653,7 +653,9 @@ async function executePreparedToolCall(
 				if (signal.aborted) {
 					reject(new Error("Tool execution aborted by user"));
 				} else {
-					signal.addEventListener("abort", () => reject(new Error("Tool execution aborted by user")), { once: true });
+					signal.addEventListener("abort", () => reject(new Error("Tool execution aborted by user")), {
+						once: true,
+					});
 				}
 			});
 			executionPromise = Promise.race([executionPromise, abortPromise]);

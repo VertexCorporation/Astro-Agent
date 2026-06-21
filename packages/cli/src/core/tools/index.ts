@@ -75,6 +75,12 @@ export {
 	type LsToolInput,
 	type LsToolOptions,
 } from "./ls.js";
+export {
+	createMathEvaluateTool,
+	createMathEvaluateToolDefinition,
+	type MathEvaluateToolDetails,
+	type MathEvaluateToolInput,
+} from "./math_evaluate.js";
 export { createMessageAgentTool, createMessageAgentToolDefinition, type MessageAgentInput } from "./message_agent.js";
 export {
 	createReadTool,
@@ -101,7 +107,6 @@ export {
 	createUserProfileToolDefinition,
 	type UserProfileToolInput,
 } from "./update_user_profile.js";
-export { createMathEvaluateTool, createMathEvaluateToolDefinition, type MathEvaluateToolDetails, type MathEvaluateToolInput } from "./math_evaluate.js";
 export {
 	createWriteTool,
 	createWriteToolDefinition,
@@ -137,6 +142,7 @@ import { createGitShipTool, createGitShipToolDefinition } from "./git-ship.js";
 import { createGrepTool, createGrepToolDefinition, type GrepToolOptions } from "./grep.js";
 import { createInvokeSubagentTool, createInvokeSubagentToolDefinition } from "./invoke_subagent.js";
 import { createLsTool, createLsToolDefinition, type LsToolOptions } from "./ls.js";
+import { createMathEvaluateTool, createMathEvaluateToolDefinition } from "./math_evaluate.js";
 import { createMessageAgentTool, createMessageAgentToolDefinition } from "./message_agent.js";
 import { createReadTool, createReadToolDefinition, type ReadToolOptions } from "./read.js";
 import { createSemanticSearchTool, createSemanticSearchToolDefinition } from "./semantic_search.js";
@@ -145,7 +151,6 @@ import { createTaskTool, createTaskToolDefinition } from "./task.js";
 import { createTodoTool, createTodoToolDefinition } from "./todo.js";
 import { createUserProfileTool, createUserProfileToolDefinition } from "./update_user_profile.js";
 import { createWriteTool, createWriteToolDefinition, type WriteToolOptions } from "./write.js";
-import { createMathEvaluateTool, createMathEvaluateToolDefinition } from "./math_evaluate.js";
 
 export type Tool = EngineTool<any>;
 export type ToolDef = ToolDefinition<any, any>;

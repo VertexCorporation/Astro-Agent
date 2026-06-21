@@ -1,8 +1,8 @@
 import type { EngineTool } from "moon-engine";
 import { Type } from "typebox";
 import type { ToolDefinition } from "../extensions/types.js";
-import { wrapToolDefinition } from "./tool-definition-wrapper.js";
 import { createGrepToolDefinition } from "./grep.js";
+import { wrapToolDefinition } from "./tool-definition-wrapper.js";
 
 const semanticSearchSchema = Type.Object({
 	query: Type.String({ description: "Semantic keyword, function name, or logic summary to search for" }),
@@ -23,14 +23,20 @@ export function createSemanticSearchToolDefinition(cwd: string): ToolDefinition<
 				const keywords = params.query.split(/\s+/).filter(Boolean);
 				// Create a simple regex that matches lines containing at least one of the keywords.
 				// For real BM25, we'd need file scoring, but this is a fast lightweight fallback to prevent crashes.
-				const pattern = keywords.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
-				
-				const result = await grepToolDef.execute(_id, {
-					pattern: `(${pattern})`,
-					ignoreCase: true,
-					limit: 150,
-				}, signal, _onUpdate, _ctx);
-				
+				const pattern = keywords.map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
+
+				const result = await grepToolDef.execute(
+					_id,
+					{
+						pattern: `(${pattern})`,
+						ignoreCase: true,
+						limit: 150,
+					},
+					signal,
+					_onUpdate,
+					_ctx,
+				);
+
 				return result;
 			} catch (err: any) {
 				return {

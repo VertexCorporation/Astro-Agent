@@ -2348,8 +2348,10 @@ export function startWebUiServer(options: { port?: number; staticRoot?: string }
 		const origin = req.headers.origin || "";
 		const host = req.headers.host || "";
 		// Prevent CSRF from malicious websites by enforcing localhost origin/host
-		if ((origin && !origin.includes("localhost") && !origin.includes("127.0.0.1") && !origin.startsWith("file://")) || 
-		    (host && !host.includes("localhost") && !host.includes("127.0.0.1"))) {
+		if (
+			(origin && !origin.includes("localhost") && !origin.includes("127.0.0.1") && !origin.startsWith("file://")) ||
+			(host && !host.includes("localhost") && !host.includes("127.0.0.1"))
+		) {
 			res.writeHead(403);
 			res.end("Forbidden");
 			return;
