@@ -125,13 +125,17 @@ export class StudioMode {
 	}
 
 	private getBlenderMcpConfig(port?: string) {
-		const args = ["--python", "3.12", "blender-mcp"];
-		const targetPort = port && port.trim() !== "" ? port.trim() : "1050";
-		args.push("--port", targetPort);
+		// blender-mcp connects to Blender addon via BLENDER_PORT env var (default: 9876)
+		// The --port arg here is blender-mcp's own MCP server port (not the Blender addon port)
+		const blenderAddonPort = port && port.trim() !== "" ? port.trim() : "9876";
 		return {
 			command: "uvx",
-			args,
-			env: { DISABLE_TELEMETRY: "true", UV_PYTHON: "3.12", BLENDER_PORT: targetPort },
+			args: ["--python", "3.12", "blender-mcp"],
+			env: {
+				DISABLE_TELEMETRY: "true",
+				UV_PYTHON: "3.12",
+				BLENDER_PORT: blenderAddonPort,
+			},
 			autoStart: false,
 		};
 	}
