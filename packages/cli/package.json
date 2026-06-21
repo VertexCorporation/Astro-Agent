@@ -1,6 +1,6 @@
 {
 	"name": "mooncode",
-	"version": "31.0.0",
+	"version": "35.0.0",
 	"description": "Astro Agent Omniscient - AI Assistant",
 	"type": "module",
 	"moonConfig": {
@@ -56,9 +56,9 @@
 		"ignore": "^7.0.5",
 		"marked": "^15.0.12",
 		"minimatch": "^10.2.3",
-		"moon-core": "^31.0.0",
-		"moon-engine": "^31.0.0",
-		"moon-tui": "^31.0.0",
+		"moon-core": "^35.0.0",
+		"moon-engine": "^35.0.0",
+		"moon-tui": "^35.0.0",
 		"proper-lockfile": "^4.1.2",
 		"puppeteer-core": "^22.15.0",
 		"strip-ansi": "^7.1.0",

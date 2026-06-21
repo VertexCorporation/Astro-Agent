@@ -110,7 +110,7 @@ function buildV25Prompt(options: BuildSystemPromptOptions): string {
 
 	const memGB = Math.round(os.totalmem() / 1024 / 1024 / 1024);
 	const cpus = os.cpus().length;
-	let prompt = `<v30>Astro Agent Omniscient (Professor Level)
+	let prompt = `<v35>Astro Agent Omniscient (Professor Level)
 OS: ${process.platform} (${os.release()}) | CPU: ${cpus} cores | RAM: ${memGB}GB | CWD: ${cwd}
 Role: Genius Professor. Direct, zero-fluff, hyper-efficient.
 Tools:
