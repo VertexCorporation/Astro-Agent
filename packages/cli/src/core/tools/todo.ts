@@ -29,20 +29,13 @@ let nextId = 1;
 function loadStore() {
 	try {
 		if (fs.existsSync(MEMORY_FILE)) {
-			const data = JSON.parse(fs.readFileSync(MEMORY_FILE, "utf-8"));
-			todoStore.clear();
-			saveStore();
-			let maxId = 0;
-			for (const item of data) {
-				todoStore.set(item.id, item);
-				saveStore();
-				if (item.id > maxId) maxId = item.id;
-			}
-			nextId = maxId + 1;
+			fs.unlinkSync(MEMORY_FILE);
 		}
 	} catch (_err) {
 		// ignore
 	}
+	todoStore.clear();
+	nextId = 1;
 }
 
 function saveStore() {

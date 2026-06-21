@@ -300,6 +300,7 @@ export function createBashToolDefinition(
 				onUpdate({ content: [], details: undefined });
 			}
 			return new Promise((resolve, reject) => {
+				let isFinished = false;
 				let tempFilePath: string | undefined;
 				let tempFileStream: ReturnType<typeof createWriteStream> | undefined;
 				let totalBytes = 0;
@@ -331,7 +332,7 @@ export function createBashToolDefinition(
 						chunksBytes -= removed.length;
 					}
 					// Stream partial output using the rolling tail buffer.
-					if (onUpdate) {
+					if (onUpdate && !isFinished && !signal?.aborted) {
 						const fullBuffer = Buffer.concat(chunks);
 						const fullText = fullBuffer.toString("utf-8");
 						const truncation = truncateTail(fullText);
@@ -358,6 +359,7 @@ export function createBashToolDefinition(
 					meta: { cwd, mode: policy.mode },
 				});
 				if (!policy.allowed) {
+					isFinished = true;
 					reject(new Error(`Policy blocked bash command${policy.reason ? `: ${policy.reason}` : ""}`));
 					return;
 				}
@@ -402,6 +404,7 @@ export function createBashToolDefinition(
 								meta: { cwd, mode: policy.mode },
 							});
 							outputText += `\n\nCommand exited with code ${exitCode}`;
+							isFinished = true;
 							reject(new Error(outputText));
 						} else {
 							appendAuditEvent({
@@ -412,6 +415,7 @@ export function createBashToolDefinition(
 								meta: { cwd, mode: policy.mode },
 							});
 							const executionDurationMs = Date.now() - executionStartTime;
+							isFinished = true;
 							resolve({
 								content: [
 									{
@@ -432,6 +436,7 @@ ${outputText}`,
 						if (err.message === "aborted") {
 							if (output) output += "\n\n";
 							output += "Command aborted";
+							isFinished = true;
 							reject(new Error(output));
 						} else if (err.message.startsWith("timeout:")) {
 							const timeoutSecs = err.message.split(":")[1];
@@ -445,6 +450,7 @@ ${outputText}`,
 								message: `Timeout after ${timeoutSecs} seconds`,
 								meta: { cwd, mode: policy.mode },
 							});
+							isFinished = true;
 							reject(new Error(output));
 						} else {
 							appendAuditEvent({
@@ -455,6 +461,7 @@ ${outputText}`,
 								message: err.message,
 								meta: { cwd, mode: policy.mode },
 							});
+							isFinished = true;
 							reject(err);
 						}
 					});

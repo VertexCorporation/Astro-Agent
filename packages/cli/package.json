@@ -1,6 +1,6 @@
 {
-	"name": "astroagent",
-	"version": "30.0.0",
+	"name": "mooncode",
+	"version": "31.0.0",
 	"description": "Astro Agent Omniscient - AI Assistant",
 	"type": "module",
 	"moonConfig": {

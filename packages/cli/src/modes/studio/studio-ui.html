@@ -2877,7 +2877,7 @@ function setGeneratingState(generating) {
 		indicator.className = 'msg-row assistant';
 		indicator.innerHTML = `
 			<div style="display:flex;align-items:center;gap:8px;color:var(--muted);font-size:0.85rem;padding:4px 0;">
-				<span class="material-symbols-rounded icon-primary thinking-pulse" style="font-size:16px;">psychology</span>
+				<img src="/assets/Mooncodewhitelogo.png" class="thinking-pulse" style="width:16px;height:16px;border-radius:4px;object-fit:cover;" onerror="this.style.display='none'">
 				<span class="thinking-pulse">Thinking...</span>
 			</div>`;
 		chatInner.appendChild(indicator);
