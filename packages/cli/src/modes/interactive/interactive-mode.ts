@@ -8466,13 +8466,12 @@ export class InteractiveMode {
 
 	private getBlenderMcpConfig(port?: string) {
 		const args = ["--python", "3.12", "blender-mcp"];
-		if (port && port.trim() !== "") {
-			args.push("--port", port.trim());
-		}
+		const targetPort = (port && port.trim() !== "") ? port.trim() : "1050";
+		args.push("--port", targetPort);
 		return {
 			command: "uvx",
 			args,
-			env: { DISABLE_TELEMETRY: "true", UV_PYTHON: "3.12" },
+			env: { DISABLE_TELEMETRY: "true", UV_PYTHON: "3.12", BLENDER_PORT: targetPort },
 			autoStart: false,
 		};
 	}

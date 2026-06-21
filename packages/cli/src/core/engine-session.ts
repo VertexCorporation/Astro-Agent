@@ -1095,6 +1095,8 @@ export class EngineSession {
 				definition,
 				sourceInfo: createSyntheticSourceInfo(`<mcp:${tool.name}>`, { source: "mcp" }),
 			});
+			const snippet = this._normalizePromptSnippet(tool.description) || tool.description || `MCP tool ${tool.name}`;
+			this._toolPromptSnippets.set(tool.name, snippet);
 		}
 
 		this.setActiveToolsByName([...new Set([...this.getActiveToolNames(), ...mcpTools.map((tool) => tool.name)])]);

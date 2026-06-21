@@ -126,13 +126,12 @@ export class StudioMode {
 
 	private getBlenderMcpConfig(port?: string) {
 		const args = ["--python", "3.12", "blender-mcp"];
-		if (port && port.trim() !== "") {
-			args.push("--port", port.trim());
-		}
+		const targetPort = (port && port.trim() !== "") ? port.trim() : "1050";
+		args.push("--port", targetPort);
 		return {
 			command: "uvx",
 			args,
-			env: { DISABLE_TELEMETRY: "true", UV_PYTHON: "3.12" },
+			env: { DISABLE_TELEMETRY: "true", UV_PYTHON: "3.12", BLENDER_PORT: targetPort },
 			autoStart: false,
 		};
 	}
@@ -233,7 +232,11 @@ export class StudioMode {
 				return;
 			}
 			if (action?.action === "add_custom") {
-				const { command, args, env, cwd } = action;
+				const config = action.config || {};
+				const command = action.command || config.command;
+				const args = action.args || config.args;
+				const env = action.env || config.env;
+				const cwd = action.cwd || config.cwd;
 				if (!name || !command) throw new Error("Name and command are required.");
 				await this.activateMcpServer(name, { command, args, cwd, env });
 				return;
@@ -266,6 +269,18 @@ export class StudioMode {
 	private getStateUpdateEvent() {
 		try {
 			const stats = this.runtime.session.getSessionStats();
+			const clients = this.runtime.session.mcpManager ? [...this.runtime.session.mcpManager.getClients().keys()] : [];
+			const isBlenderConnected = clients.includes("blender");
+			const configured = this.runtime.services.settingsManager.getMcpServers();
+			const blenderConfig = configured["blender"];
+			let blenderPort = "1050";
+			if (blenderConfig && blenderConfig.args) {
+				const portIdx = blenderConfig.args.indexOf("--port");
+				if (portIdx !== -1 && portIdx + 1 < blenderConfig.args.length) {
+					blenderPort = blenderConfig.args[portIdx + 1];
+				}
+			}
+
 			return {
 				type: "state_update",
 				state: {
@@ -275,6 +290,7 @@ export class StudioMode {
 						in: stats.tokens.input,
 						out: stats.tokens.output,
 					},
+					blenderMcp: isBlenderConnected ? { connected: true, port: blenderPort } : null,
 				},
 			};
 		} catch (_e) {

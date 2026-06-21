@@ -113,32 +113,26 @@ class HeaderStdioMcpClient {
 	}
 
 	private write(message: any): void {
-		const body = Buffer.from(JSON.stringify(message), "utf8");
-		this.proc!.stdin.write(Buffer.from(`Content-Length: ${body.length}\r\n\r\n`, "ascii"));
+		const body = Buffer.from(JSON.stringify(message) + "\n", "utf8");
 		this.proc!.stdin.write(body);
 	}
 
 	private read(chunk: Buffer): void {
 		this.buffer = Buffer.concat([this.buffer, chunk]);
 		while (true) {
-			const headerEnd = this.buffer.indexOf("\r\n\r\n");
-			if (headerEnd === -1) return;
+			const newlineIndex = this.buffer.indexOf("\n");
+			if (newlineIndex === -1) return;
 
-			const header = this.buffer.subarray(0, headerEnd).toString("ascii");
-			const match = /content-length:\s*(\d+)/i.exec(header);
-			if (!match) {
-				this.buffer = this.buffer.subarray(headerEnd + 4);
-				continue;
+			const line = this.buffer.subarray(0, newlineIndex).toString("utf8").trim();
+			this.buffer = this.buffer.subarray(newlineIndex + 1);
+			
+			if (line) {
+				try {
+					this.handleMessage(JSON.parse(line));
+				} catch (e) {
+					console.error(`[MCP:${this.name}] Failed to parse message: ${line}`);
+				}
 			}
-
-			const length = Number(match[1]);
-			const bodyStart = headerEnd + 4;
-			const bodyEnd = bodyStart + length;
-			if (this.buffer.length < bodyEnd) return;
-
-			const body = this.buffer.subarray(bodyStart, bodyEnd).toString("utf8");
-			this.buffer = this.buffer.subarray(bodyEnd);
-			this.handleMessage(JSON.parse(body));
 		}
 	}
 
