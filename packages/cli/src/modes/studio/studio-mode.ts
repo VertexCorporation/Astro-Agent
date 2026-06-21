@@ -126,7 +126,7 @@ export class StudioMode {
 
 	private getBlenderMcpConfig(port?: string) {
 		const args = ["--python", "3.12", "blender-mcp"];
-		const targetPort = (port && port.trim() !== "") ? port.trim() : "1050";
+		const targetPort = port && port.trim() !== "" ? port.trim() : "1050";
 		args.push("--port", targetPort);
 		return {
 			command: "uvx",
@@ -269,7 +269,9 @@ export class StudioMode {
 	private getStateUpdateEvent() {
 		try {
 			const stats = this.runtime.session.getSessionStats();
-			const clients = this.runtime.session.mcpManager ? [...this.runtime.session.mcpManager.getClients().keys()] : [];
+			const clients = this.runtime.session.mcpManager
+				? [...this.runtime.session.mcpManager.getClients().keys()]
+				: [];
 			const isBlenderConnected = clients.includes("blender");
 			const configured = this.runtime.services.settingsManager.getMcpServers();
 			const blenderConfig = configured["blender"];

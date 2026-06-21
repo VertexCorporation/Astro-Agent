@@ -8466,7 +8466,7 @@ export class InteractiveMode {
 
 	private getBlenderMcpConfig(port?: string) {
 		const args = ["--python", "3.12", "blender-mcp"];
-		const targetPort = (port && port.trim() !== "") ? port.trim() : "1050";
+		const targetPort = port && port.trim() !== "" ? port.trim() : "1050";
 		args.push("--port", targetPort);
 		return {
 			command: "uvx",

@@ -125,7 +125,7 @@ class HeaderStdioMcpClient {
 
 			const line = this.buffer.subarray(0, newlineIndex).toString("utf8").trim();
 			this.buffer = this.buffer.subarray(newlineIndex + 1);
-			
+
 			if (line) {
 				try {
 					this.handleMessage(JSON.parse(line));
