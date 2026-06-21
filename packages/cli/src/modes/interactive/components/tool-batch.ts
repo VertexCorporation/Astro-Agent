@@ -5,25 +5,19 @@
  * into a compact summary line that can be expanded.
  */
 
-import { type Component, Container } from "moon-tui";
+import { Container } from "moon-tui";
 import { theme } from "../theme/theme.js";
 import type { ToolExecutionComponent } from "./tool-execution.js";
 
 const ANSI_RE = /\x1b\[[0-9;]*m/g;
 
-function widthOf(value: string): number {
+function _widthOf(value: string): number {
 	return value.replace(ANSI_RE, "").length;
 }
 
 export class ToolBatchComponent extends Container {
 	private toolComponents: ToolExecutionComponent[] = [];
 	private collapsed = true;
-	private cachedWidth?: number;
-	private cachedLines?: string[];
-
-	constructor() {
-		super();
-	}
 
 	/** Add a tool execution to this batch */
 	addTool(component: ToolExecutionComponent): void {

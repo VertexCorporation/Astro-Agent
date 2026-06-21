@@ -1,5 +1,5 @@
 import { platform } from "node:os";
-import puppeteer, { type Browser, Page } from "puppeteer-core";
+import puppeteer, { type Browser } from "puppeteer-core";
 
 let browserInstance: Browser | null = null;
 
@@ -34,7 +34,7 @@ async function getBrowser(): Promise<Browser> {
 			defaultViewport: null,
 			args: ["--start-maximized", "--no-sandbox"],
 		});
-	} catch (e) {
+	} catch (_e) {
 		executablePath = edgePaths[os];
 		browserInstance = await puppeteer.launch({
 			executablePath,
@@ -113,7 +113,7 @@ export async function executePuppeteerAction(action: string, params: any): Promi
 	}
 }
 
-export async function executePuppeteerTabs(action: string, params: any): Promise<any> {
+export async function executePuppeteerTabs(action: string, _params: any): Promise<any> {
 	const browser = await getBrowser();
 	switch (action) {
 		case "list": {

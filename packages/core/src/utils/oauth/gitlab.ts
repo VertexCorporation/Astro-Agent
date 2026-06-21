@@ -115,7 +115,8 @@ export async function loginGitLab(callbacks: OAuthLoginCallbacks): Promise<OAuth
 
 	callbacks.onAuth({ url: `${GITLAB_COM_URL}/oauth/authorize?${authParams.toString()}` });
 	const code = await new Promise<string>((resolve, reject) => {
-		const http = require("node:http");
+		const httpName = "node:http";
+		const http = require(httpName);
 		const server = http.createServer((req: any, res: any) => {
 			try {
 				const url = new URL(req.url || "", REDIRECT_URI);

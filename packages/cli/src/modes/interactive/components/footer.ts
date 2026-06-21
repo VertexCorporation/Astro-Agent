@@ -1,6 +1,4 @@
 import type { Component } from "moon-tui";
-import { VERSION } from "../../../config.js";
-import { getDevLevelState } from "../../../core/dev-level.js";
 import type { EngineSession } from "../../../core/engine-session.js";
 import type { ReadonlyFooterDataProvider } from "../../../core/footer-data-provider.js";
 
@@ -63,7 +61,7 @@ export class FooterComponent implements Component {
 
 	constructor(
 		private session: EngineSession,
-		private _footerData: ReadonlyFooterDataProvider,
+		_footerData: ReadonlyFooterDataProvider,
 		getExecutingToolNames?: () => string[],
 	) {
 		this.getExecutingToolNames = getExecutingToolNames;

@@ -482,7 +482,7 @@ export class StudioMode {
 					res.setHeader("Content-Type", "application/json");
 					res.end(JSON.stringify([]));
 				}
-			} catch (e) {
+			} catch (_e) {
 				res.setHeader("Content-Type", "application/json");
 				res.end(JSON.stringify([]));
 			}
@@ -1635,7 +1635,7 @@ export class StudioMode {
 				let childrenPaths: string[] = [];
 				try {
 					childrenPaths = fs.readdirSync(dir);
-				} catch (e) {
+				} catch (_e) {
 					// Ignore unreadable directories
 				}
 
@@ -1646,7 +1646,7 @@ export class StudioMode {
 						try {
 							const cStats = fs.statSync(childPath);
 							return { name: f, path: childPath, type: cStats.isDirectory() ? "directory" : "file" };
-						} catch (e) {
+						} catch (_e) {
 							return null;
 						}
 					})
@@ -1683,7 +1683,7 @@ export class StudioMode {
 
 					const buffer = fs.readFileSync(filePath);
 					res.setHeader("Content-Type", "application/json");
-					res.end(JSON.stringify({ content: "data:" + mime + ";base64," + buffer.toString("base64") }));
+					res.end(JSON.stringify({ content: `data:${mime};base64,${buffer.toString("base64")}` }));
 				} else {
 					const content = fs.readFileSync(filePath, "utf-8");
 					res.setHeader("Content-Type", "application/json");

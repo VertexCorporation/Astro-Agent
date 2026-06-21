@@ -13,7 +13,6 @@ import type {
 import { AssistantMessageEventStream } from "../utils/event-stream.js";
 import type { BedrockOptions } from "./amazon-bedrock.js";
 import type { AnthropicOptions } from "./anthropic.js";
-import * as anthropicModule from "./anthropic.js";
 import type { AzureOpenAIResponsesOptions } from "./azure-openai-responses.js";
 import { streamGitLabDuo } from "./gitlab-duo.js";
 import type { GoogleOptions } from "./google.js";

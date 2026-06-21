@@ -40,7 +40,7 @@ function loadStore() {
 			}
 			nextId = maxId + 1;
 		}
-	} catch (err) {
+	} catch (_err) {
 		// ignore
 	}
 }
@@ -49,7 +49,7 @@ function saveStore() {
 	try {
 		const items = Array.from(todoStore.values()).sort((a, b) => a.id - b.id);
 		fs.writeFileSync(MEMORY_FILE, JSON.stringify(items, null, 2), "utf-8");
-	} catch (err) {
+	} catch (_err) {
 		// ignore
 	}
 }

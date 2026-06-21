@@ -83,7 +83,6 @@ import {
 } from "./extensions/index.js";
 import { emitSessionShutdownEvent } from "./extensions/runner.js";
 import { LearningMemory } from "./learning-memory.js";
-import { filterMessagesMathematically } from "./mathematical-memory.js";
 import { getMemoryPreface, persistMemorySignal, shouldPersistMemorySignal } from "./memory-policy.js";
 import { type BashExecutionMessage, type CustomMessage, compactMessageForStorage } from "./messages.js";
 import { pickFallbackModel } from "./model-orchestrator.js";

@@ -298,7 +298,7 @@ export class AuthStorage {
 		return `${provider}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 	}
 
-	private defaultAccountLabel(provider: string, type: "oauth" | "api_key"): string {
+	private defaultAccountLabel(_provider: string, _type: "oauth" | "api_key"): string {
 		return process.env.USERNAME || os.hostname() || "My PC";
 	}
 

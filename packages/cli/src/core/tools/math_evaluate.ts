@@ -31,7 +31,7 @@ export function createMathEvaluateToolDefinition(): ToolDefinition<typeof mathSc
 			"Evaluate a mathematical expression. Use this for all numerical calculations, probability, statistics, geometry, or UI/layout pixel math. NEVER guess math. Supported: +, -, *, /, %, **, Math.* methods (e.g. Math.sqrt).",
 		parameters: mathSchema,
 		execute: async (
-			toolCallId: string,
+			_toolCallId: string,
 			input: MathEvaluateToolInput,
 			signal?: AbortSignal,
 			_onUpdate?: any,

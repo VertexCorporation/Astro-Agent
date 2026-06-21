@@ -416,9 +416,8 @@ export function createBashToolDefinition(
 								content: [
 									{
 										type: "text",
-										text:
-											`[⏱️ Execution Time: ${executionDurationMs}ms]
-` + outputText,
+										text: `[⏱️ Execution Time: ${executionDurationMs}ms]
+${outputText}`,
 									},
 								],
 								details,

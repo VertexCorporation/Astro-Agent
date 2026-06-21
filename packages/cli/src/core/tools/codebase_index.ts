@@ -9,7 +9,7 @@ const codebaseIndexSchema = Type.Object({
 	force: Type.Optional(Type.Boolean({ description: "Yeniden dizin oluşturmaya zorla (Force re-indexing)" })),
 });
 
-export function createCodebaseIndexToolDefinition(cwd: string): ToolDefinition<typeof codebaseIndexSchema, any, any> {
+export function createCodebaseIndexToolDefinition(_cwd: string): ToolDefinition<typeof codebaseIndexSchema, any, any> {
 	return {
 		name: "codebase_index",
 		label: "codebase_index",

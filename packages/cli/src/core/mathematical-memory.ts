@@ -10,7 +10,7 @@ export interface MathematicalMessageFilterOptions {
  * to score the relevance of messages in the context window.
  */
 export function filterMessagesMathematically(options: MathematicalMessageFilterOptions): any[] {
-	const { messages, maxTokens } = options;
+	const { messages } = options;
 	if (!messages || messages.length <= 10) return messages;
 
 	// Always keep the system prompt and the latest 4 messages (2 turns)
@@ -28,7 +28,7 @@ export function filterMessagesMathematically(options: MathematicalMessageFilterO
 	let currentEma = 1.0;
 
 	// Reverse iterate to give higher EMA to recent messages
-	const scoredMessages = targetMessages.reverse().map((msg, idx) => {
+	const scoredMessages = targetMessages.reverse().map((msg, _idx) => {
 		let score = currentEma;
 
 		// Update EMA

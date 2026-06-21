@@ -8464,14 +8464,6 @@ export class InteractiveMode {
 		await this.handleWebPanelRoute("/mcp", "MCP control panel");
 	}
 
-	private getGodotMcpConfig() {
-		return {
-			command: "npx",
-			args: ["-y", "@tugcantopaloglu/godot-mcp"],
-			autoStart: false,
-		};
-	}
-
 	private getBlenderMcpConfig(port?: string) {
 		const args = ["--python", "3.12", "blender-mcp"];
 		if (port && port.trim() !== "") {

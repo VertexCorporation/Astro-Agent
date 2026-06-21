@@ -42,7 +42,7 @@ export class HybridMemorySystem {
 	 * Future implementation: Hash the prompt and check against a local semantic cache.
 	 * If similarity > 0.95, return cached response.
 	 */
-	public checkSemanticCache(prompt: string): string | null {
+	public checkSemanticCache(_prompt: string): string | null {
 		// Placeholder for Semantic Cache lookup
 		return null;
 	}
@@ -50,7 +50,7 @@ export class HybridMemorySystem {
 	/**
 	 * Future implementation: Update the local semantic cache with a new prompt/response pair.
 	 */
-	public updateSemanticCache(prompt: string, response: string): void {
+	public updateSemanticCache(_prompt: string, _response: string): void {
 		// Placeholder for Semantic Cache insertion
 	}
 
@@ -85,7 +85,7 @@ export class HybridMemorySystem {
 	 * Future implementation: Convert a query to an embedding and search the local Vector DB
 	 * to retrieve the top-K relevant historical messages.
 	 */
-	public async searchVectorHistory(query: string): Promise<any[]> {
+	public async searchVectorHistory(_query: string): Promise<any[]> {
 		// Placeholder for Vector DB search
 		return [];
 	}

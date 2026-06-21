@@ -55,7 +55,7 @@ export function getCompactContextToolDefinition(
 				};
 			}
 		},
-		renderCall(args, theme) {
+		renderCall(_args, theme) {
 			return {
 				render: () => [theme.fg("toolTitle", "Token Sıkıştırması Çalışıyor 🧹")],
 				invalidate: () => {},

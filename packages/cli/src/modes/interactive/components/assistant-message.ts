@@ -47,7 +47,6 @@ export class AssistantMessageComponent extends Container {
 
 	private cachedWidth?: number;
 	private cachedLines?: string[];
-	private isFusionMode: boolean;
 
 	constructor(
 		message?: AssistantMessage,

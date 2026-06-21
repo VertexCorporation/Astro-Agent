@@ -739,7 +739,7 @@ function handleClientMessage(client: BrowserBridgeClient, raw: string): void {
 	clearTimeout(pending.timer);
 
 	if (message.type === "tool_result") {
-		if (message.payload && message.payload.error) {
+		if (message.payload?.error) {
 			pending.reject(new Error(message.payload.error));
 		} else {
 			pending.resolve(message.payload ? message.payload.data : undefined);

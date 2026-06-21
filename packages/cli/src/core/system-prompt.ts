@@ -102,7 +102,7 @@ export function buildSystemPrompt(options: BuildSystemPromptOptions): string {
  * how the AI reasons about problems differently from every other model.
  */
 function buildV25Prompt(options: BuildSystemPromptOptions): string {
-	const { cwd, selectedTools, toolSnippets, appendSystemPrompt, contextFiles, agents, designMode } = options;
+	const { cwd, selectedTools, toolSnippets, appendSystemPrompt, contextFiles, agents } = options;
 
 	const tools = selectedTools || ["read", "bash", "edit", "write"];
 	const visibleTools = tools.filter((name) => !!toolSnippets?.[name]);
@@ -130,18 +130,18 @@ Rules:
 
 	const ctxFiles = contextFiles ?? [];
 	if (ctxFiles.length > 0) {
-		prompt += "\n\n# Context\n" + ctxFiles.map((f) => `## ${f.path}\n` + f.content).join("\n\n");
+		prompt += `\n\n# Context\n${ctxFiles.map((f) => `## ${f.path}\n${f.content}`).join("\n\n")}`;
 	}
 
 	return prompt;
 }
 
-function buildBlenderSystemPrompt(): string {
+function _buildBlenderSystemPrompt(): string {
 	return "\n\n## Blender\n- MCP tools active. Inspect scene first, model cleanly, use modifiers/collections.";
 }
 
 /** Scratch MCP — compact */
-function buildScratchSystemPrompt(): string {
+function _buildScratchSystemPrompt(): string {
 	return "\n\n## Scratch\n- MCP tools active. Inspect page status first. Prefer small verified edits.";
 }
 

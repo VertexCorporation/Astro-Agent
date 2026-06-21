@@ -15,13 +15,13 @@ const intuitionSchema = Type.Object({
 export type IntuitionInput = Static<typeof intuitionSchema>;
 
 function runTribeBridge(inputType: string, content: string, signal?: AbortSignal): Promise<string> {
-	return new Promise((resolve, reject) => {
+	return new Promise((resolve, _reject) => {
 		const scriptPath = path.join(process.cwd(), "packages/cli/src/core/tools/tribe_bridge.py");
 		const tribeMainPath = path.join(process.cwd(), "tribev2-main");
 
 		const py = spawn("python", [scriptPath, inputType, content, tribeMainPath]);
 		let out = "";
-		let err = "";
+		let _err = "";
 
 		const onAbort = () => {
 			if (!py.killed) py.kill();
@@ -32,8 +32,12 @@ function runTribeBridge(inputType: string, content: string, signal?: AbortSignal
 			if (signal.aborted) onAbort();
 		}
 
-		py.stdout.on("data", (data) => (out += data.toString()));
-		py.stderr.on("data", (data) => (err += data.toString()));
+		py.stdout.on("data", (data) => {
+			out += data.toString();
+		});
+		py.stderr.on("data", (data) => {
+			_err += data.toString();
+		});
 
 		py.on("close", (code) => {
 			if (signal) signal.removeEventListener("abort", onAbort);
