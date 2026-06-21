@@ -78,8 +78,24 @@ class HeaderStdioMcpClient {
 
 		this.proc.stdout.on("data", (chunk) => this.read(chunk));
 		this.proc.stderr.on("data", (chunk) => {
-			const text = chunk.toString().trim();
-			if (text) console.error(`[MCP:${this.name}] ${text}`);
+			const text = chunk.toString();
+			// Only surface ERROR-level lines, suppress noisy INFO/WARNING/DEBUG
+			for (const rawLine of text.split("\n")) {
+				const line = rawLine.trim();
+				if (!line) continue;
+				// Suppress verbose info patterns from Python logging
+				if (/ - INFO - /.test(line)) continue;
+				if (/blender-mcp-telemetry.*WARNING/.test(line)) continue;
+				if (/Telemetry disabled/.test(line)) continue;
+				if (/Processing request of type/.test(line)) continue;
+				if (/Command sent, waiting/.test(line)) continue;
+				if (/Received (complete response|[\d]+ bytes)/.test(line)) continue;
+				if (/Response parsed, status: success/.test(line)) continue;
+				if (/Created new persistent connection/.test(line)) continue;
+				if (/Connected to Blender at/.test(line)) continue;
+				if (/Successfully connected to Blender/.test(line)) continue;
+				console.error(`[MCP:${this.name}] ${line}`);
+			}
 		});
 		this.proc.on("exit", (code) => {
 			const error = new Error(`MCP server ${this.name} exited with code ${code}`);
