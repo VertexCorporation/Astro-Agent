@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Astro 5 - 3D Demo</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { overflow: hidden; background: #0a0a0f; font-family: system-ui, sans-serif; }
+canvas { display: block; }
+
+#ui {
+  position: fixed; top: 24px; left: 50%; transform: translateX(-50%);
+  color: #888; font-size: 13px; letter-spacing: 0.5px;
+  text-align: center; pointer-events: none; opacity: 0.6;
+  text-shadow: 0 0 20px rgba(0,0,0,0.8);
+}
+#ui strong { color: #fff; }
+#ui span { display: inline-block; margin: 0 12px; }
+
+#controls {
+  position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 12px; pointer-events: none;
+}
+#controls button {
+  pointer-events: all;
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+  color: #ccc; padding: 10px 22px; border-radius: 8px;
+  font-size: 13px; cursor: pointer; transition: all 0.2s;
+  backdrop-filter: blur(8px); font-family: inherit;
+}
+#controls button:hover {
+  background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.25);
+  color: #fff;
+}
+#controls button.active {
+  background: rgba(100,140,255,0.2); border-color: rgba(100,140,255,0.4);
+  color: #8af;
+}
+</style>
+</head>
+<body>
+
+<div id="ui">
+  <strong>Astro 5</strong> <span>·</span> 3D Tasarım Demo
+</div>
+
+<div id="controls">
+  <button class="active" data-mode="rotate">Döndür</button>
+  <button data-mode="float">Yüzdür</button>
+  <button data-mode="explode">Patlat</button>
+  <button data-mode="wave">Dalga</button>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/controls/OrbitControls.js';
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(50, innerWidth / innerHeight, 0.1, 100);
+camera.position.set(8, 5, 12);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.5;
+document.body.prepend(renderer.domElement);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.05;
+controls.autoRotate = true;
+controls.autoRotateSpeed = 1.2;
+controls.minDistance = 3;
+controls.maxDistance = 30;
+
+const bg = new THREE.Color(0x0a0a0f);
+scene.background = bg;
+
+const ambient = new THREE.AmbientLight(0x222244, 0.5);
+scene.add(ambient);
+
+const key = new THREE.DirectionalLight(0xffeedd, 3);
+key.position.set(5, 10, 7);
+scene.add(key);
+
+const fill = new THREE.DirectionalLight(0x4488ff, 1);
+fill.position.set(-5, 0, -5);
+scene.add(fill);
+
+const rim = new THREE.DirectionalLight(0x88ddff, 1.5);
+rim.position.set(-3, -5, 8);
+scene.add(rim);
+
+const point = new THREE.PointLight(0xff6644, 2, 15);
+point.position.set(-4, 3, -2);
+scene.add(point);
+
+const point2 = new THREE.PointLight(0x4488ff, 2, 15);
+point2.position.set(4, -2, 3);
+scene.add(point2);
+
+const group = new THREE.Group();
+scene.add(group);
+
+const geo = new THREE.IcosahedronGeometry(1, 1);
+
+const count = 120;
+const items = [];
+const matColors = [
+  0x4488ff, 0x88ddff, 0xff6644, 0xffaa44,
+  0x44ff88, 0xdd88ff, 0xff4488, 0x88ffdd,
+];
+
+for (let i = 0; i < count; i++) {
+  const color = matColors[i % matColors.length];
+  const mat = new THREE.MeshPhysicalMaterial({
+    color,
+    metalness: 0.1,
+    roughness: 0.3,
+    clearcoat: 0.4,
+    clearcoatRoughness: 0.3,
+    transparent: true,
+    opacity: 0.85 + Math.random() * 0.15,
+    envMapIntensity: 0.6,
+  });
+  const size = 0.2 + Math.random() * 0.6;
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.scale.set(size, size, size);
+
+  const theta = Math.random() * Math.PI * 2;
+  const phi = Math.acos(2 * Math.random() - 1);
+  const r = 2 + Math.random() * 3.5;
+
+  mesh.userData = {
+    theta, phi, r,
+    baseTheta: theta,
+    basePhi: phi,
+    phase: Math.random() * Math.PI * 2,
+    speed: 0.3 + Math.random() * 0.5,
+    rotSpeed: { x: (Math.random() - 0.5) * 2, y: (Math.random() - 0.5) * 2 },
+    origScale: size,
+  };
+
+  mesh.position.set(
+    r * Math.sin(phi) * Math.cos(theta),
+    r * Math.cos(phi),
+    r * Math.sin(phi) * Math.sin(theta)
+  );
+
+  mesh.rotation.set(Math.random() * 6, Math.random() * 6, Math.random() * 6);
+
+  group.add(mesh);
+  items.push(mesh);
+}
+
+const centerMat = new THREE.MeshPhysicalMaterial({
+  color: 0x88ddff,
+  metalness: 0.3,
+  roughness: 0.2,
+  clearcoat: 1.0,
+  clearcoatRoughness: 0.1,
+  emissive: 0x4488ff,
+  emissiveIntensity: 0.1,
+});
+const center = new THREE.Mesh(new THREE.IcosahedronGeometry(0.8, 2), centerMat);
+group.add(center);
+
+const wireMat = new THREE.MeshPhysicalMaterial({
+  color: 0x4488ff, wireframe: true, transparent: true, opacity: 0.08,
+});
+const wireSphere = new THREE.Mesh(new THREE.SphereGeometry(3.8, 24, 24), wireMat);
+group.add(wireSphere);
+
+const ringGeo = new THREE.RingGeometry(3.2, 3.8, 64);
+const ringMat = new THREE.MeshBasicMaterial({
+  color: 0x4488ff, transparent: true, opacity: 0.04, side: THREE.DoubleSide,
+});
+const ring = new THREE.Mesh(ringGeo, ringMat);
+ring.rotation.x = Math.PI / 2;
+group.add(ring);
+
+const ring2 = ring.clone();
+ring2.material = ringMat.clone();
+ring2.material.opacity = 0.025;
+ring2.scale.set(1.5, 1.5, 1.5);
+ring2.rotation.x = Math.PI / 3;
+ring2.rotation.z = Math.PI / 4;
+group.add(ring2);
+
+const stars = new THREE.BufferGeometry();
+const starCount = 2000;
+const starPos = new Float32Array(starCount * 3);
+for (let i = 0; i < starCount * 3; i++) {
+  starPos[i] = (Math.random() - 0.5) * 80;
+}
+stars.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+const starMat = new THREE.PointsMaterial({
+  color: 0xffffff, size: 0.05, transparent: true, opacity: 0.6,
+});
+const starField = new THREE.Points(stars, starMat);
+scene.add(starField);
+
+let mode = 'rotate';
+let time = 0;
+
+document.querySelectorAll('#controls button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#controls button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    mode = btn.dataset.mode;
+  });
+});
+
+function animate() {
+  requestAnimationFrame(animate);
+  time += 0.01;
+  const t = time;
+
+  const r = 3.5;
+  point.position.x = Math.sin(t * 0.7) * r;
+  point.position.z = Math.cos(t * 0.7) * r;
+  point.position.y = Math.sin(t * 0.5) * 2 + 1;
+  point2.position.x = Math.sin(t * 0.5 + 2) * r;
+  point2.position.z = Math.cos(t * 0.5 + 2) * r;
+  point2.position.y = Math.cos(t * 0.7) * 2;
+
+  switch (mode) {
+    case 'rotate':
+      controls.autoRotate = true;
+      for (const mesh of items) {
+        const ud = mesh.userData;
+        mesh.position.set(
+          ud.r * Math.sin(ud.basePhi) * Math.cos(ud.baseTheta + t * 0.1),
+          ud.r * Math.cos(ud.basePhi),
+          ud.r * Math.sin(ud.basePhi) * Math.sin(ud.baseTheta + t * 0.1)
+        );
+        mesh.rotation.x += ud.rotSpeed.x * 0.01;
+        mesh.rotation.y += ud.rotSpeed.y * 0.01;
+      }
+      break;
+
+    case 'float':
+      controls.autoRotate = true;
+      for (const mesh of items) {
+        const ud = mesh.userData;
+        const wave = Math.sin(t * ud.speed + ud.phase) * 0.4;
+        mesh.position.set(
+          ud.r * Math.sin(ud.basePhi) * Math.cos(ud.baseTheta),
+          ud.r * Math.cos(ud.basePhi) + wave,
+          ud.r * Math.sin(ud.basePhi) * Math.sin(ud.baseTheta)
+        );
+        mesh.rotation.x = Math.sin(t * ud.speed + ud.phase) * 0.3;
+        mesh.rotation.y = Math.cos(t * ud.speed * 0.7 + ud.phase) * 0.3;
+      }
+      break;
+
+    case 'explode':
+      controls.autoRotate = false;
+      for (const mesh of items) {
+        const ud = mesh.userData;
+        const dist = ud.r * (1 + Math.sin(t * ud.speed + ud.phase) * 0.8);
+        mesh.position.set(
+          dist * Math.sin(ud.basePhi) * Math.cos(ud.baseTheta),
+          dist * Math.cos(ud.basePhi),
+          dist * Math.sin(ud.basePhi) * Math.sin(ud.baseTheta)
+        );
+        mesh.rotation.x += 0.02;
+        mesh.rotation.y += 0.03;
+        mesh.scale.setScalar(ud.origScale * (0.5 + Math.abs(Math.sin(t * ud.speed + ud.phase))));
+      }
+      break;
+
+    case 'wave':
+      controls.autoRotate = true;
+      for (let i = 0; i < items.length; i++) {
+        const mesh = items[i];
+        const ud = mesh.userData;
+        const offset = i * 0.1;
+        const wave = Math.sin(t * 1.5 + offset) * 1.2;
+        const r2 = ud.r + wave * 0.5;
+        mesh.position.set(
+          r2 * Math.sin(ud.basePhi + Math.sin(t * 0.8 + offset) * 0.2) * Math.cos(ud.baseTheta + t * 0.05),
+          r2 * Math.cos(ud.basePhi + Math.sin(t * 0.8 + offset) * 0.2),
+          r2 * Math.sin(ud.basePhi + Math.sin(t * 0.8 + offset) * 0.2) * Math.sin(ud.baseTheta + t * 0.05)
+        );
+        mesh.rotation.x = Math.sin(t + offset) * 0.5;
+        mesh.rotation.y = Math.cos(t * 0.7 + offset) * 0.5;
+      }
+      break;
+  }
+
+  center.rotation.x += 0.003;
+  center.rotation.y += 0.005;
+  wireSphere.rotation.x += 0.0005;
+  wireSphere.rotation.y += 0.0008;
+  ring.rotation.z += 0.002;
+  ring2.rotation.x += 0.001;
+  ring2.rotation.y += 0.002;
+
+  controls.update();
+  renderer.render(scene, camera);
+}
+
+animate();
+
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+</script>
+</body>
+</html>

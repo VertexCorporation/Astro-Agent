@@ -401,7 +401,7 @@ export class EngineSession {
 	private _baseSystemPromptOptions!: BuildSystemPromptOptions;
 
 	private _noMemory = true;
-	// J.A.R.V.I.S. Fractal Context Engine
+	// Astro Fractal Context Engine
 	private _hybridMemory: HybridMemorySystem = new HybridMemorySystem();
 
 	constructor(config: EngineSessionConfig) {
@@ -432,7 +432,7 @@ export class EngineSession {
 			includeAllExtensionTools: true,
 		});
 
-		// J.A.R.V.I.S. Sentinel Probes — Start file watcher for pre-cognition error detection
+		// Astro Sentinel Probes — Start file watcher for pre-cognition error detection
 		try {
 			OmegaKernel.getInstance().watchSentinelProbes(this._cwd);
 		} catch {
@@ -1287,7 +1287,7 @@ export class EngineSession {
 		// Memory system instructions (Claude Fable 5 inspired)
 		const memoryInstructions = buildMemoryInstructions();
 
-		// J.A.R.V.I.S. Fractal Context Engine: Build compact Merkle Tree codebase skeleton
+		// Astro Fractal Context Engine: Build compact Merkle Tree codebase skeleton
 		let fractalContextSummary: string | undefined;
 		try {
 			const treeSummary = this._hybridMemory.getFractalTreeSummary(this._cwd);
@@ -1624,17 +1624,17 @@ export class EngineSession {
 			this._applyFastThinkingGuard(expandedText);
 			this._applyAutoThinkingLevel(expandedText);
 
-			// J.A.R.V.I.S. Sentinel Probes — Pre-Cognition: inject known compilation errors
+			// Astro Sentinel Probes — Pre-Cognition: inject known compilation errors
 			try {
 				const kernel = OmegaKernel.getInstance();
 				if (kernel.sentinelIssues.length > 0) {
 					const issueReport = kernel.sentinelIssues
 						.map((i) => `File: ${i.file}\n  Errors:\n${i.errors.map((e) => `    - ${e}`).join("\n")}`)
 						.join("\n\n");
-					const sentinelContext = `\n\n[J.A.R.V.I.S. Sentinel Pre-Cognition]: The following TypeScript/build errors were detected in the background:\n${issueReport}\n\nPlease fix these errors as part of your response.`;
+					const sentinelContext = `\n\n[Astro Sentinel Pre-Cognition]: The following TypeScript/build errors were detected in the background:\n${issueReport}\n\nPlease fix these errors as part of your response.`;
 					expandedText = expandedText + sentinelContext;
 					console.log(
-						`[J.A.R.V.I.S. Sentinel] 🔮 Pre-cognition hatalar prompt'a eklendi. (${kernel.sentinelIssues.length} sorun)`,
+						`[Astro Sentinel] 🔮 Pre-cognition hatalar prompt'a eklendi. (${kernel.sentinelIssues.length} sorun)`,
 					);
 					kernel.sentinelIssues = [];
 				}
@@ -1688,7 +1688,7 @@ export class EngineSession {
 			this._recordAffectiveUserInput(expandedText);
 
 			// ──────────────────────────────────────────────────────────────────────
-			// J.A.R.V.I.S. Dynamic Neural Resonance — Emotion-Driven Temperature
+			// Astro Dynamic Neural Resonance — Emotion-Driven Temperature
 			// ──────────────────────────────────────────────────────────────────────
 			try {
 				const affectState = this.settingsManager.getAffectiveSettings();
@@ -1701,19 +1701,19 @@ export class EngineSession {
 						// High stress → Hyper-logical, zero hallucination mode
 						dynamicTemp = 0.01;
 						console.log(
-							`[J.A.R.V.I.S. Neural Resonance] 🧊 Stres yüksek (${stressLevel.toFixed(2)}). Hyper-logic modu aktif. Temperature → ${dynamicTemp}`,
+							`[Astro Neural Resonance] 🧊 Stres yüksek (${stressLevel.toFixed(2)}). Hyper-logic modu aktif. Temperature → ${dynamicTemp}`,
 						);
 					} else if (creativityLevel > 0.8) {
 						// High curiosity → Creative Tony Stark mode
 						dynamicTemp = 0.8;
 						console.log(
-							`[J.A.R.V.I.S. Neural Resonance] ⚡ Merak yüksek (${creativityLevel.toFixed(2)}). Tony Stark yaratıcı modu aktif. Temperature → ${dynamicTemp}`,
+							`[Astro Neural Resonance] ⚡ Merak yüksek (${creativityLevel.toFixed(2)}). Tony Stark yaratıcı modu aktif. Temperature → ${dynamicTemp}`,
 						);
 					} else {
 						// Interpolate: low curiosity → 0.1, high curiosity → 0.6
 						dynamicTemp = 0.1 + creativityLevel * 0.5;
 						console.log(
-							`[J.A.R.V.I.S. Neural Resonance] 🎯 Dengeli mod. Temperature → ${dynamicTemp.toFixed(2)}`,
+							`[Astro Neural Resonance] 🎯 Dengeli mod. Temperature → ${dynamicTemp.toFixed(2)}`,
 						);
 					}
 					this.engine.state.temperature = dynamicTemp;

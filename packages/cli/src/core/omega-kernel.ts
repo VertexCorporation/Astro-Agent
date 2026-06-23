@@ -125,7 +125,7 @@ export class OmegaKernel {
 	public patchMemory: PatchMemoryItem[] = [];
 	public memoryHit = false;
 
-	// J.A.R.V.I.S. Sentinel Probes
+	// Astro Sentinel Probes
 	public sentinelIssues: Array<{ file: string; errors: string[] }> = [];
 	private _sentinelWatcher: ReturnType<typeof fs.watch> | null = null;
 	private _sentinelDebounce: ReturnType<typeof setTimeout> | null = null;
@@ -552,7 +552,7 @@ export class OmegaKernel {
 	}
 
 	/**
-	 * J.A.R.V.I.S. Sentinel Probes: Starts a file watcher on the workspace.
+	 * Astro Sentinel Probes: Starts a file watcher on the workspace.
 	 * When a TS/JS file changes, runs a debounced compilation check to find issues.
 	 * Issues are stored in this.sentinelIssues for pre-cognition suggestions.
 	 */
@@ -561,7 +561,7 @@ export class OmegaKernel {
 		this.stopSentinelProbes();
 		this._sentinelCwd = cwd;
 
-		console.log(`[J.A.R.V.I.S. Sentinel] 👁️ Sinir uçları yerleştiriliyor: ${cwd}`);
+		console.log(`[Astro Sentinel] 👁️ Sinir uçları yerleştiriliyor: ${cwd}`);
 		try {
 			this._sentinelWatcher = fs.watch(cwd, { recursive: true }, (_event, filename) => {
 				if (!filename) return;
@@ -576,7 +576,7 @@ export class OmegaKernel {
 						if (result.status === "failed" && result.errorHighlights && result.errorHighlights.length > 0) {
 							this.sentinelIssues = [{ file: filename, errors: result.errorHighlights }];
 							console.log(
-								`[J.A.R.V.I.S. Sentinel] ⚠️ Hata algılandı: ${filename} — ${result.errorHighlights[0]}`,
+								`[Astro Sentinel] ⚠️ Hata algılandı: ${filename} — ${result.errorHighlights[0]}`,
 							);
 						} else {
 							this.sentinelIssues = [];
@@ -587,12 +587,12 @@ export class OmegaKernel {
 				}, 1500);
 			});
 		} catch (e) {
-			console.error("[J.A.R.V.I.S. Sentinel] Watcher başlatılamadı:", e);
+			console.error("[Astro Sentinel] Watcher başlatılamadı:", e);
 		}
 	}
 
 	/**
-	 * J.A.R.V.I.S. Sentinel Probes: Stops the file watcher.
+	 * Astro Sentinel Probes: Stops the file watcher.
 	 */
 	public stopSentinelProbes(): void {
 		if (this._sentinelDebounce) {
@@ -606,7 +606,7 @@ export class OmegaKernel {
 			this._sentinelWatcher = null;
 		}
 		this._sentinelCwd = null;
-		console.log("[J.A.R.V.I.S. Sentinel] 🔴 Sinir uçları geri çekildi.");
+		console.log("[Astro Sentinel] 🔴 Sinir uçları geri çekildi.");
 	}
 
 	/**
@@ -616,7 +616,7 @@ export class OmegaKernel {
 		branches: Array<{ strategy: string; cwd: string; score: number }>,
 	): Promise<Array<{ strategy: string; cwd: string; score: number; result: VerificationResult }>> {
 		console.log(
-			`[J.A.R.V.I.S. Verification Oracle] Compiling ${branches.length} speculative branches concurrently...`,
+			`[Astro Verification Oracle] Compiling ${branches.length} speculative branches concurrently...`,
 		);
 		const verificationPromises = branches.map(async (branch) => {
 			const result = await this.verifyTask(branch.cwd);
@@ -632,7 +632,7 @@ export class OmegaKernel {
 	 * Spawns speculative execution sandboxes and returns the path to the best verified workspace.
 	 */
 	public async runSpeculativeExecution(_userRequest: string, cwd: string): Promise<string | null> {
-		console.log("[J.A.R.V.I.S. Speculative Execution] Initializing parallel universe simulations...");
+		console.log("[Astro Speculative Execution] Initializing parallel universe simulations...");
 		const strategies = [
 			{ name: "aggressive_refactor", score: 85 },
 			{ name: "minimal_patch", score: 95 },
@@ -678,7 +678,7 @@ export class OmegaKernel {
 					score: strat.score,
 				});
 			} catch (e) {
-				console.error(`[J.A.R.V.I.S. Speculative Engine] Failed to initialize sandbox for ${strat.name}:`, e);
+				console.error(`[Astro Speculative Engine] Failed to initialize sandbox for ${strat.name}:`, e);
 			}
 		}
 
@@ -694,7 +694,7 @@ export class OmegaKernel {
 			passed.sort((a, b) => b.score - a.score);
 			const winner = passed[0];
 			console.log(
-				`[J.A.R.V.I.S.] Strategy '${winner.strategy}' won with score ${winner.score}. Merging back to workspace...`,
+				`[Astro] Strategy '${winner.strategy}' won with score ${winner.score}. Merging back to workspace...`,
 			);
 
 			// In a real run, we would copy the changed files back to the primary workspace.
@@ -731,7 +731,7 @@ export class OmegaKernel {
 		}
 
 		console.log(
-			"[J.A.R.V.I.S. Speculative Engine] Warning: All parallel universes failed compilation. Reverting to primary workspace.",
+			"[Astro Speculative Engine] Warning: All parallel universes failed compilation. Reverting to primary workspace.",
 		);
 		return null;
 	}

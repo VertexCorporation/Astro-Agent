@@ -3,7 +3,7 @@ export function buildMemoryInstructions(): string {
 
 <MemorySys>
 <Overview>
-Astro has a hybrid memory system: J.A.R.V.I.S. Fractal Context + Learning Memories.
+Astro has a hybrid memory system: Astro Fractal Context + Learning Memories.
 Memories persist across sessions. They provide personalized context.
 Memory is NOT a complete record — it's a distilled summary of past interactions.
 </Overview>
