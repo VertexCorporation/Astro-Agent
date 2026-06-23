@@ -2009,19 +2009,20 @@ export class InteractiveMode {
 			if (scratchConfig) {
 				this.settingsManager.setMcpServer("scratch", scratchConfig);
 			}
-			// if (!existingMcpServers.blender) {
-			// 	this.settingsManager.setMcpServer("blender", this.getBlenderMcpConfig());
-			// }
+			// Remove stale blender config to prevent auto-connect on startup
+			if (existingMcpServers.blender) {
+				this.settingsManager.removeMcpServer("blender");
+			}
 			await this.settingsManager.flush();
 			const tools = await this.session.connectConfiguredMcpServers();
 			const mcpToolCount = tools.filter((tool) => tool.startsWith("scratch_") || tool.startsWith("blender_")).length;
 			if (mcpToolCount > 0) {
-				this.showStatus(`MCP otomatik baglandi. ${mcpToolCount} tool aktif.`);
+				this.showStatus(`MCP auto-connected. ${mcpToolCount} tools active.`);
 			}
 			this.footer.setSession(this.session);
 			this.ui.requestRender();
 		} catch (error) {
-			this.showWarning(`MCP otomatik bağlanamadı: ${error instanceof Error ? error.message : String(error)}`);
+			this.showWarning(`MCP auto-connect failed: ${error instanceof Error ? error.message : String(error)}`);
 		}
 	}
 

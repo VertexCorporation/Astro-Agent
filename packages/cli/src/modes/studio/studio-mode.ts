@@ -195,7 +195,6 @@ export class StudioMode {
 			if (action?.action === "connect_builtin") {
 				if (name === "blender") {
 					const cfg = this.getBlenderMcpConfig(action?.port);
-					cfg.autoStart = true;
 					await this.activateMcpServer("blender", cfg);
 					return;
 				}
