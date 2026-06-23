@@ -22,10 +22,10 @@ const JSONISH_BLOCK = /^\s*[[{][\s\S]*[\]}]\s*$/;
 // Long timestamp/date noise common in log files
 const LOG_TIMESTAMP = /\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?/g;
 
-const REPEATED_LOG_LINE_THRESHOLD = 3;
-const CAPSULE_MIN_CHARS = 4_000;
-const CAPSULE_MAX_RAW_CHARS = 2_000;
-const CAPSULE_MAX_LINES = 30;
+const REPEATED_LOG_LINE_THRESHOLD = 2;
+const CAPSULE_MIN_CHARS = 2_000;
+const CAPSULE_MAX_RAW_CHARS = 1_000;
+const CAPSULE_MAX_LINES = 15;
 
 // ── Tool block trimming ────────────────────────────────────────────────────────
 function trimLongToolBlock(block: string): string {
@@ -160,17 +160,20 @@ export function compressCognitiveVector(text: string): string {
 	// 1. Remove verbose common phrases & convert to high-density semantic representations
 	const contractions: [RegExp, string][] = [
 		[
-			/\b(please |could you |would you mind |can you |help me to |i want to |i need to |please help me write |write a function that)\b/gi,
+			/\b(please |could you |would you mind |can you |help me to |i want to |i need to |please help me write |write a function that|lütfen |yapabilir misin |yardımcı olur musun |istiyorum |gerekiyor)\b/gi,
 			"",
 		],
-		[/\b(make sure that |make sure to |ensure that |be careful to |keep in mind that)\b/gi, "ensure:"],
-		[/\b(for example|such as|like)\b/gi, "e.g."],
-		[/\b(in order to|so that we can)\b/gi, "to"],
-		[/\b(as soon as possible|at your earliest convenience)\b/gi, "ASAP"],
-		[/\b(in the case of|in terms of|with respect to)\b/gi, "re:"],
-		[/\b(is responsible for|has the responsibility of)\b/gi, "handles"],
-		[/\b(utilize|utilizing|use of|make use of)\b/gi, "use"],
-		[/\b(implement|implementation of|create|creating)\b/gi, "build"],
+		[
+			/\b(make sure that |make sure to |ensure that |be careful to |keep in mind that|emin ol |dikkat et |unutma)\b/gi,
+			"ensure:",
+		],
+		[/\b(for example|such as|like|örneğin|mesela|gibi)\b/gi, "e.g."],
+		[/\b(in order to|so that we can|amacıyla|için)\b/gi, "to"],
+		[/\b(as soon as possible|at your earliest convenience|en kısa sürede|hemen)\b/gi, "ASAP"],
+		[/\b(in the case of|in terms of|with respect to|durumunda|açısından)\b/gi, "re:"],
+		[/\b(is responsible for|has the responsibility of|sorumludur|sorumlu)\b/gi, "handles"],
+		[/\b(utilize|utilizing|use of|make use of|kullan|kullanarak|kullanımı)\b/gi, "use"],
+		[/\b(implement|implementation of|create|creating|oluştur|yarat|uygula)\b/gi, "build"],
 	];
 
 	for (const [pattern, repl] of contractions) {
@@ -389,7 +392,7 @@ export function optimizePromptForIntentCapsule(text: string): PromptCapsuleResul
 }
 
 // ── Local/Ollama aggressive trim ──────────────────────────────────────────────
-export function optimizeForLocalModel(text: string, maxChars = 4_000): TokenOptimizeResult {
+export function optimizeForLocalModel(text: string, maxChars = 2_000): TokenOptimizeResult {
 	// was 6000
 	const base = optimizePromptText(text);
 	const working = base.optimizedText;

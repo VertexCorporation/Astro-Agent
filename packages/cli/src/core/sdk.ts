@@ -278,8 +278,6 @@ export async function createEngineSession(
 		"edit",
 		"write",
 		"codebase_index",
-		"browser_tabs",
-		"browser_page",
 		"ask_question",
 		"invoke_subagent",
 		"manage_task",

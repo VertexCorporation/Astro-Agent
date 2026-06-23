@@ -54,6 +54,7 @@ export interface UncertaintyRouterResult {
 	recommendedThinkLevel: "low" | "medium" | "high" | "apex";
 	recommendedModelTier: "local" | "cloud" | "hybrid";
 	reason: string;
+	speculativeBranching?: boolean;
 }
 
 export interface VerificationResult {
@@ -123,6 +124,12 @@ export class OmegaKernel {
 	public repoGraph: RepoGraph = { nodes: new Map(), edges: [], status: "missing" };
 	public patchMemory: PatchMemoryItem[] = [];
 	public memoryHit = false;
+
+	// J.A.R.V.I.S. Sentinel Probes
+	public sentinelIssues: Array<{ file: string; errors: string[] }> = [];
+	private _sentinelWatcher: ReturnType<typeof fs.watch> | null = null;
+	private _sentinelDebounce: ReturnType<typeof setTimeout> | null = null;
+	private _sentinelCwd: string | null = null;
 
 	private constructor() {
 		this.loadPatchMemory();
@@ -315,6 +322,7 @@ export class OmegaKernel {
 			recommendedThinkLevel: thinkLevel,
 			recommendedModelTier: modelTier,
 			reason,
+			speculativeBranching: entropy > 0.6,
 		};
 	}
 
@@ -540,6 +548,191 @@ export class OmegaKernel {
 				return mem;
 			}
 		}
+		return null;
+	}
+
+	/**
+	 * J.A.R.V.I.S. Sentinel Probes: Starts a file watcher on the workspace.
+	 * When a TS/JS file changes, runs a debounced compilation check to find issues.
+	 * Issues are stored in this.sentinelIssues for pre-cognition suggestions.
+	 */
+	public watchSentinelProbes(cwd: string): void {
+		if (this._sentinelWatcher && this._sentinelCwd === cwd) return;
+		this.stopSentinelProbes();
+		this._sentinelCwd = cwd;
+
+		console.log(`[J.A.R.V.I.S. Sentinel] 👁️ Sinir uçları yerleştiriliyor: ${cwd}`);
+		try {
+			this._sentinelWatcher = fs.watch(cwd, { recursive: true }, (_event, filename) => {
+				if (!filename) return;
+				if (!filename.endsWith(".ts") && !filename.endsWith(".js")) return;
+				if (filename.includes("node_modules") || filename.includes(".git")) return;
+
+				// Debounce the check
+				if (this._sentinelDebounce) clearTimeout(this._sentinelDebounce);
+				this._sentinelDebounce = setTimeout(async () => {
+					try {
+						const result = await this.verifyTask(cwd);
+						if (result.status === "failed" && result.errorHighlights && result.errorHighlights.length > 0) {
+							this.sentinelIssues = [{ file: filename, errors: result.errorHighlights }];
+							console.log(
+								`[J.A.R.V.I.S. Sentinel] ⚠️ Hata algılandı: ${filename} — ${result.errorHighlights[0]}`,
+							);
+						} else {
+							this.sentinelIssues = [];
+						}
+					} catch {
+						// Silently ignore verification failures
+					}
+				}, 1500);
+			});
+		} catch (e) {
+			console.error("[J.A.R.V.I.S. Sentinel] Watcher başlatılamadı:", e);
+		}
+	}
+
+	/**
+	 * J.A.R.V.I.S. Sentinel Probes: Stops the file watcher.
+	 */
+	public stopSentinelProbes(): void {
+		if (this._sentinelDebounce) {
+			clearTimeout(this._sentinelDebounce);
+			this._sentinelDebounce = null;
+		}
+		if (this._sentinelWatcher) {
+			try {
+				this._sentinelWatcher.close();
+			} catch {}
+			this._sentinelWatcher = null;
+		}
+		this._sentinelCwd = null;
+		console.log("[J.A.R.V.I.S. Sentinel] 🔴 Sinir uçları geri çekildi.");
+	}
+
+	/**
+	 * Run verification concurrently on multiple sandboxes (Promise.all / Promise.any logic)
+	 */
+	public async verifyTaskSpeculative(
+		branches: Array<{ strategy: string; cwd: string; score: number }>,
+	): Promise<Array<{ strategy: string; cwd: string; score: number; result: VerificationResult }>> {
+		console.log(
+			`[J.A.R.V.I.S. Verification Oracle] Compiling ${branches.length} speculative branches concurrently...`,
+		);
+		const verificationPromises = branches.map(async (branch) => {
+			const result = await this.verifyTask(branch.cwd);
+			return {
+				...branch,
+				result,
+			};
+		});
+		return Promise.all(verificationPromises);
+	}
+
+	/**
+	 * Spawns speculative execution sandboxes and returns the path to the best verified workspace.
+	 */
+	public async runSpeculativeExecution(_userRequest: string, cwd: string): Promise<string | null> {
+		console.log("[J.A.R.V.I.S. Speculative Execution] Initializing parallel universe simulations...");
+		const strategies = [
+			{ name: "aggressive_refactor", score: 85 },
+			{ name: "minimal_patch", score: 95 },
+			{ name: "alternative_library", score: 75 },
+		];
+
+		const branches: Array<{ strategy: string; cwd: string; score: number }> = [];
+
+		for (const strat of strategies) {
+			try {
+				const sandboxCwd = path.join(os.tmpdir(), `mooncode-spec-${strat.name}-${Date.now()}`);
+				fs.mkdirSync(sandboxCwd, { recursive: true });
+
+				// Recursive copy function
+				const copyDir = (srcDir: string, destDir: string) => {
+					const items = fs.readdirSync(srcDir);
+					for (const item of items) {
+						if (item === "node_modules" || item === ".git" || item === "dist" || item.includes("mooncode-spec"))
+							continue;
+						const srcPath = path.join(srcDir, item);
+						const destPath = path.join(destDir, item);
+						const stat = fs.statSync(srcPath);
+						if (stat.isDirectory()) {
+							fs.mkdirSync(destPath, { recursive: true });
+							copyDir(srcPath, destPath);
+						} else {
+							fs.copyFileSync(srcPath, destPath);
+						}
+					}
+				};
+
+				copyDir(cwd, sandboxCwd);
+
+				// Create junction for node_modules to avoid copying it
+				const srcNodeModules = path.join(cwd, "node_modules");
+				if (fs.existsSync(srcNodeModules)) {
+					fs.symlinkSync(srcNodeModules, path.join(sandboxCwd, "node_modules"), "junction");
+				}
+
+				branches.push({
+					strategy: strat.name,
+					cwd: sandboxCwd,
+					score: strat.score,
+				});
+			} catch (e) {
+				console.error(`[J.A.R.V.I.S. Speculative Engine] Failed to initialize sandbox for ${strat.name}:`, e);
+			}
+		}
+
+		if (branches.length === 0) {
+			return null;
+		}
+
+		const verifiedBranches = await this.verifyTaskSpeculative(branches);
+		const passed = verifiedBranches.filter((b) => b.result.status === "passed");
+
+		if (passed.length > 0) {
+			// Sort by score descending to pick the best verified strategy
+			passed.sort((a, b) => b.score - a.score);
+			const winner = passed[0];
+			console.log(
+				`[J.A.R.V.I.S.] Strategy '${winner.strategy}' won with score ${winner.score}. Merging back to workspace...`,
+			);
+
+			// In a real run, we would copy the changed files back to the primary workspace.
+			// Let's implement copy back for modified files!
+			// For simplicity and speed, we copy non-node_modules/non-git files back.
+			const copyBack = (srcDir: string, destDir: string) => {
+				const items = fs.readdirSync(srcDir);
+				for (const item of items) {
+					if (item === "node_modules" || item === ".git" || item === "dist") continue;
+					const srcPath = path.join(srcDir, item);
+					const destPath = path.join(destDir, item);
+					const stat = fs.statSync(srcPath);
+					if (stat.isDirectory()) {
+						if (!fs.existsSync(destPath)) {
+							fs.mkdirSync(destPath, { recursive: true });
+						}
+						copyBack(srcPath, destPath);
+					} else {
+						// Only copy if file was modified (e.g. content differs)
+						let shouldCopy = true;
+						if (fs.existsSync(destPath)) {
+							const srcBuf = fs.readFileSync(srcPath);
+							const destBuf = fs.readFileSync(destPath);
+							shouldCopy = !srcBuf.equals(destBuf);
+						}
+						if (shouldCopy) {
+							fs.copyFileSync(srcPath, destPath);
+						}
+					}
+				}
+			};
+			copyBack(winner.cwd, cwd);
+			return winner.cwd;
+		}
+
+		console.log(
+			"[J.A.R.V.I.S. Speculative Engine] Warning: All parallel universes failed compilation. Reverting to primary workspace.",
+		);
 		return null;
 	}
 }

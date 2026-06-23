@@ -75,6 +75,7 @@ function createMutableEngineState(
 		systemPrompt: initialState?.systemPrompt ?? "",
 		model: initialState?.model ?? DEFAULT_MODEL,
 		thinkingLevel: initialState?.thinkingLevel ?? "off",
+		temperature: initialState?.temperature,
 		get tools() {
 			return tools;
 		},
@@ -415,6 +416,7 @@ export class Engine {
 		let skipInitialSteeringPoll = options.skipInitialSteeringPoll === true;
 		return {
 			model: this._state.model,
+			temperature: this._state.temperature,
 			reasoning: this._state.thinkingLevel === "off" ? undefined : this._state.thinkingLevel,
 			sessionId: this.sessionId,
 			onPayload: this.onPayload,

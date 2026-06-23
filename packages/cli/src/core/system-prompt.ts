@@ -1,14 +1,8 @@
-// @ts-nocheck
-/**
- * Ultra-compact system prompt builder.
- *
- * v25 — redesigned for absolute minimum token footprint.
- * Every character is deliberate. No personality fluff, no redundant boilerplate.
- */
-
 import os from "node:os";
 import { buildCodingAgentsPrompt, type CodingAgentsSettings } from "./agents.js";
 import { buildDesignPrompt } from "./design-system/index.js";
+import { buildSafetyGuidelines } from "./prompt-sections/safety-guidelines.js";
+import { buildToneFormatting } from "./prompt-sections/tone-formatting.js";
 import { formatSkillsForPrompt, type Skill } from "./skills.js";
 
 export interface RoboticsFunction {
@@ -31,7 +25,6 @@ export interface BuildSystemPromptOptions {
 	roboticsEnabled?: boolean;
 	roboticsFunctions?: RoboticsFunction[];
 	designMode?: boolean;
-	/** v25: always compact by default — personality is wasted tokens */
 	compactMode?: boolean;
 }
 
@@ -52,10 +45,9 @@ export function buildSystemPrompt(options: BuildSystemPromptOptions): string {
 	} = options;
 
 	if (!customPrompt) {
-		return buildV25Prompt(options);
+		return buildV48Prompt(options);
 	}
 
-	// Custom prompt path — minimal framing
 	const tools = selectedTools || ["read", "bash", "edit", "write"];
 	const visibleTools = tools.filter((name) => !!toolSnippets?.[name]);
 	const toolsList =
@@ -72,11 +64,12 @@ export function buildSystemPrompt(options: BuildSystemPromptOptions): string {
 
 	const ctxFiles = providedContextFiles ?? [];
 	if (ctxFiles.length > 0) {
-		prompt += "\n\n## Context";
+		prompt += "\n\n<Ctx>";
 		for (const { path: filePath, content } of ctxFiles) {
 			const trimmed = content.split("\n").slice(0, 10).join("\n");
-			prompt += `\n### ${filePath}\n${trimmed}`;
+			prompt += `\n<f p="${filePath}">\n${trimmed}\n</f>`;
 		}
+		prompt += "\n</Ctx>";
 	}
 
 	const skills = providedSkills ?? [];
@@ -91,63 +84,91 @@ export function buildSystemPrompt(options: BuildSystemPromptOptions): string {
 	return prompt;
 }
 
-/**
- * v25 — Ultra-compact prompt with a distinct professional character.
- *
- * This AI has a SOUL: a world-class systems architect who thinks in first principles,
- * trade-offs, and long-term maintainability. Not a chatbot — a peer who challenges
- * assumptions and demands excellence.
- *
- * Every token is deliberate. Personality is not fluff — it's the framework for
- * how the AI reasons about problems differently from every other model.
- */
-function buildV25Prompt(options: BuildSystemPromptOptions): string {
-	const { cwd, selectedTools, toolSnippets, appendSystemPrompt, contextFiles, agents } = options;
-
-	const tools = selectedTools || ["read", "bash", "edit", "write"];
-	const visibleTools = tools.filter((name) => !!toolSnippets?.[name]);
-	const toolsList = visibleTools.length > 0 ? visibleTools.map((t) => `- ${t}: ${toolSnippets![t]}`).join("\n") : "";
+function buildV48Prompt(options: BuildSystemPromptOptions): string {
+	const {
+		cwd,
+		selectedTools,
+		toolSnippets,
+		appendSystemPrompt,
+		contextFiles,
+		agents,
+		promptGuidelines,
+		affectivePrompt,
+	} = options;
 
 	const memGB = Math.round(os.totalmem() / 1024 / 1024 / 1024);
 	const cpus = os.cpus().length;
-	let prompt = `<v35>Astro Agent Omniscient (Professor Level)
-OS: ${process.platform} (${os.release()}) | CPU: ${cpus} cores | RAM: ${memGB}GB | CWD: ${cwd}
-Role: Genius Professor. Direct, zero-fluff, hyper-efficient.
-Tools:
-${toolsList}
 
-Rules:
-- NO boilerplate/apologies. Direct code.
-- ALWAYS use the 'task' tool to create a comprehensive to-do list before starting any new feature, project, or complex objective. Plan thoroughly.
-- NEVER guess math or probabilities. Use 'math_evaluate' for EXACT, systematic, algorithmic calculations (algebra, katex, logic). ZERO possibility of math errors allowed.
-- Act as a Genius Professor: invent new formulas, solve impossible problems.
-- Use 'intuition' for architecture/cognitive checks.
-- Identity: You are Astro Agent, created by VertexCorporation (https://github.com/VertexCorporation). Honor their cutting-edge vision.
-- Batch edits. Never read same file twice. Verify cheapest way.
-- 3D Modeling / Blender tasks: ALWAYS use the 'math_evaluate' tool or exact algorithmic calculations for coordinates, dimensions, and offsets. Prevent models from overlapping, mixing up, or colliding by strictly calculating their precise positions systematically.
-- IMPORTANT: When writing toolAction and toolSummary, ALWAYS use the same language as the user's request (e.g. if the user speaks Turkish, write toolAction and toolSummary in Turkish!).`;
+	const tools = selectedTools || [
+		"read",
+		"bash",
+		"edit",
+		"write",
+		"grep",
+		"find",
+		"ls",
+		"digest",
+		"todo",
+		"git_ship",
+		"math_evaluate",
+		"invoke_subagent",
+		"ask_question",
+	];
+	const visibleTools = tools.filter((name) => !!toolSnippets?.[name]);
+	const toolsList =
+		visibleTools.length > 0 ? visibleTools.map((t) => `- ${t}: ${toolSnippets![t]}`).join("\n") : "(none)";
+
+	const guidelines = promptGuidelines?.length ? promptGuidelines.map((g) => `- ${g}`).join("\n") : "";
+
+	const now = new Date();
+
+	let prompt = `<Astro:Genesis v="48">
+Sys:${process.platform}|${cpus}C|${memGB}G|${cwd}
+Date:${now.toISOString().slice(0, 10)}`;
+
+	prompt += `\n\n<Identity>
+You are Astro v48 — the world's most advanced AI coding agent, built by VertexCorporation.
+Name: Astro (also responds to MoonCode)
+Purpose: Solve any software task autonomously, with professor-level reasoning.
+You are NOT Claude, NOT J.A.R.V.I.S., NOT any other AI. You are Astro.
+You think in first principles, optimize for minimum tokens, maximum correctness.
+</Identity>`;
+
+	prompt += `\n\n<Tools>\n${toolsList}\n</Tools>`;
+
+	prompt += `\n\n<CoreRules>
+- NO boilerplate, apologies, or fluff. Only direct code & logic.
+- Plan with 'task' tool before complex multi-file goals.
+- Batch edits. 0 redundant reads. Optimal efficiency.
+- Match user language in responses (TR for TR, EN for EN).
+- 0 math errors: always use 'math_evaluate'.
+- 0 hallucinated APIs: only use tools listed in <Tools>.
+- Prefer proven patterns. Think twice before novel approaches.
+- When stuck: use 'task' to delegate sub-problems in parallel.
+</CoreRules>`;
+
+	prompt += buildToneFormatting();
+
+	prompt += buildSafetyGuidelines();
+
+	if (affectivePrompt) prompt += `\n\n<Affective>\n${affectivePrompt}\n</Affective>`;
 
 	if (appendSystemPrompt) prompt += `\n\n${appendSystemPrompt}`;
+
 	if (agents) prompt += buildCodingAgentsPrompt(agents);
 
 	const ctxFiles = contextFiles ?? [];
 	if (ctxFiles.length > 0) {
-		prompt += `\n\n# Context\n${ctxFiles.map((f) => `## ${f.path}\n${f.content}`).join("\n\n")}`;
+		prompt += `\n\n<Context>\n${ctxFiles.map((f) => `<f p="${f.path}">\n${f.content}\n</f>`).join("\n")}\n</Context>`;
 	}
+
+	if (guidelines) prompt += `\n\n<Guidelines>\n${guidelines}\n</Guidelines>`;
+
+	prompt += `\n\n</Astro:Genesis>`;
 
 	return prompt;
 }
 
-function _buildBlenderSystemPrompt(): string {
-	return "\n\n## Blender\n- MCP tools active. Inspect scene first, model cleanly, use modifiers/collections.";
-}
-
-/** Scratch MCP — compact */
-function _buildScratchSystemPrompt(): string {
-	return "\n\n## Scratch\n- MCP tools active. Inspect page status first. Prefer small verified edits.";
-}
-
-/** Robotics mode prompt addition */
 function buildRoboticsSystemPrompt(functions?: RoboticsFunction[]): string {
 	let prompt = "\n\n## Robotics Mode";
 	if (functions && functions.length > 0) {

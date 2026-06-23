@@ -118,12 +118,6 @@ import type { EngineTool } from "moon-engine";
 import type { ToolDefinition } from "../extensions/types.js";
 import { createAskQuestionTool, createAskQuestionToolDefinition } from "./ask_question.js";
 import { type BashToolOptions, createBashTool, createBashToolDefinition } from "./bash.js";
-import {
-	createBrowserPageTool,
-	createBrowserPageToolDefinition,
-	createBrowserTabsTool,
-	createBrowserTabsToolDefinition,
-} from "./browser.js";
 import { createCodebaseIndexTool, createCodebaseIndexToolDefinition } from "./codebase_index.js";
 import { createDigestTool, createDigestToolDefinition } from "./digest.js";
 import {
@@ -163,8 +157,6 @@ export type ToolName =
 	| "semantic_search"
 	| "codebase_index"
 	| "git_ship"
-	| "browser_tabs"
-	| "browser_page"
 	| "ask_question"
 	| "invoke_subagent"
 	| "discord_list_guilds"
@@ -188,8 +180,6 @@ export const allToolNames: Set<ToolName> = new Set([
 	"semantic_search",
 	"codebase_index",
 	"git_ship",
-	"browser_tabs",
-	"browser_page",
 	"ask_question",
 	"invoke_subagent",
 	"discord_list_guilds",
@@ -362,8 +352,6 @@ export function createAllToolDefinitions(cwd: string, options?: ToolsOptions): R
 		semantic_search: createSemanticSearchToolDefinition(cwd),
 		codebase_index: createCodebaseIndexToolDefinition(cwd),
 		git_ship: createGitShipToolDefinition(cwd),
-		browser_tabs: createBrowserTabsToolDefinition(),
-		browser_page: createBrowserPageToolDefinition(),
 		ask_question: createAskQuestionToolDefinition(),
 		invoke_subagent: createInvokeSubagentToolDefinition(cwd),
 		snapshot: createSnapshotToolDefinition(cwd),
@@ -382,8 +370,6 @@ export function createCodingTools(cwd: string, options?: ToolsOptions): Tool[] {
 		createBashTool(cwd, options?.bash),
 		createEditTool(cwd, options?.edit),
 		createWriteTool(cwd, options?.write),
-		createBrowserTabsTool(),
-		createBrowserPageTool(options?.getModelVisionSupport),
 		createAskQuestionTool(),
 		createInvokeSubagentTool(cwd),
 		createTaskTool(),
@@ -415,8 +401,6 @@ export function createAllTools(cwd: string, options?: ToolsOptions): Record<Tool
 		semantic_search: createSemanticSearchTool(cwd),
 		codebase_index: createCodebaseIndexTool(cwd),
 		git_ship: createGitShipTool(cwd),
-		browser_tabs: createBrowserTabsTool(),
-		browser_page: createBrowserPageTool(options?.getModelVisionSupport),
 		ask_question: createAskQuestionTool(),
 		invoke_subagent: createInvokeSubagentTool(cwd),
 		discord_list_guilds: createDiscordListGuildsTool(options?.discord),

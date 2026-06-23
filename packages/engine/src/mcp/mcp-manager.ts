@@ -93,7 +93,8 @@ class HeaderStdioMcpClient {
 						/Telemetry disabled/.test(line) ||
 						/blender-mcp-telemetry/.test(line) ||
 						/Make sure the Blender addon is running before using/.test(line)
-					) continue;
+					)
+						continue;
 					// Yellow for real warnings
 					process.stderr.write(`\x1b[33m[MCP:${this.name}] ${line}\x1b[0m\n`);
 					continue;
@@ -102,7 +103,6 @@ class HeaderStdioMcpClient {
 				// Red for ERROR lines
 				if (/ - ERROR - /.test(line)) {
 					process.stderr.write(`\x1b[31m[MCP:${this.name}] \x1b[1m${line}\x1b[0m\n`);
-					continue;
 				}
 
 				// Any other unrecognized line — skip silently
@@ -140,7 +140,7 @@ class HeaderStdioMcpClient {
 	}
 
 	private write(message: any): void {
-		const body = Buffer.from(JSON.stringify(message) + "\n", "utf8");
+		const body = Buffer.from(`${JSON.stringify(message)}\n`, "utf8");
 		this.proc!.stdin.write(body);
 	}
 
@@ -156,7 +156,7 @@ class HeaderStdioMcpClient {
 			if (line) {
 				try {
 					this.handleMessage(JSON.parse(line));
-				} catch (e) {
+				} catch (_e) {
 					console.error(`[MCP:${this.name}] Failed to parse message: ${line}`);
 				}
 			}

@@ -57,7 +57,7 @@
 	"engines": {
 		"node": ">=20.0.0"
 	},
-	"version": "31.0.0",
+	"version": "48.0.0",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/vertexcorporation/Astro-Agent"

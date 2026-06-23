@@ -249,11 +249,11 @@ export function shouldCompact(contextTokens: number, contextWindow: number, sett
 	// - fallback:  never via ceiling, only via window-reserve boundary
 	let profileCeiling = Infinity;
 	if (settings.profile === "nuclear") {
-		profileCeiling = 1_000;
+		profileCeiling = 500;
 	} else if (settings.profile === "aggressive") {
-		profileCeiling = 2_500;
+		profileCeiling = 1_500;
 	} else if (settings.profile === "balanced" || !settings.profile) {
-		profileCeiling = 15_000;
+		profileCeiling = 8_000;
 	}
 
 	// Trigger at the safer of: reserved-output boundary or profile ceiling.
@@ -767,14 +767,12 @@ export async function compact(
 
 	// ULTRA-COMPACT (0 Token Mode)
 	const filesStr = Array.from(fileOps.values())
-		.map((f) => `- ${f.path} [${f.status}]`)
-		.join("\n");
-	const summary = `<summary>
-[Context cleared manually. 0-token compact.]
-${customInstructions ? `Custom Instructions: ${customInstructions}\n` : ""}
-Recent File Ops:
-${filesStr || "No files edited."}
-</summary>`;
+		.map((f) => ` ${f.path}(${f.status})`)
+		.join("");
+	const summary = `<sum>
+[0-token flush]
+${customInstructions ? `Focus:${customInstructions}\n` : ""}Files:${filesStr || "none"}
+</sum>`;
 
 	return { summary, firstKeptEntryId, tokensBefore };
 }

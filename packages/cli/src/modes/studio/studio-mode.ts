@@ -278,9 +278,9 @@ export class StudioMode {
 				: [];
 			const isBlenderConnected = clients.includes("blender");
 			const configured = this.runtime.services.settingsManager.getMcpServers();
-			const blenderConfig = configured["blender"];
+			const blenderConfig = configured.blender;
 			let blenderPort = "1050";
-			if (blenderConfig && blenderConfig.args) {
+			if (blenderConfig?.args) {
 				const portIdx = blenderConfig.args.indexOf("--port");
 				if (portIdx !== -1 && portIdx + 1 < blenderConfig.args.length) {
 					blenderPort = blenderConfig.args[portIdx + 1];

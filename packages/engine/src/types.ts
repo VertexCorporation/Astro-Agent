@@ -293,6 +293,8 @@ export interface EngineState {
 	model: Model<any>;
 	/** Requested reasoning level for future turns. */
 	thinkingLevel: ThinkingLevel;
+	/** Dynamic temperature override for model calls. */
+	temperature?: number;
 	/** Available tools. Assigning a new array copies the top-level array. */
 	set tools(tools: EngineTool<any>[]);
 	get tools(): EngineTool<any>[];

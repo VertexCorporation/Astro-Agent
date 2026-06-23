@@ -112,7 +112,7 @@ export class SwarmManager extends EventEmitter {
 
 		// Get top 5 most relevant context snippets
 		const ranked = vdb.search(taskDescription, 5);
-		const results = ranked.map((r) => r.content);
+		const results = ranked.map((r: any) => r.content);
 
 		auditManager.log({
 			component: "Swarm",
@@ -289,8 +289,8 @@ export class SwarmManager extends EventEmitter {
 		}
 
 		const text = message.content
-			.filter((part) => part.type === "text" || part.type === "thinking")
-			.map((part) => (part.type === "text" ? part.text : part.thinking))
+			.filter((part: any) => part.type === "text" || part.type === "thinking")
+			.map((part: any) => (part.type === "text" ? part.text : part.thinking))
 			.join("\n")
 			.trim();
 		return text || `[${agent.role}] completed without text output.`;
