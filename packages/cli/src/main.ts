@@ -795,7 +795,7 @@ export async function main(args: string[], options?: MainOptions) {
 				process.stderr.write("\n");
 			}
 		} catch {
-			// Ollama kapalıysa normal hata akışına bırak.
+			// If Ollama is off, let normal error flow handle it.
 		}
 	}
 

@@ -573,8 +573,7 @@ export async function findInitialModel(options: {
 			modelRegistry,
 		});
 		if (resolved.error) {
-			console.error(chalk.red(resolved.error));
-			process.exit(1);
+			throw new Error(resolved.error);
 		}
 		if (resolved.model) {
 			return { model: resolved.model, thinkingLevel: DEFAULT_THINKING_LEVEL, fallbackMessage: undefined };

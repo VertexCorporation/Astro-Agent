@@ -75,17 +75,17 @@ export function printDoctor(): void {
 	console.log(`Node           : ${process.version}`);
 	console.log(`Platform       : ${process.platform} ${process.arch}`);
 
-	console.log(chalk.bold("\nPATH üzerindeki mooncode/moon/mooncli adayları:"));
+	console.log(chalk.bold("\nmooncode/moon/mooncli candidates on PATH:"));
 	if (candidates.length === 0) {
-		console.log(chalk.yellow("  Bulunamadı. Terminal PATH ayarını kontrol et."));
+		console.log(chalk.yellow("  Not found. Check your terminal PATH setting."));
 	} else {
 		for (const candidate of candidates) {
-			const marker = candidate === process.argv[1] ? chalk.green("aktif") : "";
+			const marker = candidate === process.argv[1] ? chalk.green("active") : "";
 			console.log(`  - ${candidate}${marker ? ` ${marker}` : ""}`);
 		}
 	}
 
-	console.log(chalk.bold("\nGüncelleme:"));
+	console.log(chalk.bold("\nUpdate:"));
 	if (selfUpdate) {
 		console.log(`  ${selfUpdate.display}`);
 	} else {
@@ -96,16 +96,16 @@ export function printDoctor(): void {
 	if (candidates.length > 1) {
 		console.log(
 			chalk.yellow(
-				"\nWarning: PATH üzerinde birden fazla Moon bulundu. Eski sürüm görünüyorsa ilk sıradaki wrapper'ı kaldır veya PATH sırasını düzelt.",
+				"\nWarning: Multiple Moon installations found on PATH. If the old version shows up, remove the first wrapper or fix PATH order.",
 			),
 		);
 	}
 	if (packageVersion && packageVersion !== VERSION) {
 		console.log(
 			chalk.red(
-				"\nWarning: Derlenmiş VERSION ile package.json sürümü farklı. `npm run build --workspace=packages/cli` çalıştır.",
+				"\nWarning: Compiled VERSION differs from package.json version. Run `npm run build --workspace=packages/cli`.",
 			),
 		);
 	}
-	console.log(chalk.dim(`\nAktif argv[1]: ${process.argv[1] || activeDir}`));
+	console.log(chalk.dim(`\nActive argv[1]: ${process.argv[1] || activeDir}`));
 }

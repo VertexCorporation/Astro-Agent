@@ -1260,7 +1260,7 @@ export class EngineSession {
 				try {
 					roboticsFunctions = TaskPlanner.loadFunctions(fnPath) as RoboticsFunction[];
 				} catch {
-					// yol varsa ama dosya hatalıysa, sessizce geç
+					// if path exists but file is corrupt, skip silently
 				}
 			}
 		}
@@ -1388,7 +1388,7 @@ export class EngineSession {
 	// =========================================================================
 
 	/**
-	 * Robotics mode'u etkinleştir: tool'ları ekle, system prompt'ı güncelle, settings'e kaydet.
+	 * Activate robotics mode: add tools, update system prompt, save to settings.
 	 */
 	enableRoboticsMode(): void {
 		const settings = this.settingsManager.getRoboticsSettings();
@@ -1425,7 +1425,7 @@ export class EngineSession {
 	}
 
 	/**
-	 * Robotics mode'u devre dışı bırak.
+	 * Deactivate robotics mode.
 	 */
 	disableRoboticsMode(): void {
 		const roboticsToolNames = [
@@ -1436,13 +1436,13 @@ export class EngineSession {
 			"robotics_plan",
 		];
 
-		// tool registry'den çıkar
+		// remove from tool registry
 		for (const name of roboticsToolNames) {
 			this._toolRegistry.delete(name);
 			this._toolDefinitions.delete(name);
 		}
 
-		// aktif tool listesinden çıkar
+		// remove from active tool list
 		const currentToolNames = this.getActiveToolNames().filter((n) => !roboticsToolNames.includes(n));
 		this.setActiveToolsByName(currentToolNames);
 
@@ -1701,20 +1701,18 @@ export class EngineSession {
 						// High stress → Hyper-logical, zero hallucination mode
 						dynamicTemp = 0.01;
 						console.log(
-							`[Astro Neural Resonance] 🧊 Stres yüksek (${stressLevel.toFixed(2)}). Hyper-logic modu aktif. Temperature → ${dynamicTemp}`,
+							`[Astro Neural Resonance] 🧊 Stress high (${stressLevel.toFixed(2)}). Hyper-logic mode active. Temperature → ${dynamicTemp}`,
 						);
 					} else if (creativityLevel > 0.8) {
 						// High curiosity → Creative Tony Stark mode
 						dynamicTemp = 0.8;
 						console.log(
-							`[Astro Neural Resonance] ⚡ Merak yüksek (${creativityLevel.toFixed(2)}). Tony Stark yaratıcı modu aktif. Temperature → ${dynamicTemp}`,
+							`[Astro Neural Resonance] ⚡ Curiosity high (${creativityLevel.toFixed(2)}). Creative mode active. Temperature → ${dynamicTemp}`,
 						);
 					} else {
 						// Interpolate: low curiosity → 0.1, high curiosity → 0.6
 						dynamicTemp = 0.1 + creativityLevel * 0.5;
-						console.log(
-							`[Astro Neural Resonance] 🎯 Dengeli mod. Temperature → ${dynamicTemp.toFixed(2)}`,
-						);
+						console.log(`[Astro Neural Resonance] 🎯 Dengeli mod. Temperature → ${dynamicTemp.toFixed(2)}`);
 					}
 					this.engine.state.temperature = dynamicTemp;
 				}

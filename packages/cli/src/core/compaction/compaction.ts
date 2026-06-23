@@ -756,23 +756,31 @@ Be concise. Focus on what's needed to understand the kept suffix.`;
  */
 export async function compact(
 	preparation: CompactionPreparation,
-	_model: Model<any>,
-	_apiKey: string,
-	_headers?: Record<string, string>,
+	model: Model<any>,
+	apiKey: string,
+	headers?: Record<string, string>,
 	customInstructions?: string,
-	_signal?: AbortSignal,
-	_thinkingLevel?: ThinkingLevel,
+	signal?: AbortSignal,
+	thinkingLevel?: ThinkingLevel,
 ): Promise<CompactionResult> {
-	const { firstKeptEntryId, tokensBefore, fileOps } = preparation;
+	const { firstKeptEntryId, tokensBefore, messagesToSummarize, previousSummary, settings } = preparation;
 
-	// ULTRA-COMPACT (0 Token Mode)
-	const filesStr = Array.from(fileOps.values())
-		.map((f) => ` ${f.path}(${f.status})`)
-		.join("");
-	const summary = `<sum>
-[0-token flush]
-${customInstructions ? `Focus:${customInstructions}\n` : ""}Files:${filesStr || "none"}
-</sum>`;
+	if (messagesToSummarize.length === 0) {
+		const summary = previousSummary ?? "<sum>[no messages to summarize]</sum>";
+		return { summary, firstKeptEntryId, tokensBefore };
+	}
+
+	const summary = await generateSummary(
+		messagesToSummarize,
+		model,
+		settings.reserveTokens,
+		apiKey,
+		headers,
+		signal,
+		customInstructions,
+		previousSummary,
+		thinkingLevel,
+	);
 
 	return { summary, firstKeptEntryId, tokensBefore };
 }

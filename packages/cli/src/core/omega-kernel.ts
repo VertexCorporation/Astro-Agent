@@ -561,7 +561,7 @@ export class OmegaKernel {
 		this.stopSentinelProbes();
 		this._sentinelCwd = cwd;
 
-		console.log(`[Astro Sentinel] 👁️ Sinir uçları yerleştiriliyor: ${cwd}`);
+		console.log(`[Astro Sentinel] 👁️ Deploying watchers: ${cwd}`);
 		try {
 			this._sentinelWatcher = fs.watch(cwd, { recursive: true }, (_event, filename) => {
 				if (!filename) return;
@@ -575,9 +575,7 @@ export class OmegaKernel {
 						const result = await this.verifyTask(cwd);
 						if (result.status === "failed" && result.errorHighlights && result.errorHighlights.length > 0) {
 							this.sentinelIssues = [{ file: filename, errors: result.errorHighlights }];
-							console.log(
-								`[Astro Sentinel] ⚠️ Hata algılandı: ${filename} — ${result.errorHighlights[0]}`,
-							);
+							console.log(`[Astro Sentinel] ⚠️ Error detected: ${filename} — ${result.errorHighlights[0]}`);
 						} else {
 							this.sentinelIssues = [];
 						}
@@ -587,7 +585,7 @@ export class OmegaKernel {
 				}, 1500);
 			});
 		} catch (e) {
-			console.error("[Astro Sentinel] Watcher başlatılamadı:", e);
+			console.error("[Astro Sentinel] Failed to start watcher:", e);
 		}
 	}
 
@@ -606,7 +604,7 @@ export class OmegaKernel {
 			this._sentinelWatcher = null;
 		}
 		this._sentinelCwd = null;
-		console.log("[Astro Sentinel] 🔴 Sinir uçları geri çekildi.");
+		console.log("[Astro Sentinel] 🔴 Watchers retracted.");
 	}
 
 	/**
@@ -615,9 +613,7 @@ export class OmegaKernel {
 	public async verifyTaskSpeculative(
 		branches: Array<{ strategy: string; cwd: string; score: number }>,
 	): Promise<Array<{ strategy: string; cwd: string; score: number; result: VerificationResult }>> {
-		console.log(
-			`[Astro Verification Oracle] Compiling ${branches.length} speculative branches concurrently...`,
-		);
+		console.log(`[Astro Verification Oracle] Compiling ${branches.length} speculative branches concurrently...`);
 		const verificationPromises = branches.map(async (branch) => {
 			const result = await this.verifyTask(branch.cwd);
 			return {

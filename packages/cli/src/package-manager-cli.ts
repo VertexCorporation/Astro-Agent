@@ -62,64 +62,64 @@ function getPackageCommandUsage(command: PackageCommand): string {
 function printPackageCommandHelp(command: PackageCommand): void {
 	switch (command) {
 		case "install":
-			console.log(`${chalk.bold("Kullanım:")}
+			console.log(`${chalk.bold("Usage:")}
   ${getPackageCommandUsage("install")}
 
-Bir paket yükle ve ayarlara ekle.
+Install a package and add it to settings.
 
-Seçenekler:
-  -l, --local    Projeye özel yükle (.mooncode/settings.json)
+Options:
+  -l, --local    Install locally (.mooncode/settings.json)
 
-Örnekler:
+Examples:
   ${APP_NAME} install npm:@foo/bar
   ${APP_NAME} install git:github.com/user/repo
   ${APP_NAME} install git:git@github.com:user/repo
   ${APP_NAME} install https://github.com/user/repo
   ${APP_NAME} install ssh://git@github.com/user/repo
-  ${APP_NAME} install ./yerel/yol
+  ${APP_NAME} install ./local/path
 `);
 			return;
 
 		case "remove":
-			console.log(`${chalk.bold("Kullanım:")}
+			console.log(`${chalk.bold("Usage:")}
   ${getPackageCommandUsage("remove")}
 
-Bir paketi ve kaynağını ayarlardan kaldır.
-Alternatif: ${APP_NAME} uninstall <kaynak> [-l]
+Remove a package and its source from settings.
+Alias: ${APP_NAME} uninstall <source> [-l]
 
-Seçenekler:
-  -l, --local    Proje ayarlarından kaldır (.mooncode/settings.json)
+Options:
+  -l, --local    Remove from project settings (.mooncode/settings.json)
 
-Örnekler:
+Examples:
   ${APP_NAME} remove npm:@foo/bar
   ${APP_NAME} uninstall npm:@foo/bar
 `);
 			return;
 
 		case "update":
-			console.log(`${chalk.bold("Kullanım:")}
+			console.log(`${chalk.bold("Usage:")}
   ${getPackageCommandUsage("update")}
 
-Moon'u ve yüklü paketleri güncelle.
+Update Moon and installed packages.
 
-Seçenekler:
-  --self                  Sadece Moon'u güncelle
-  --extensions            Sadece yüklü paketleri güncelle
-  --extension <kaynak>    Sadece bir paketi güncelle
-  --force                 Mevcut sürüm güncel olsa bile Moon'u yeniden yükle
+Options:
+  --self                  Update Moon only
+  --extensions            Update installed packages only
+  --extension <source>    Update a single package
+  --force                 Reinstall Moon even if version is current
 
-Kısa formlar:
-  ${APP_NAME} update                Moon'u ve tüm eklentileri güncelle
-  ${APP_NAME} update <kaynak>       Bir paketi güncelle
-  ${APP_NAME} update Moon             Sadece Moon'u güncelle (self de alternatif olarak çalışır)
+Short forms:
+  ${APP_NAME} update                Update Moon and all extensions
+  ${APP_NAME} update <source>       Update a single package
+  ${APP_NAME} update Moon             Update Moon only (self also works)
 `);
 			return;
 
 		case "list":
-			console.log(`${chalk.bold("Kullanım:")}
+			console.log(`${chalk.bold("Usage:")}
   ${getPackageCommandUsage("list")}
 
-Kullanıcı ve proje ayarlarında yüklü olan paketleri listele.
+List packages installed in user and project settings.
 `);
 			return;
 	}
@@ -202,7 +202,7 @@ function parsePackageCommand(args: string[]): PackageCommandOptions | undefined 
 			if (!value || value.startsWith("-")) {
 				missingOptionValue = missingOptionValue ?? arg;
 			} else if (extensionFlagSource) {
-				conflictingOptions = conflictingOptions ?? "--extension sadece bir kez sağlanabilir";
+				conflictingOptions = conflictingOptions ?? "--extension can only be provided once";
 				index++;
 			} else {
 				extensionFlagSource = value;
@@ -227,12 +227,10 @@ function parsePackageCommand(args: string[]): PackageCommandOptions | undefined 
 	if (command === "update") {
 		if (extensionFlagSource) {
 			if (selfFlag || extensionsFlag) {
-				conflictingOptions =
-					conflictingOptions ?? "--extension seçeneği --self veya --extensions ile birlikte kullanılamaz";
+				conflictingOptions = conflictingOptions ?? "--extension cannot be used with --self or --extensions";
 			}
 			if (source) {
-				conflictingOptions =
-					conflictingOptions ?? "--extension seçeneği konumsal bir kaynakla birlikte kullanılamaz";
+				conflictingOptions = conflictingOptions ?? "--extension cannot be used with a positional source";
 			}
 			updateTarget = { type: "extensions", source: extensionFlagSource };
 		} else if (source) {
@@ -242,8 +240,7 @@ function parsePackageCommand(args: string[]): PackageCommandOptions | undefined 
 			} else {
 				if (extensionsFlag || selfFlag) {
 					conflictingOptions =
-						conflictingOptions ??
-						"konumsal güncelleme hedefleri --self veya --extensions ile birlikte kullanılamaz";
+						conflictingOptions ?? "positional update targets cannot be used with --self or --extensions";
 				}
 				updateTarget = { type: "extensions", source };
 			}
@@ -281,18 +278,18 @@ function updateTargetIncludesExtensions(target: UpdateTarget): boolean {
 }
 
 function printSelfUpdateUnavailable(npmCommand?: string[]): void {
-	console.error("hata: MoonCode bu kurulumu paket yöneticisiyle otomatik güncelleyemiyor.");
+	console.error("error: MoonCode cannot auto-update this installation with the package manager.");
 	console.error(getSelfUpdateUnavailableInstruction(PACKAGE_NAME, npmCommand));
 
 	const entrypoint = process.argv[1];
 	if (entrypoint) {
 		console.error("");
-		console.error(`MoonCode yürütülebilir dosyasının konumu: ${entrypoint}`);
+		console.error(`MoonCode executable location: ${entrypoint}`);
 	}
 }
 
 function printSelfUpdateFallback(command: SelfUpdateCommand): void {
-	console.error(chalk.dim(`Eğer bu hata devam ederse, şu komutu kendiniz çalıştırın: ${command.display}`));
+	console.error(chalk.dim(`If this error persists, run this command manually: ${command.display}`));
 }
 
 async function shouldRunSelfUpdate(force: boolean): Promise<boolean> {
@@ -311,7 +308,7 @@ async function shouldRunSelfUpdate(force: boolean): Promise<boolean> {
 		return true;
 	}
 
-	console.log(chalk.green(`${APP_NAME} zaten güncel (v${VERSION})`));
+	console.log(chalk.green(`${APP_NAME} is already up to date (v${VERSION})`));
 	return false;
 }
 
@@ -325,14 +322,14 @@ async function runCommand(command: string, args: string[], display: string, cwd?
 		child.on("error", reject);
 		child.on("close", (code, signal) => {
 			if (code === 0) resolve();
-			else if (signal) reject(new Error(`${display} ${signal} sinyaliyle sonlandırıldı`));
-			else reject(new Error(`${display} ${code ?? "bilinmeyen"} koduyla çıktı`));
+			else if (signal) reject(new Error(`${display} terminated with signal ${signal}`));
+			else reject(new Error(`${display} exited with code ${code ?? "unknown"}`));
 		});
 	});
 }
 
 async function runSelfUpdate(command: SelfUpdateCommand): Promise<void> {
-	console.log(chalk.dim(`${APP_NAME}, ${command.display} ile güncelleniyor...`));
+	console.log(chalk.dim(`Updating ${APP_NAME} via ${command.display}...`));
 	await runCommand(command.command, command.args, command.display);
 }
 
@@ -340,7 +337,7 @@ async function runGitHubSelfUpdate(npmCommand?: string[]): Promise<void> {
 	const [npmBin = "npm", ...npmArgs] = npmCommand ?? [];
 	const dir = await mkdtemp(join(tmpdir(), "mooncode-update-"));
 	try {
-		console.log(chalk.dim("MoonCode GitHub'dan indiriliyor..."));
+		console.log(chalk.dim("Downloading MoonCode from GitHub..."));
 		await runCommand(
 			"git",
 			["clone", "--depth", "1", "https://github.com/theayzek01/MoonCode.git", dir],
@@ -399,39 +396,37 @@ export async function handlePackageCommand(args: string[]): Promise<boolean> {
 	}
 
 	if (options.invalidOption) {
-		console.error(chalk.red(`"${options.command}" için bilinmeyen seçenek: ${options.invalidOption}.`));
-		console.error(
-			chalk.dim(`"${APP_NAME} --help" veya "${getPackageCommandUsage(options.command)}" komutunu kullanın.`),
-		);
+		console.error(chalk.red(`Unknown option for "${options.command}": ${options.invalidOption}.`));
+		console.error(chalk.dim(`Use "${APP_NAME} --help" or "${getPackageCommandUsage(options.command)}".`));
 		process.exitCode = 1;
 		return true;
 	}
 
 	if (options.missingOptionValue) {
-		console.error(chalk.red(`${options.missingOptionValue} için değer eksik.`));
-		console.error(chalk.dim(`Kullanım: ${getPackageCommandUsage(options.command)}`));
+		console.error(chalk.red(`Missing value for ${options.missingOptionValue}.`));
+		console.error(chalk.dim(`Usage: ${getPackageCommandUsage(options.command)}`));
 		process.exitCode = 1;
 		return true;
 	}
 
 	if (options.invalidArgument) {
-		console.error(chalk.red(`Beklenmeyen argüman: ${options.invalidArgument}.`));
-		console.error(chalk.dim(`Kullanım: ${getPackageCommandUsage(options.command)}`));
+		console.error(chalk.red(`Unexpected argument: ${options.invalidArgument}.`));
+		console.error(chalk.dim(`Usage: ${getPackageCommandUsage(options.command)}`));
 		process.exitCode = 1;
 		return true;
 	}
 
 	if (options.conflictingOptions) {
 		console.error(chalk.red(options.conflictingOptions));
-		console.error(chalk.dim(`Kullanım: ${getPackageCommandUsage(options.command)}`));
+		console.error(chalk.dim(`Usage: ${getPackageCommandUsage(options.command)}`));
 		process.exitCode = 1;
 		return true;
 	}
 
 	const source = options.source;
 	if ((options.command === "install" || options.command === "remove") && !source) {
-		console.error(chalk.red(`${options.command} kaynağı eksik.`));
-		console.error(chalk.dim(`Kullanım: ${getPackageCommandUsage(options.command)}`));
+		console.error(chalk.red(`Missing source for ${options.command}.`));
+		console.error(chalk.dim(`Usage: ${getPackageCommandUsage(options.command)}`));
 		process.exitCode = 1;
 		return true;
 	}
@@ -439,7 +434,7 @@ export async function handlePackageCommand(args: string[]): Promise<boolean> {
 	const cwd = process.cwd();
 	const engineDir = getEngineDir();
 	const settingsManager = SettingsManager.create(cwd, engineDir);
-	reportSettingsErrors(settingsManager, "paket komutu");
+	reportSettingsErrors(settingsManager, "package command");
 	const selfUpdateNpmCommand = settingsManager.getGlobalSettings().npmCommand;
 
 	const packageManager = new DefaultPackageManager({ cwd, engineDir, settingsManager });
@@ -454,17 +449,17 @@ export async function handlePackageCommand(args: string[]): Promise<boolean> {
 		switch (options.command) {
 			case "install":
 				await packageManager.installAndPersist(source!, { local: options.local });
-				console.log(chalk.green(`${source} yüklendi`));
+				console.log(chalk.green(`${source} installed`));
 				return true;
 
 			case "remove": {
 				const removed = await packageManager.removeAndPersist(source!, { local: options.local });
 				if (!removed) {
-					console.error(chalk.red(`${source} için eşleşen paket bulunamadı`));
+					console.error(chalk.red(`No matching package found for ${source}`));
 					process.exitCode = 1;
 					return true;
 				}
-				console.log(chalk.green(`${source} kaldırıldı`));
+				console.log(chalk.green(`${source} removed`));
 				return true;
 			}
 
@@ -474,7 +469,7 @@ export async function handlePackageCommand(args: string[]): Promise<boolean> {
 				const projectPackages = configuredPackages.filter((pkg) => pkg.scope === "project");
 
 				if (configuredPackages.length === 0) {
-					console.log(chalk.dim("Yüklü paket bulunamadı."));
+					console.log(chalk.dim("No packages installed."));
 					return true;
 				}
 
@@ -487,7 +482,7 @@ export async function handlePackageCommand(args: string[]): Promise<boolean> {
 				};
 
 				if (userPackages.length > 0) {
-					console.log(chalk.bold("Kullanıcı paketleri:"));
+					console.log(chalk.bold("User packages:"));
 					for (const pkg of userPackages) {
 						formatPackage(pkg);
 					}
@@ -495,7 +490,7 @@ export async function handlePackageCommand(args: string[]): Promise<boolean> {
 
 				if (projectPackages.length > 0) {
 					if (userPackages.length > 0) console.log();
-					console.log(chalk.bold("Proje paketleri:"));
+					console.log(chalk.bold("Project packages:"));
 					for (const pkg of projectPackages) {
 						formatPackage(pkg);
 					}
@@ -510,9 +505,9 @@ export async function handlePackageCommand(args: string[]): Promise<boolean> {
 					const updateSource = target.type === "extensions" ? target.source : undefined;
 					await packageManager.update(updateSource);
 					if (updateSource) {
-						console.log(chalk.green(`${updateSource} güncellendi`));
+						console.log(chalk.green(`${updateSource} updated`));
 					} else {
-						console.log(chalk.green("Paketler güncellendi"));
+						console.log(chalk.green("Packages updated"));
 					}
 				}
 				if (updateTargetIncludesSelf(target)) {
@@ -524,22 +519,20 @@ export async function handlePackageCommand(args: string[]): Promise<boolean> {
 						if (selfUpdateCommand) await runSelfUpdate(selfUpdateCommand);
 						else await runGitHubSelfUpdate(selfUpdateNpmCommand);
 					} catch (error: unknown) {
-						const message = error instanceof Error ? error.message : "Bilinmeyen paket komutu hatası";
+						const message = error instanceof Error ? error.message : "Unknown package command error";
 						console.error(chalk.red(`Error: ${message}`));
 						if (selfUpdateCommand) printSelfUpdateFallback(selfUpdateCommand);
 						else printSelfUpdateUnavailable(selfUpdateNpmCommand);
 						process.exitCode = 1;
 						return true;
 					}
-					console.log(
-						chalk.green(`${APP_NAME} güncellendi. Yeni terminalde 'mooncode' veya 'mooncli' çalıştırın.`),
-					);
+					console.log(chalk.green(`${APP_NAME} updated. Run 'mooncode' or 'mooncli' in a new terminal.`));
 				}
 				return true;
 			}
 		}
 	} catch (error: unknown) {
-		const message = error instanceof Error ? error.message : "Bilinmeyen paket komutu hatası";
+		const message = error instanceof Error ? error.message : "Unknown package command error";
 		console.error(chalk.red(`Error: ${message}`));
 		process.exitCode = 1;
 		return true;

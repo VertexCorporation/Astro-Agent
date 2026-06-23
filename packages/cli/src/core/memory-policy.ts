@@ -7,7 +7,7 @@ export interface MemorySignal {
 	timestamp: string;
 	text: string;
 	tag: "preference" | "workflow";
-	weight?: number; // 1-10 önem skoru, varsayılan 5
+	weight?: number; // 1-10 importance score, default 5
 }
 
 const GLOBAL_MEMORY_FILE = join(getEngineDir(), "memory-signals.json");
@@ -116,7 +116,7 @@ function dedupeSignals(signals: MemorySignal[]): MemorySignal[] {
 }
 
 /**
- * Memory preface oluşturur. Local modeller için `compact` mod çok daha kısa çıktı verir.
+ * Builds memory preface. For local models, `compact` mode produces much shorter output.
  */
 export function getMemoryPreface(limit = 8, compact = false, cwd?: string): string {
 	const items = loadMemorySignals(cwd)

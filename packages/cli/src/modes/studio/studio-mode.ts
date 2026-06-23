@@ -494,7 +494,7 @@ export class StudioMode {
 		}
 
 		if (method === "GET" && url.pathname === "/api/custom-emojis") {
-			const emojiDir = "C:\\Users\\theay\\Desktop\\Discord_Emojis\\final";
+			const emojiDir = process.env.ASTRO_EMOJI_DIR ?? "";
 			try {
 				if (fs.existsSync(emojiDir)) {
 					const files = fs.readdirSync(emojiDir).filter((f) => /\.(png|gif|jpg|jpeg|webp)$/i.test(f));
@@ -518,7 +518,7 @@ export class StudioMode {
 				res.end("Bad Request");
 				return;
 			}
-			const emojiDir = "C:\\Users\\theay\\Desktop\\Discord_Emojis\\final";
+			const emojiDir = process.env.ASTRO_EMOJI_DIR ?? "";
 			let targetFile = "";
 			if (fs.existsSync(emojiDir)) {
 				const files = fs.readdirSync(emojiDir).filter((f) => /\.(png|gif|jpg|jpeg|webp)$/i.test(f));
@@ -632,7 +632,7 @@ export class StudioMode {
 				desc: c.description,
 			}));
 
-			for (const t of templates) cmds.push({ cmd: `/${t.name}`, desc: t.description || "Şablon komutu" });
+			for (const t of templates) cmds.push({ cmd: `/${t.name}`, desc: t.description || "Template command" });
 
 			for (const e of extensions) cmds.push({ cmd: `/${e.name}`, desc: e.description || "Eklenti komutu" });
 
@@ -752,7 +752,7 @@ export class StudioMode {
 							try {
 								this.broadcastEvent({
 									type: "terminal_log",
-									data: `\n🔥 Fusion Mode: Düşünülüyor (${fusionState.thinkModel.id})...\n`,
+									data: `\n🔥 Fusion Mode: Thinking (${fusionState.thinkModel.id})...\n`,
 								});
 								const thinkModelObj = this.runtime.session.modelRegistry.find(
 									fusionState.thinkModel.provider,
@@ -763,7 +763,7 @@ export class StudioMode {
 									thinkModelObj,
 									{
 										systemPrompt:
-											"Sen çok zeki bir planlama ve analiz asistanısın. Asla kod yazma. Sadece plan yap, mimariyi çıkar ve adım adım ne yapılması gerektiğini `<think>.</think>` blokları arasına yazarak açıklayıcı şekilde asıl kodlayıcıya aktar.",
+											"You are a highly intelligent planning and analysis assistant. Never write code. Only plan, extract architecture, and describe step by step what needs to be done inside `<think>.</think>` blocks for the coder to implement.",
 										messages: [
 											...(this.runtime.session.engine.state.messages || []).map((m: any) => ({
 												role: m.role,
@@ -793,7 +793,7 @@ export class StudioMode {
 										effectivePrompt = `<think>\n${thinkText}\n</think>\n\n${effectivePrompt}`;
 										this.broadcastEvent({
 											type: "terminal_log",
-											data: `🔥 Fusion Mode: Düşünce tamamlandı. Kodlanıyor (${fusionState.codeModel.id})...\n`,
+											data: `🔥 Fusion Mode: Thought completed. Coding (${fusionState.codeModel.id})...\n`,
 										});
 									}
 								}
@@ -801,7 +801,7 @@ export class StudioMode {
 								console.error("Fusion Think error in Web Mode:", e);
 								this.broadcastEvent({
 									type: "terminal_log",
-									data: `⚠️ Fusion Think Hatası: ${e.message || e}\n`,
+									data: `⚠️ Fusion Think Error: ${e.message || e}\n`,
 								});
 							}
 						}
@@ -815,7 +815,7 @@ export class StudioMode {
 									message: {
 										id: `error-${Date.now()}`,
 										role: "assistant",
-										content: `<span class="material-symbols-rounded" style="font-size:14px;vertical-align:middle;">error</span> Hata oluştu: ${err.message || err}`,
+										content: `<span class="material-symbols-rounded" style="font-size:14px;vertical-align:middle;">error</span> Error: ${err.message || err}`,
 									},
 								});
 								this.broadcastEvent({ type: "engine_end" });
@@ -1008,7 +1008,7 @@ export class StudioMode {
 								timestamp: new Date().toISOString(),
 								name: name,
 							};
-							await fsPromises.appendFile(target.path, `\\n${JSON.stringify(infoEntry)}\\n`);
+							await fsPromises.appendFile(target.path, `\n${JSON.stringify(infoEntry)}\n`);
 						}
 						res.setHeader("Content-Type", "application/json");
 						res.end(JSON.stringify({ success: true }));
@@ -1051,7 +1051,7 @@ export class StudioMode {
 								const sf = sm.getSessionFile()!;
 								const header = sm.getHeader();
 								if (header) {
-									await fsPromises.writeFile(sf, `${JSON.stringify(header)}\\n`);
+									await fsPromises.writeFile(sf, `${JSON.stringify(header)}\n`);
 								}
 								await this.runtime.switchSession(sf);
 							}
@@ -1103,7 +1103,7 @@ export class StudioMode {
 								projects[projectCwd].sessions.push({
 									id: info.id,
 									path: info.path,
-									name: info.name || info.firstMessage || "Başlıksız Sohbet",
+									name: info.name || info.firstMessage || "Untitled Chat",
 									created: info.created,
 									modified: info.modified,
 									messageCount: info.messageCount,

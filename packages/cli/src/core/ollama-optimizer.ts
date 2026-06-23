@@ -4,22 +4,22 @@ const DEFAULT_BASE_URL = "http://localhost:11434";
 const PROFILE_VALUES = {
 	turbo: {
 		MOON_OLLAMA_MODE: "turbo",
-		MOON_OLLAMA_NUM_CTX: "8192", // 4K→8K: 4K ile gerçek kod analizi imkansız
-		MOON_OLLAMA_NUM_BATCH: "1024", // daha büyük batch = prefill hızlanır
+		MOON_OLLAMA_NUM_CTX: "8192", // 4K→8K: 4K makes real code analysis impossible
+		MOON_OLLAMA_NUM_BATCH: "1024", // larger batch = faster prefill
 		MOON_OLLAMA_LOW_VRAM: "true",
-		MOON_OLLAMA_KEEP_ALIVE: "1h", // 30m→1h: model yeniden yükleme gecikti
+		MOON_OLLAMA_KEEP_ALIVE: "1h", // 30m→1h: delayed model reload
 	},
 	balanced: {
 		MOON_OLLAMA_MODE: "balanced",
-		MOON_OLLAMA_NUM_CTX: "16384", // 8K→16K: orta büyüklük dosyalar sığsın
+		MOON_OLLAMA_NUM_CTX: "16384", // 8K→16K: fits medium-sized files
 		MOON_OLLAMA_NUM_BATCH: "1024",
 		MOON_OLLAMA_LOW_VRAM: "false",
 		MOON_OLLAMA_KEEP_ALIVE: "2h",
 	},
 	quality: {
 		MOON_OLLAMA_MODE: "quality",
-		MOON_OLLAMA_NUM_CTX: "32768", // 12K→32K: büyük dosya/codebase analizi
-		MOON_OLLAMA_NUM_BATCH: "512", // büyük ctx'te daha küçük batch daha kararlı
+		MOON_OLLAMA_NUM_CTX: "32768", // 12K→32K: large file/codebase analysis
+		MOON_OLLAMA_NUM_BATCH: "512", // smaller batch more stable at large ctx
 		MOON_OLLAMA_LOW_VRAM: "false",
 		MOON_OLLAMA_KEEP_ALIVE: "4h",
 	},

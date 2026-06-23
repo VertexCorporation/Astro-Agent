@@ -320,7 +320,6 @@ export function createCodingToolDefinitions(cwd: string, options?: ToolsOptions)
 		createBrowserTabsToolDefinition(),
 		createBrowserPageToolDefinition(),
 		createAskQuestionToolDefinition(),
-		createAskThemeToolDefinition(),
 		createInvokeSubagentToolDefinition(cwd),
 		createTaskToolDefinition(),
 		createSnapshotToolDefinition(cwd),

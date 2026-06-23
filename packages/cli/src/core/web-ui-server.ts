@@ -382,16 +382,16 @@ if (installButton) {
       installButton.textContent = 'Copied';
       setTimeout(() => { installButton.textContent = old; }, 1300);
     } catch {
-      installButton.textContent = 'Seçip kopyala';
+      installButton.textContent = 'Select & copy';
     }
   });
 }
 
 const terminalLines = [
-  'özet: incelendi → düzenlendi → doğrulandı',
-  'kural: user changes korunur, destructive işlem sorulur',
+  'summary: reviewed → edited → verified',
+  'rule: user changes preserved, destructive ops confirmed',
   'browser: the active tab is read and the UI result is checked',
-  'index: sadece gerektiğinde repo haritası çıkarılır'
+  'index: only builds repo map when needed'
 ];
 let terminalIndex = 0;
 setInterval(() => {
@@ -417,7 +417,7 @@ function textOf(content) {
 function compact(text, limit = 6000) {
   const value = String(text || '');
   if (value.length <= limit) return value;
-  return value.slice(0, limit) + String.fromCharCode(10) + '… kırpıldı';
+  return value.slice(0, limit) + String.fromCharCode(10) + '… truncated';
 }
 
 async function loadSessions(force = false) {
@@ -427,21 +427,21 @@ async function loadSessions(force = false) {
     const signature = sessions.map((session) => session.id + ':' + session.modified + ':' + session.messages).join('|');
     if (!force && signature === lastSessionSignature) return;
     lastSessionSignature = signature;
-    if (statusEl) statusEl.textContent = sessions.length ? sessions.length + ' oturum' : 'oturum yok';
+    if (statusEl) statusEl.textContent = sessions.length ? sessions.length + ' sessions' : 'no sessions';
     if (!sessions.length) {
-      sessionsEl.innerHTML = '<p class="muted pad">Henüz kaydedilmiş oturum yok.</p>';
+      sessionsEl.innerHTML = '<p class="muted pad">No saved sessions yet.</p>';
       return;
     }
     sessionsEl.innerHTML = sessions.map((session) => {
       const id = escapeHtml(session.id || 'session');
-      const cwd = escapeHtml(session.cwd || 'cwd yok');
-      const time = session.modified ? new Date(session.modified).toLocaleString('tr-TR') : '';
+      const cwd = escapeHtml(session.cwd || 'no cwd');
+      const time = session.modified ? new Date(session.modified).toLocaleString() : '';
       const active = session.id === activeSession ? ' active' : '';
-      return '<button class="session-item' + active + '" data-id="' + id + '"><b>' + id + '</b><span>' + cwd + '</span><span>' + time + ' · ' + (session.messages || 0) + ' kayıt</span></button>';
+      return '<button class="session-item' + active + '" data-id="' + id + '"><b>' + id + '</b><span>' + cwd + '</span><span>' + time + ' · ' + (session.messages || 0) + ' records</span></button>';
     }).join('');
   } catch {
-    if (statusEl) statusEl.textContent = 'bağlantı yok';
-    sessionsEl.innerHTML = '<p class="muted pad">Oturum API okunamadı.</p>';
+    if (statusEl) statusEl.textContent = 'no connection';
+    sessionsEl.innerHTML = '<p class="muted pad">Could not read session API.</p>';
   }
 }
 
@@ -451,14 +451,14 @@ async function loadSession(id) {
   document.querySelectorAll('.session-item').forEach((item) => item.classList.toggle('active', item.dataset.id === id));
   if (chatTitle) chatTitle.textContent = id;
   chatEl.className = '';
-  chatEl.innerHTML = '<p class="muted pad">Oturum açılıyor…</p>';
+  chatEl.innerHTML = '<p class="muted pad">Opening session…</p>';
   try {
     const data = await fetch('/api/session/' + encodeURIComponent(id), { cache: 'no-store' }).then((response) => response.json());
     const entries = Array.isArray(data.entries) ? data.entries.slice(-60) : [];
-    chatEl.innerHTML = entries.map(renderEntry).filter(Boolean).join('') || '<p class="muted pad">Bu oturumda gösterilecek kayıt yok.</p>';
+    chatEl.innerHTML = entries.map(renderEntry).filter(Boolean).join('') || '<p class="muted pad">No records to show in this session.</p>';
     chatEl.scrollTop = chatEl.scrollHeight;
   } catch {
-    chatEl.innerHTML = '<p class="muted pad">Oturum okunamadı.</p>';
+    chatEl.innerHTML = '<p class="muted pad">Could not read session.</p>';
   }
 }
 
@@ -466,7 +466,7 @@ function renderEntry(entry) {
   if (entry.type === 'message' && entry.message) {
     const role = entry.message.role || 'system';
     const className = role === 'user' ? 'user' : role === 'assistant' ? 'assistant' : 'system';
-    const label = role === 'user' ? 'Kullanıcı' : role === 'assistant' ? 'MoonCode' : role;
+    const label = role === 'user' ? 'User' : role === 'assistant' ? 'MoonCode' : role;
     const content = compact(textOf(entry.message.content || entry.message.text || entry.message));
     return '<div class="msg ' + className + '"><div class="role">' + escapeHtml(label) + '</div><pre>' + escapeHtml(content) + '</pre></div>';
   }
@@ -512,7 +512,7 @@ const APP_HTML = `<!doctype html>
       <div class="session-search">
         <div class="search-wrapper">
           <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" class="search-icon"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-          <input type="text" id="search-input" placeholder="Sessionsda ara..." />
+          <input type="text" id="search-input" placeholder="Search sessions..." />
         </div>
       </div>
       <div class="sessions-list" id="sessions-list">
@@ -524,12 +524,12 @@ const APP_HTML = `<!doctype html>
       <header class="chat-header">
         <div class="active-session-info">
           <span class="status-indicator live"></span>
-          <h3 id="active-session-name">Oturum Seçin</h3>
+          <h3 id="active-session-name">Select Session</h3>
         </div>
         <div class="header-actions">
           <button class="btn btn-secondary" id="btn-unlock-tui">
             <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" style="margin-right: 6px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-            TUI'a Dön
+            Back to TUI
           </button>
         </div>
       </header>
@@ -539,8 +539,8 @@ const APP_HTML = `<!doctype html>
         <div class="messages-content">
           <div class="welcome-screen">
           <span class="moon-mascot"><i data-lucide="moon" style="width:48px;height:48px;"></i></span>
-            <h1>Merhaba! Ben MoonCode.</h1>
-            <p>Sol menüden canlı veya geçmiş bir oturum seçerek başlayın. Repo içerisindeki tüm akışı buradan izleyebilir ve yönlendirebilirsiniz.</p>
+            <h1>Hello! I'm MoonCode.</h1>
+            <p>Select a live or past session from the sidebar to start. Monitor and direct all repo activity from here.</p>
           </div>
         </div>
       </div>
@@ -548,12 +548,12 @@ const APP_HTML = `<!doctype html>
       <footer class="input-bar">
         <div class="input-container">
           <form id="message-form" class="message-form">
-            <textarea id="message-input" placeholder="MoonCode'a bir şeyler yazın... [Enter ile gönderir, Shift+Enter yeni satır]" rows="1"></textarea>
+            <textarea id="message-input" placeholder="Ask MoonCode something... [Enter to send, Shift+Enter for new line]" rows="1"></textarea>
             <button type="submit" class="btn btn-primary" id="btn-send">
               <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
             </button>
           </form>
-          <div class="input-footer-text">MoonCode otonom bir geliştirme asistanıdır</div>
+          <div class="input-footer-text">MoonCode is an autonomous development assistant</div>
         </div>
       </footer>
     </main>
@@ -562,9 +562,9 @@ const APP_HTML = `<!doctype html>
   <div class="modal-overlay" id="unlock-modal">
     <div class="modal-card">
       <span class="modal-icon">🔓</span>
-      <h2>TUI Kilidi Açıldı!</h2>
-      <p>Terminalinize güvenle geri dönebilirsiniz. Bu tarayıcı sekmesini kapatabilirsiniz.</p>
-      <button class="btn btn-primary" style="width: 100%; margin-top: 12px;" onclick="document.getElementById('unlock-modal').style.display='none'">Harika!</button>
+      <h2>TUI Unlocked!</h2>
+      <p>You can safely return to your terminal. You may close this browser tab.</p>
+      <button class="btn btn-primary" style="width: 100%; margin-top: 12px;" onclick="document.getElementById('unlock-modal').style.display='none'">Great!</button>
     </div>
   </div>
 

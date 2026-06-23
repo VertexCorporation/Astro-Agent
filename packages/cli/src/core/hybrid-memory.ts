@@ -208,19 +208,17 @@ export class HybridMemorySystem {
 				const children: MerkleNode[] = [];
 				if (ext === ".ts" || ext === ".js") {
 					const classRegex = /class\s+(\w+)/g;
-					let classMatch;
-					while ((classMatch = classRegex.exec(content)) !== null) {
+					for (const classMatch of content.matchAll(classRegex)) {
 						const className = classMatch[1];
 						children.push({
 							name: className,
 							type: "class",
-							hash: createHash("md5").update(className).digest("hex").slice(0, 8),
+							hash: createHash("md5").update(`class ${className}`).digest("hex").slice(0, 8),
 							signature: `class ${className}`,
 						});
 					}
 					const funcRegex = /(?:export\s+)?(?:async\s+)?function\s+(\w+)\s*\(([^)]*)\)/g;
-					let funcMatch;
-					while ((funcMatch = funcRegex.exec(content)) !== null) {
+					for (const funcMatch of content.matchAll(funcRegex)) {
 						const s = `function ${funcMatch[1]}(${funcMatch[2]})`;
 						children.push({
 							name: funcMatch[1],

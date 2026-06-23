@@ -25,8 +25,8 @@ const gitShipSchema = Type.Object({
 		],
 		{ description: "Git aksiyonu" },
 	),
-	message: Type.Optional(Type.String({ description: "Commit/PR mesajı" })),
-	branchName: Type.Optional(Type.String({ description: "Branch adı" })),
+	message: Type.Optional(Type.String({ description: "Commit/PR message" })),
+	branchName: Type.Optional(Type.String({ description: "Branch name" })),
 });
 
 export function createGitShipToolDefinition(cwd: string): ToolDefinition<typeof gitShipSchema, any, any> {
