@@ -709,6 +709,19 @@
 			border-radius: 5px; padding: 2px 5px; color: var(--muted);
 		}
 
+		/* ─── MODEL BADGE ────────────────────────────────────────────────── */
+		#input-model-badge {
+			font-family: 'JetBrains Mono', monospace;
+			font-size: 0.75rem;
+			font-weight: 500;
+			max-width: 120px;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+			display: inline-block;
+			vertical-align: middle;
+		}
+
 		/* ─── THEME PICKER ────────────────────────────────────────────────── */
 		.theme-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 		.theme-card {
@@ -1202,10 +1215,10 @@
 							<span id="input-model-badge" style="font-family:'JetBrains Mono',monospace;">—</span>
 							<span class="material-symbols-rounded" style="font-size:11px;">keyboard_arrow_down</span>
 						</button>
-            <button onclick="openModal('reasoningModal')" class="badge-btn" style="font-size:0.8rem;">
-				<span class="material-symbols-rounded icon-success" style="font-size:14px;">psychology</span>
-				<span id="reasoning-display">Thinking: Low</span>
-				<span class="material-symbols-rounded" style="font-size:13px;">keyboard_arrow_down</span>
+            <button onclick="openModal('reasoningModal')" id="reasoning-btn" class="badge-btn" style="font-size:0.75rem; display:flex; align-items:center; gap:4px; padding:4px 8px; border-radius:6px; border:1px solid var(--border); background:var(--surface2); cursor:pointer; color:var(--muted); font-family:'Inter',sans-serif; transition:all 0.15s;">
+				<span class="material-symbols-rounded" style="font-size:14px; color:var(--accent2);">psychology</span>
+				<span id="reasoning-display">Low</span>
+				<span class="material-symbols-rounded" style="font-size:11px; color:var(--muted);">keyboard_arrow_down</span>
 			</button>
 					</div>
 					<div class="input-footer-right">
@@ -1320,6 +1333,10 @@
 				<span class="material-symbols-rounded" style="color:var(--muted);">remove_circle</span>
 				<div><div class="cmd-title">Off</div><div class="cmd-desc">Faster response, no thinking</div></div>
 			</button>
+			<button onclick="setReasoning('minimal')" class="model-item" id="r-minimal">
+				<span class="material-symbols-rounded icon-muted" style="">battery_0_bar</span>
+				<div><div class="cmd-title">Minimal</div><div class="cmd-desc">Minimal thinking, near-instant</div></div>
+			</button>
 			<button onclick="setReasoning('low')" class="model-item" id="r-low">
 				<span class="material-symbols-rounded icon-primary" style="">battery_1_bar</span>
 				<div><div class="cmd-title">Low</div><div class="cmd-desc">Light thinking, balanced speed</div></div>
@@ -1330,7 +1347,11 @@
 			</button>
 			<button onclick="setReasoning('high')" class="model-item" id="r-high">
 				<span class="material-symbols-rounded icon-success" style="">battery_full</span>
-				<div><div class="cmd-title">High</div><div class="cmd-desc">Deepest thinking, slow</div></div>
+				<div><div class="cmd-title">High</div><div class="cmd-desc">Deep thinking, slower</div></div>
+			</button>
+			<button onclick="setReasoning('xhigh')" class="model-item" id="r-xhigh">
+				<span class="material-symbols-rounded icon-success" style="">battery_charge_full</span>
+				<div><div class="cmd-title">X-High</div><div class="cmd-desc">Maximum thinking, highest quality</div></div>
 			</button>
 		</div>
 	</div>
@@ -3681,7 +3702,8 @@ async function setModel(provider, id, disableFusion = true) {
 }
 
 // ─── REASONING ────────────────────────────────────────────────────────────
-const reasoningLabels = { none: 'Off', low: 'Low', medium: 'Medium', high: 'High' };
+const reasoningLabels = { none: 'Off', minimal: 'Minimal', low: 'Low', medium: 'Medium', high: 'High', xhigh: 'X-High' };
+const reasoningLevels = ['none', 'minimal', 'low', 'medium', 'high', 'xhigh'];
 
 async function setReasoning(level) {
 	await fetch('/api/set-thinking', {
@@ -3690,7 +3712,7 @@ async function setReasoning(level) {
 		body: JSON.stringify({ level })
 	});
 	document.getElementById('reasoning-display').textContent = 'Thinking: ' + (reasoningLabels[level] || level);
-	['none','low','medium','high'].forEach(l => document.getElementById('r-'+l)?.classList.remove('selected'));
+	reasoningLevels.forEach(l => document.getElementById('r-'+l)?.classList.remove('selected'));
 	document.getElementById('r-'+level)?.classList.add('selected');
 	closeModal('reasoningModal');
 	toast(`Thinking level: ${reasoningLabels[level]}`, 'info');
@@ -4977,19 +4999,21 @@ function saveSessionRules() {
 </div>
 
 <!-- SESSION RULES MODAL -->
-<div id="sessionRulesModal" class="modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);z-index:10000;align-items:center;justify-content:center;">
-	<div class="modal-content" style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;width:90%;max-width:500px;box-shadow:var(--shadow-lg);">
-		<h2 style="margin:0 0 10px 0;font-size:1.2rem;color:var(--fg);display:flex;align-items:center;gap:8px;">
-			<span class="material-symbols-rounded" style="color:var(--accent2);">rule</span>
-			Sohbet Kuralları
-		</h2>
-		<p style="margin:0 0 16px 0;font-size:0.85rem;color:var(--muted);line-height:1.4;">
-			Ajanın sadece bu sohbet oturumu boyunca uymasını istediğiniz özel kuralları buraya yazabilirsiniz. (Örn: "Asla browse tool kullanma", "Sadece Türkçe cevap ver", "Dosya oluşturma")
-		</p>
-		<textarea id="session-rules-input" placeholder="Kuralları buraya girin..." style="width:100%;height:150px;background:var(--bg2);color:var(--fg);border:1px solid var(--border);border-radius:8px;padding:12px;font-family:inherit;font-size:0.9rem;resize:vertical;"></textarea>
-		<div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px;">
-			<button onclick="closeModal('sessionRulesModal')" class="btn" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:8px 16px;border-radius:8px;">İptal</button>
-			<button onclick="saveSessionRules()" class="btn btn-primary" style="padding:8px 16px;border-radius:8px;font-weight:600;">Kuralları Kaydet</button>
+<div id="sessionRulesModal" class="modal-overlay" onclick="overlayClose(event,'sessionRulesModal')" style="z-index:10000;">
+	<div class="modal" style="max-width:500px;" onclick="event.stopPropagation()">
+		<div class="modal-header">
+			<div class="modal-title"><span class="material-symbols-rounded" style="color:var(--accent2);">rule</span> Session Rules</div>
+			<button class="modal-close" onclick="closeModal('sessionRulesModal')"><span class="material-symbols-rounded">close</span></button>
+		</div>
+		<div class="modal-body">
+			<p style="margin:0 0 16px;font-size:0.85rem;color:var(--muted);line-height:1.5;">
+				Set custom rules for this session only. (e.g. "Always use Turkish", "Never create files", "Use browser tool for searches")
+			</p>
+			<textarea id="session-rules-input" placeholder="Rules go here..." style="width:100%;height:150px;background:var(--bg2);color:var(--fg);border:1px solid var(--border);border-radius:8px;padding:12px;font-family:inherit;font-size:0.9rem;resize:vertical;"></textarea>
+		</div>
+		<div class="modal-footer">
+			<button onclick="closeModal('sessionRulesModal')" class="btn btn-ghost">Cancel</button>
+			<button onclick="saveSessionRules()" class="btn btn-primary" style="font-weight:600;">Save Rules</button>
 		</div>
 	</div>
 </div>
