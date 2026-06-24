@@ -22,6 +22,7 @@ export class StudioMode {
 	// biome-ignore lint/correctness/noUnusedPrivateClassMembers: reserved for future use
 	private _options: InteractiveModeOptions;
 	private clients: ServerResponse[] = [];
+	private mobileClients: Set<ServerResponse> = new Set();
 	private server: ReturnType<typeof createServer> | null = null;
 	private port: number = 0;
 	private pinnedMessageIds: Set<string> = new Set();
@@ -296,6 +297,8 @@ export class StudioMode {
 						out: stats.tokens.output,
 					},
 					blenderMcp: isBlenderConnected ? { connected: true, port: blenderPort } : null,
+					mobileConnected: this.mobileClients.size > 0,
+					mobileCount: this.mobileClients.size,
 				},
 			};
 		} catch (_e) {
@@ -305,9 +308,33 @@ export class StudioMode {
 					model: this.runtime.session.model?.id || "Unknown Model",
 					cwd: this.runtime.cwd,
 					tokens: { in: 0, out: 0 },
+					mobileConnected: this.mobileClients.size > 0,
+					mobileCount: this.mobileClients.size,
 				},
 			};
 		}
+	}
+
+	private getLocalIp(): string {
+		try {
+			const interfaces = os.networkInterfaces();
+			for (const name of Object.keys(interfaces)) {
+				for (const iface of interfaces[name] || []) {
+					if (iface.family === "IPv4" && !iface.internal) {
+						return iface.address;
+					}
+				}
+			}
+		} catch (_) {}
+		return "127.0.0.1";
+	}
+
+	private broadcastMobileStatus() {
+		this.broadcastEvent({
+			type: "mobile_status",
+			mobileConnected: this.mobileClients.size > 0,
+			mobileCount: this.mobileClients.size,
+		});
 	}
 
 	private broadcastEvent(event: any) {
@@ -452,7 +479,7 @@ export class StudioMode {
 						console.error("Web UI server error:", err.message);
 					}
 				});
-				this.server!.listen(port, "127.0.0.1", () => {
+				this.server!.listen(port, "0.0.0.0", () => {
 					const address = this.server!.address() as any;
 					this.port = address.port;
 					const url = `http://127.0.0.1:${this.port}`;
@@ -472,10 +499,27 @@ export class StudioMode {
 
 		const origin = req.headers.origin || "";
 		const host = req.headers.host || "";
-		if (
-			(origin && !origin.includes("localhost") && !origin.includes("127.0.0.1") && !origin.startsWith("file://")) ||
-			(host && !host.includes("localhost") && !host.includes("127.0.0.1"))
-		) {
+		const isPrivate = (h: string) => {
+			if (h.startsWith("file://")) return true;
+			let hostname = h;
+			if (h.includes("://")) {
+				try {
+					hostname = new URL(h).hostname;
+				} catch {
+					hostname = h;
+				}
+			} else {
+				hostname = h.split(":")[0];
+			}
+			return (
+				hostname === "localhost" ||
+				hostname.startsWith("127.") ||
+				hostname.startsWith("192.168.") ||
+				hostname.startsWith("10.") ||
+				/^172\.(1[6-9]|2\d|3[01])\./.test(hostname)
+			);
+		};
+		if ((origin && !isPrivate(origin)) || (host && !isPrivate(host))) {
 			res.statusCode = 403;
 			res.end("Forbidden");
 			return;
@@ -593,7 +637,12 @@ export class StudioMode {
 			res.setHeader("Content-Type", "text/event-stream");
 			res.setHeader("Cache-Control", "no-cache");
 			res.setHeader("Connection", "keep-alive");
+			const isMobile = url.searchParams.get("mobile") === "1";
 			this.clients.push(res);
+			if (isMobile) {
+				this.mobileClients.add(res);
+				this.broadcastMobileStatus();
+			}
 			try {
 				const stats = this.runtime.session.getSessionStats();
 				const initialState = {
@@ -615,6 +664,10 @@ export class StudioMode {
 
 			req.on("close", () => {
 				this.clients = this.clients.filter((client) => client !== res);
+				if (isMobile) {
+					this.mobileClients.delete(res);
+					this.broadcastMobileStatus();
+				}
 			});
 			return;
 		}
@@ -1720,6 +1773,43 @@ export class StudioMode {
 		if (method === "GET" && url.pathname === "/api/todo") {
 			res.setHeader("Content-Type", "application/json");
 			res.end(JSON.stringify(getTodoSnapshot()));
+			return;
+		}
+
+		if (method === "GET" && url.pathname === "/mobile") {
+			const html = this.getHtmlTemplate()
+				.replace('<html lang="en"', '<html lang="en" data-mobile="1"')
+				.replace("<title>Astro 5 🚀 – AI Coding Assistant</title>", "<title>Astro 5 🚀 – Mobile</title>");
+			res.setHeader("Content-Type", "text/html; charset=utf-8");
+			res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+			res.end(html);
+			return;
+		}
+
+		if (method === "GET" && url.pathname === "/api/mobile/qr") {
+			const localIp = this.getLocalIp();
+			const mobileUrl = `http://${localIp}:${this.port}/mobile`;
+			res.setHeader("Content-Type", "application/json");
+			res.end(
+				JSON.stringify({
+					url: mobileUrl,
+					ip: localIp,
+					port: this.port,
+					connected: this.mobileClients.size > 0,
+					mobileCount: this.mobileClients.size,
+				}),
+			);
+			return;
+		}
+
+		if (method === "GET" && url.pathname === "/api/mobile/status") {
+			res.setHeader("Content-Type", "application/json");
+			res.end(
+				JSON.stringify({
+					connected: this.mobileClients.size > 0,
+					mobileCount: this.mobileClients.size,
+				}),
+			);
 			return;
 		}
 

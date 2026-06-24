@@ -14,6 +14,7 @@
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 	<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 	<style>
 		/* ─── THEME TOKENS ─────────────────────────────────────────────── */
 		[data-theme="mooncode"] {
@@ -1045,11 +1046,206 @@
   .todo-text { padding-top:2px; flex:1; min-width:0; }
   .todo-label { color:var(--fg); font-size:0.8rem; line-height:1.4; display:block; word-break:break-word; }
   .todo-stop.done .todo-label { color:var(--muted); text-decoration:line-through; }
+
+/* ─── MOBILE MODE ──────────────────────────────────────────────────── */
+#mobile-tab-bar { display:none; }
+[data-mobile="1"] body.mobile-mode #sidebar,
+[data-mobile="1"] body.mobile-mode #app-sidebar-toggle,
+[data-mobile="1"] body.mobile-mode .model-select-btn,
+[data-mobile="1"] body.mobile-mode #ide-pane,
+[data-mobile="1"] body.mobile-mode #ide-resizer,
+[data-mobile="1"] body.mobile-mode #header,
+[data-mobile="1"] body.mobile-mode .input-footer .badge-btn,
+[data-mobile="1"] body.mobile-mode #mic-btn { display:none !important; }
+[data-mobile="1"] body.mobile-mode body { overflow:hidden; height:100dvh; position:fixed; width:100%; }
+[data-mobile="1"] body.mobile-mode #chat-container {
+	flex:1 !important; margin-left:0 !important; width:100% !important;
+	padding:8px 0 0 0 !important; overflow-y:auto !important;
+	height:0 !important; min-height:0 !important;
+}
+[data-mobile="1"] body.mobile-mode .chat-inner { max-width:100% !important; padding:0 12px !important; }
+[data-mobile="1"] body.mobile-mode .msg-bubble { max-width:100% !important; }
+[data-mobile="1"] body.mobile-mode .user-bubble { max-width:92% !important; }
+[data-mobile="1"] body.mobile-mode #prompt-input { font-size:16px !important; }
+[data-mobile="1"] body.mobile-mode .input-box { margin:0 8px !important; border-radius:10px !important; }
+[data-mobile="1"] body.mobile-mode #input-area {
+	position:static !important; padding:8px 0 !important;
+	background:var(--bg) !important;
+}
+[data-mobile="1"] body.mobile-mode .input-footer-left > *:not(#char-count),
+[data-mobile="1"] body.mobile-mode .input-wrap > div:not(.input-box) { display:none !important; }
+[data-mobile="1"] body.mobile-mode #split-container { flex-direction:column !important; }
+[data-mobile="1"] body.mobile-mode #main { display:flex !important; flex-direction:column !important; overflow:hidden !important; }
+[data-mobile="1"] body.mobile-mode #mobile-tab-bar { display:flex !important; }
+[data-mobile="1"] body.mobile-mode #mobile-status-bar { display:flex !important; }
+
+#mobile-status-bar {
+	display:none; align-items:center; justify-content:center; gap:6px;
+	padding:6px 12px; background:rgba(74,222,128,0.08);
+	border-bottom:1px solid rgba(74,222,128,0.15);
+	font-size:0.75rem; color:var(--accent2); flex-shrink:0;
+}
+#mobile-status-bar .status-dot {
+	width:6px; height:6px; border-radius:50%;
+	background:var(--accent2); display:inline-block;
+	animation: pulse 2s infinite;
+}
+
+#mobile-tab-bar {
+	height:56px; flex-shrink:0;
+	background:var(--surface); border-top:1px solid var(--border);
+	display:none; align-items:center; justify-content:space-around;
+	padding:4px 0; z-index:30;
+}
+.mob-tab {
+	flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+	gap:2px; background:none; border:none; color:var(--muted); cursor:pointer;
+	font-size:0.6rem; font-family:inherit; padding:4px 0; transition:color 0.15s;
+	-webkit-tap-highlight-color:transparent; user-select:none;
+}
+.mob-tab .mob-icon { font-size:22px; font-variation-settings:'FILL' 0; }
+.mob-tab.active { color:var(--accent); }
+.mob-tab.active .mob-icon { font-variation-settings:'FILL' 1; }
+
+#mobile-views { flex:1; display:flex; flex-direction:column; overflow:hidden; position:relative; }
+.mobile-view { display:none; flex-direction:column; overflow:hidden; height:100%; }
+.mobile-view.active { display:flex; }
+
+#mobile-view-status { padding:16px; gap:12px; overflow-y:auto; }
+#mobile-view-status .stat-card {
+	background:var(--surface2); border:1px solid var(--border); border-radius:10px;
+	padding:12px; display:flex; align-items:center; gap:10px;
+}
+#mobile-view-status .stat-card .stat-label { font-size:0.72rem; color:var(--muted); }
+#mobile-view-status .stat-card .stat-value { font-size:0.85rem; color:var(--fg); font-weight:600; }
+
+#mobile-view-history { overflow-y:auto; padding:8px; }
+.mobile-history-item {
+	padding:10px 12px; border-radius:8px; cursor:pointer;
+	display:flex; align-items:center; gap:8px;
+	border-bottom:1px solid var(--border); font-size:0.82rem; color:var(--fg);
+	-webkit-tap-highlight-color:transparent;
+}
+.mobile-history-item:active { background:var(--surface2); }
+
+#mobile-view-settings { overflow-y:auto; padding:16px; gap:12px; }
+.mobile-settings-row {
+	display:flex; align-items:center; justify-content:space-between;
+	padding:12px 0; border-bottom:1px solid var(--border);
+}
+.mobile-settings-row .ms-label { font-size:0.85rem; color:var(--fg); }
+.mobile-settings-row .ms-value { font-size:0.8rem; color:var(--muted); }
+.mobile-view-title {
+	font-size:0.85rem; font-weight:600; color:var(--fg);
+	padding:0 0 8px 0; border-bottom:1px solid var(--border); margin-bottom:8px;
+}
+
+@media (max-width: 768px) {
+	#sidebar, #app-sidebar-toggle, #ide-pane, #ide-resizer { display:none !important; }
+	#chat-container { margin-left:0 !important; width:100% !important; }
+	.chat-inner { max-width:100% !important; }
+	.msg-bubble { max-width:100% !important; }
+	.user-bubble { max-width:92% !important; }
+	#prompt-input { font-size:16px !important; }
+	.input-box { margin:0 8px !important; border-radius:10px !important; }
+	#input-area { position:static !important; padding:8px 0 !important; background:var(--bg) !important; }
+	.input-footer-left > *:not(#char-count) { display:none !important; }
+	.input-wrap > div:not(.input-box) { display:none !important; }
+	#split-container { flex-direction:column !important; }
+	#main { display:flex !important; flex-direction:column !important; overflow:hidden !important; }
+	#mobile-tab-bar { display:flex !important; }
+	#mobile-status-bar { display:flex !important; }
+	body { overflow:hidden; height:100dvh; }
+	.action-bar { opacity:1 !important; }
+	.action-bar button { padding:10px !important; }
+	.modal { max-width:100% !important; margin:0 8px !important; max-height:90vh !important; }
+	#header { display:none !important; }
+	#mic-btn { display:none !important; }
+}
 </style>
 </head>
 <body>
 
-<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• SIDEBAR â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<!-- Mobile Status Bar -->
+<div id="mobile-status-bar">
+	<span class="status-dot"></span>
+	<span>PC'nize bağlandı</span>
+</div>
+
+<!-- Mobile Bottom Tab Bar -->
+<div id="mobile-tab-bar">
+	<button class="mob-tab active" data-tab="chat" onclick="switchMobileTab('chat')">
+		<span class="material-symbols-rounded mob-icon">chat</span>
+		<span>Sohbet</span>
+	</button>
+	<button class="mob-tab" data-tab="status" onclick="switchMobileTab('status')">
+		<span class="material-symbols-rounded mob-icon">monitor</span>
+		<span>Durum</span>
+	</button>
+	<button class="mob-tab" data-tab="history" onclick="switchMobileTab('history')">
+		<span class="material-symbols-rounded mob-icon">history</span>
+		<span>Geçmiş</span>
+	</button>
+	<button class="mob-tab" data-tab="settings" onclick="switchMobileTab('settings')">
+		<span class="material-symbols-rounded mob-icon">settings</span>
+		<span>Ayarlar</span>
+	</button>
+</div>
+
+<!-- Mobile Views -->
+<div id="mobile-views">
+	<!-- Chat View (main) -->
+	<div id="mobile-view-chat" class="mobile-view active"></div>
+	<!-- Status View -->
+	<div id="mobile-view-status" class="mobile-view">
+		<div class="mobile-view-title">PC Durumu</div>
+		<div class="stat-card">
+			<span class="material-symbols-rounded icon-primary" style="font-size:20px;">smart_toy</span>
+			<div><div class="stat-label">Model</div><div class="stat-value" id="mob-model">—</div></div>
+		</div>
+		<div class="stat-card">
+			<span class="material-symbols-rounded icon-primary" style="font-size:20px;">folder</span>
+			<div><div class="stat-label">Çalışma Dizini</div><div class="stat-value" id="mob-cwd">—</div></div>
+		</div>
+		<div class="stat-card">
+			<span class="material-symbols-rounded icon-success" style="font-size:20px;">link</span>
+			<div><div class="stat-label">Bağlantı</div><div class="stat-value" id="mob-connection"><span class="status-dot"></span> Bağlı</div></div>
+		</div>
+	</div>
+	<!-- History View -->
+	<div id="mobile-view-history" class="mobile-view">
+		<div class="mobile-view-title">Sohbet Geçmişi</div>
+		<div id="mob-history-list" style="flex:1;">Yükleniyor...</div>
+	</div>
+	<!-- Settings View -->
+	<div id="mobile-view-settings" class="mobile-view">
+		<div class="mobile-view-title">Hızlı Ayarlar</div>
+		<div class="mobile-settings-row">
+			<span class="ms-label">Tema</span>
+			<select id="mob-theme" onchange="setTheme(this.value)" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--fg);font-size:0.8rem;">
+				<option value="mooncode">Astro 5</option>
+				<option value="midnight">Midnight</option>
+				<option value="dracula">Dracula</option>
+				<option value="nord">Nord</option>
+				<option value="oled">OLED</option>
+				<option value="snow">Snow</option>
+			</select>
+		</div>
+		<div class="mobile-settings-row">
+			<span class="ms-label">Model</span>
+			<span class="ms-value" id="mob-model-name" style="cursor:pointer;" onclick="openModal('modelModal')">—</span>
+		</div>
+		<div class="mobile-settings-row">
+			<span class="ms-label">Düşünme</span>
+			<span class="ms-value" id="mob-reasoning" style="cursor:pointer;" onclick="openModal('reasoningModal')">Low</span>
+		</div>
+		<div style="margin-top:auto;padding:16px 0;text-align:center;font-size:0.7rem;color:var(--muted);">
+			Astro 5 🚀 v48
+		</div>
+	</div>
+</div>
+
+<!-- ═══════════════════════════════ SIDEBAR ═══════════════════════════════════════════════════ -->
 <div id="sidebar">
 	<div style="padding:10px 12px; display:flex; align-items:center; gap:8px; flex-shrink:0;">
 		<img src="/assets/Mooncodewhitelogo.png" alt="logo" style="width:22px;height:22px;border-radius:6px;flex-shrink:0;" onerror="this.style.display='none'">
@@ -1128,6 +1324,10 @@
 			<div id="bridge-pill" onclick="openModal('bridgeModal')" title="Browser Bridge" style="display:flex;align-items:center;gap:4px;padding:2px 8px;border-radius:6px;font-size:0.7rem;background:var(--surface2);border:1px solid var(--border);color:var(--muted);cursor:pointer;">
 				<span class="bridge-dot"></span>
 				<span id="bridge-label">Web</span>
+			</div>
+			<div id="mobile-indicator" style="display:none;align-items:center;gap:4px;padding:2px 8px;border-radius:6px;font-size:0.7rem;background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.25);color:var(--accent2);">
+				<span class="material-symbols-rounded" style="font-size:11px;">smartphone</span>
+				<span>Phone</span>
 			</div>
 			<div style="position:relative;">
 				<button id="user-menu-btn" onclick="toggleUserMenu()" style="width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:700;color:#fff;" title="User Menu">
@@ -1412,6 +1612,24 @@
 							<button class="btn btn-primary" onclick="copyBrowserExtensionPath()">
 								<span class="material-symbols-rounded" style="font-size:16px;">content_copy</span> Copy
 							</button>
+						</div>
+					</div>
+
+					<div class="form-group" style="margin-top: 16px; background: rgba(74,222,128,0.04); border: 1px solid rgba(74,222,128,0.12); padding: 12px; border-radius: 2px;" id="mobile-pair-section">
+						<label class="form-label" style="display:flex; align-items:center; gap:6px;">
+							<span class="material-symbols-rounded icon-success" style="font-size:18px;">smartphone</span>
+							Telefonunuza Bağlayın
+						</label>
+						<div style="font-size:0.8rem;color:var(--muted);margin-bottom:8px;">Aynı Wi-Fi ağındaki telefonunuzla QR kodu okutarak bağlanın. Telefondan yazdıklarınız anlık olarak burada görünür.</div>
+						<div id="mobile-qr-container" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:8px 0;">
+							<div id="mobile-qr-code" style="background:#fff;border-radius:8px;padding:8px;width:180px;height:180px;display:flex;align-items:center;justify-content:center;">
+								<span style="color:#999;font-size:0.8rem;">Yükleniyor...</span>
+							</div>
+							<div id="mobile-url-text" style="font-size:0.75rem;color:var(--muted);font-family:'JetBrains Mono',monospace;text-align:center;word-break:break-all;"></div>
+							<div id="mobile-connected-status" style="display:none;align-items:center;gap:6px;padding:6px 12px;background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.25);border-radius:6px;font-size:0.8rem;color:var(--accent2);">
+								<span class="material-symbols-rounded" style="font-size:16px;">check_circle</span>
+								<span>Telefon bağlandı! Mesajlar anlık senkronize.</span>
+							</div>
 						</div>
 					</div>
 				</div>
@@ -2007,6 +2225,8 @@ function setTheme(theme) {
 	document.querySelectorAll('.theme-card').forEach(c => c.classList.remove('active'));
 	const card = document.getElementById('theme-' + theme);
 	if (card) card.classList.add('active');
+	const mobTheme = document.getElementById('mob-theme');
+	if (mobTheme) mobTheme.value = theme;
 
 	const hljsLink = document.getElementById('hljs-theme');
 	if (hljsLink) {
@@ -3711,11 +3931,14 @@ async function setReasoning(level) {
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify({ level })
 	});
-	document.getElementById('reasoning-display').textContent = 'Thinking: ' + (reasoningLabels[level] || level);
+	const label = reasoningLabels[level] || level;
+	document.getElementById('reasoning-display').textContent = 'Thinking: ' + label;
 	reasoningLevels.forEach(l => document.getElementById('r-'+l)?.classList.remove('selected'));
 	document.getElementById('r-'+level)?.classList.add('selected');
+	const mobReason = document.getElementById('mob-reasoning');
+	if (mobReason) mobReason.textContent = label;
 	closeModal('reasoningModal');
-	toast(`Thinking level: ${reasoningLabels[level]}`, 'info');
+	toast(`Thinking level: ${label}`, 'info');
 }
 
 // ─── SETTINGS TABS ────────────────────────────────────────────────────────
@@ -3763,6 +3986,37 @@ function selectProfileCard(val) {
 }
 
 // ─── SETTINGS ─────────────────────────────────────────────────────────────
+async function generateMobileQR() {
+	const container = document.getElementById('mobile-qr-code');
+	const urlEl = document.getElementById('mobile-url-text');
+	if (!container) return;
+	try {
+		const res = await fetch('/api/mobile/qr');
+		const data = await res.json();
+		urlEl.textContent = data.url;
+		container.innerHTML = '';
+		if (typeof qrcode !== 'undefined') {
+			const qr = qrcode(0, 'M');
+			qr.addData(data.url);
+			qr.make();
+			const svgStr = qr.createSvgTag(4, 0);
+			const wrapper = document.createElement('div');
+			wrapper.innerHTML = svgStr;
+			const svgEl = wrapper.firstElementChild;
+			if (svgEl) {
+				svgEl.setAttribute('width', '164');
+				svgEl.setAttribute('height', '164');
+				svgEl.style.display = 'block';
+				container.appendChild(svgEl);
+			}
+		} else {
+			container.innerHTML = '<span style="color:#999;font-size:0.8rem;">QR kodu yüklenemedi</span>';
+		}
+	} catch(e) {
+		container.innerHTML = '<span style="color:#999;font-size:0.8rem;">QR kodu yüklenemedi</span>';
+	}
+}
+
 async function loadSettings() {
 	try {
 		const res = await fetch('/api/settings');
@@ -3828,6 +4082,7 @@ async function loadSettings() {
 				if (sysEl) sysEl.value = c.systemAdditions || '';
 			} catch(e){ console.warn('Silently caught error:', e); }
 		}
+		generateMobileQR();
 	} catch(e) {
 		toast('Failed to load settings', 'error');
 	}
@@ -4179,7 +4434,18 @@ async function checkInitialStatus() {
 			cwdText.textContent = data.cwd.split(/[\\/]/).pop() || data.cwd;
 			document.getElementById('cwd-display').setAttribute('data-full-cwd', data.cwd);
 		}
+		if (isMobileMode) {
+			updateMobileStatus(data);
+		}
 	} catch(e){ console.warn('Silently caught error:', e); }
+	try {
+		const mobRes = await fetch('/api/mobile/status');
+		const mobData = await mobRes.json();
+		const indicatorEl = document.getElementById('mobile-indicator');
+		if (mobData.connected && indicatorEl) {
+			indicatorEl.style.display = 'flex';
+		}
+	} catch(e){}
 }
 
 // ─── INIT SETTINGS ────────────────────────────────────────────────────────
@@ -4188,7 +4454,14 @@ async function initSettings() {
 		const res = await fetch('/api/settings');
 		const s = await res.json();
 		if (s.thinkingLevel) {
-			document.getElementById('reasoning-display').textContent = 'Thinking: ' + (reasoningLabels[s.thinkingLevel] || s.thinkingLevel);
+			const label = reasoningLabels[s.thinkingLevel] || s.thinkingLevel;
+			document.getElementById('reasoning-display').textContent = 'Thinking: ' + label;
+			const mobReason = document.getElementById('mob-reasoning');
+			if (mobReason) mobReason.textContent = label;
+		}
+		if (s.theme) {
+			const mobTheme = document.getElementById('mob-theme');
+			if (mobTheme) mobTheme.value = s.theme;
 		}
 	} catch(e){ console.warn('Silently caught error:', e); }
 }
@@ -4201,8 +4474,70 @@ async function fetchCommands() {
 	} catch(e){ console.warn('Silently caught error:', e); }
 }
 
+// ─── MOBILE DETECTION & SETUP ─────────────────────────────────────────────
+const isMobileMode = document.documentElement.getAttribute('data-mobile') === '1' || window.innerWidth < 768;
+if (isMobileMode) {
+	document.body.classList.add('mobile-mode');
+	const chatView = document.getElementById('mobile-view-chat');
+	const chatContainer = document.getElementById('chat-container');
+	const inputArea = document.getElementById('input-area');
+	if (chatView && chatContainer && inputArea) {
+		chatView.appendChild(chatContainer);
+		chatView.appendChild(inputArea);
+	}
+}
+
+function switchMobileTab(tab) {
+	document.querySelectorAll('.mob-tab').forEach(t => t.classList.remove('active'));
+	document.querySelectorAll('.mobile-view').forEach(v => v.classList.remove('active'));
+	const tabEl = document.querySelector(`.mob-tab[data-tab="${tab}"]`);
+	const viewEl = document.getElementById(`mobile-view-${tab}`);
+	if (tabEl) tabEl.classList.add('active');
+	if (viewEl) viewEl.classList.add('active');
+	if (tab === 'history') loadMobileHistory();
+}
+
+function loadMobileHistory() {
+	const list = document.getElementById('mob-history-list');
+	if (!list) return;
+	fetch('/api/conversations').then(r => r.json()).then(data => {
+		if (!data.sessions || data.sessions.length === 0) {
+			list.innerHTML = '<div style="color:var(--muted);font-size:0.82rem;text-align:center;padding:20px;">Henüz sohbet yok</div>';
+			return;
+		}
+		list.innerHTML = data.sessions.map(s => `
+			<div class="mobile-history-item" onclick="switchMobileSession('${s.id}')">
+				<span class="material-symbols-rounded" style="font-size:16px;color:var(--muted);">chat</span>
+				<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.name || s.id}</span>
+				<span style="font-size:0.7rem;color:var(--muted);">${new Date(s.modified).toLocaleDateString()}</span>
+			</div>
+		`).join('');
+	}).catch(() => { list.innerHTML = '<div style="color:var(--muted);font-size:0.82rem;padding:20px;">Yüklenemedi</div>'; });
+}
+
+function switchMobileSession(id) {
+	fetch('/api/conversations/switch', {
+		method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({id})
+	}).then(() => {
+		switchMobileTab('chat');
+		setTimeout(() => location.reload(), 300);
+	});
+}
+
+function updateMobileStatus(data) {
+	if (!isMobileMode) return;
+	if (data.model) {
+		const name = data.model.split('/').pop() || data.model;
+		document.getElementById('mob-model').textContent = name;
+		document.getElementById('mob-model-name').textContent = name;
+	}
+	if (data.cwd) {
+		document.getElementById('mob-cwd').textContent = data.cwd.split(/[\\/]/).pop() || data.cwd;
+	}
+}
+
 // ─── SSE SETUP ────────────────────────────────────────────────────────────
-const es = new EventSource('/events');
+const es = new EventSource(isMobileMode ? '/events?mobile=1' : '/events');
 // MOONCODE ARCHITECTURE FIX: SSE Reconnection & Error Handling
 es.onerror = (err) => {
     console.error('[SSE] Connection lost or interrupted.', err);
@@ -4217,6 +4552,19 @@ es.onerror = (err) => {
 es.onmessage = (e) => {
 	try {
 		const data = JSON.parse(e.data);
+
+		if (data.type === 'mobile_status') {
+			const statusEl = document.getElementById('mobile-connected-status');
+			const indicatorEl = document.getElementById('mobile-indicator');
+			if (data.mobileConnected) {
+				if (statusEl) statusEl.style.display = 'flex';
+				if (indicatorEl) indicatorEl.style.display = 'flex';
+			} else {
+				if (statusEl) statusEl.style.display = 'none';
+				if (indicatorEl) indicatorEl.style.display = 'none';
+			}
+			return;
+		}
 
 		if (data.type === 'engine_start') {
 			setGeneratingState(true);
@@ -4319,6 +4667,7 @@ es.onmessage = (e) => {
 			}, 500);
 
 		} else if (data.type === 'state_update') {
+			updateMobileStatus(data.state);
 			if (data.state?.model) {
 				const name = data.state.model.split('/').pop() || data.state.model;
 				updateModelDisplayUI(name);
@@ -4336,6 +4685,17 @@ es.onmessage = (e) => {
 				document.getElementById('token-usage').textContent = `Sistem Aktif`;
 				document.getElementById('token-pill').title = `Input: ${tIn.toLocaleString()} | Output: ${tOut.toLocaleString()}`;
 				currentMsgTokens = tOut;
+			}
+			if (data.state?.mobileConnected !== undefined) {
+				const statusEl = document.getElementById('mobile-connected-status');
+				const indicatorEl = document.getElementById('mobile-indicator');
+				if (data.state.mobileConnected) {
+					if (statusEl) statusEl.style.display = 'flex';
+					if (indicatorEl) indicatorEl.style.display = 'flex';
+				} else {
+					if (statusEl) statusEl.style.display = 'none';
+					if (indicatorEl) indicatorEl.style.display = 'none';
+				}
 			}
 		}
 	} catch(err) {
