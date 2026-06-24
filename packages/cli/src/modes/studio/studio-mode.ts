@@ -470,23 +470,25 @@ export class StudioMode {
 
 		this.server = createServer((req, res) => this.handleRequest(req, res));
 
-		return new Promise<void>((_resolve, _reject) => {
+		return new Promise<void>((resolve, _reject) => {
 			const tryListen = (port: number) => {
 				this.server!.once("error", (err: NodeJS.ErrnoException) => {
 					if (err.code === "EADDRINUSE") {
 						tryListen(port + 1);
 					} else {
 						console.error("Web UI server error:", err.message);
+						resolve();
 					}
 				});
-				this.server!.listen(port, "0.0.0.0", () => {
+				this.server!.listen(port, () => {
 					const address = this.server!.address() as any;
 					this.port = address.port;
 					const url = `http://127.0.0.1:${this.port}`;
 					console.log(`  Web UI → ${url}`);
 					const startCmd =
 						process.platform === "win32" ? "start" : process.platform === "darwin" ? "open" : "xdg-open";
-					exec(`${startCmd} ${url}`);
+					exec(`${startCmd} ${url}`, () => {});
+					resolve();
 				});
 			};
 			tryListen(3135);
