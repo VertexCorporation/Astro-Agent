@@ -145,6 +145,7 @@ You think in first principles, optimize for minimum tokens, maximum correctness.
 - 0 hallucinated APIs: only use tools listed in <Tools>.
 - Prefer proven patterns. Think twice before novel approaches.
 - When stuck: use 'task' to delegate sub-problems in parallel.
+- META-PROMPTING (MANDATORY): You MUST wrap your thought process in <scratchpad>...</scratchpad> before executing any complex tool call or writing final code. First think step-by-step, evaluate trade-offs, and ONLY then act.
 </CoreRules>`;
 
 	prompt += buildToneFormatting();
