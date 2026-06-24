@@ -561,7 +561,7 @@ export class OmegaKernel {
 		this.stopSentinelProbes();
 		this._sentinelCwd = cwd;
 
-		console.log(`[Astro Sentinel] 👁️ Deploying watchers: ${cwd}`);
+		// Sentinel watchers active (silent)
 		try {
 			this._sentinelWatcher = fs.watch(cwd, { recursive: true }, (_event, filename) => {
 				if (!filename) return;
@@ -604,7 +604,7 @@ export class OmegaKernel {
 			this._sentinelWatcher = null;
 		}
 		this._sentinelCwd = null;
-		console.log("[Astro Sentinel] 🔴 Watchers retracted.");
+		// Sentinel stopped
 	}
 
 	/**

@@ -6,7 +6,7 @@ import fs, { promises as fsPromises } from "fs";
 import { completeSimple } from "moon-core";
 import path, { dirname, join } from "path";
 import { fileURLToPath } from "url";
-import { getEngineDir, getPackageDir } from "../../config.js";
+import { getEngineDir, getPackageDir, VERSION } from "../../config.js";
 import { getBrowserBridgeStatus } from "../../core/browser-bridge-server.js";
 import type { EngineSessionRuntime } from "../../core/engine-session-runtime.js";
 import { buildSessionInfo, listSessionsFromDir, SessionManager } from "../../core/session-manager.js";
@@ -17,6 +17,58 @@ import type { InteractiveModeOptions } from "../interactive/interactive-mode.js"
 
 const execAsync = promisify(exec);
 
+function printStartupBanner(webUrl: string, authUrl: string, bridgePort: number): void {
+	const reset = "\x1b[0m";
+	const bold = "\x1b[1m";
+	const dim = "\x1b[2m";
+	// Soft purple / violet
+	const purple = "\x1b[38;2;180;140;255m";
+	// Soft cyan
+	const cyan = "\x1b[38;2;100;220;210m";
+	// Soft pink
+	const pink = "\x1b[38;2;255;160;210m";
+	// Soft white
+	const white = "\x1b[38;2;230;230;245m";
+	// Accent gold
+	const gold = "\x1b[38;2;255;210;100m";
+
+	const width = 56;
+	const border = purple + "─".repeat(width) + reset;
+	const tl = purple + "╭" + reset;
+	const tr = purple + "╮" + reset;
+	const bl = purple + "╰" + reset;
+	const br = purple + "╯" + reset;
+	const side = purple + "│" + reset;
+	const pad = (text: string, fill = " "): string => {
+		// Strip ANSI codes for length calculation
+		const plain = text.replace(/\x1b\[[0-9;]*m/g, "");
+		const spaces = width - plain.length;
+		return text + fill.repeat(Math.max(0, spaces));
+	};
+
+	const lines = [
+		"",
+		tl + border + tr,
+		side + pad("") + side,
+		side + pad(`  ${gold}✦${reset}  ${bold}${purple}Astro 5${reset}  ${dim}${white}v${VERSION}${reset}`) + side,
+		side + pad(`     ${dim}${cyan}Vertex Corporation · AI Coding Agent${reset}`) + side,
+		side + pad("") + side,
+		side + pad(`  ${cyan}🌐${reset}  ${dim}Web UI${reset}     ${white}→  ${cyan}${webUrl}${reset}`) + side,
+		side + pad(`  ${pink}🔗${reset}  ${dim}Auth API${reset}   ${white}→  ${pink}${authUrl}${reset}`) + side,
+		side +
+			pad(
+				`  ${purple}🌉${reset}  ${dim}Bridge${reset}     ${white}→  ${purple}ws://127.0.0.1:${bridgePort}${reset}`,
+			) +
+			side,
+		side + pad("") + side,
+		side + pad(`  ${gold}✦${reset}  ${dim}${white}Tarayıcıda açılıyor...${reset}`) + side,
+		side + pad("") + side,
+		bl + border + br,
+		"",
+	];
+
+	process.stdout.write(lines.join("\n") + "\n");
+}
 export class StudioMode {
 	private runtime: EngineSessionRuntime;
 	// biome-ignore lint/correctness/noUnusedPrivateClassMembers: reserved for future use
@@ -372,10 +424,7 @@ export class StudioMode {
 	private webUiServerInstance: any = null;
 
 	async run() {
-		const dbg = (msg: string) => process.stderr.write("[WEBUI] " + msg + "\n");
-		dbg("run() started");
 		this.server = createServer((req, res) => this.handleRequest(req, res));
-		dbg("server created");
 
 		await new Promise<void>((resolve) => {
 			const TIMEOUT_MS = 15000;
@@ -387,14 +436,11 @@ export class StudioMode {
 				}
 			};
 			const timer = setTimeout(() => {
-				dbg("TIMEOUT: listen timed out after " + TIMEOUT_MS + "ms");
 				done();
 			}, TIMEOUT_MS);
 
 			const tryListen = (port: number) => {
-				dbg("trying port " + port);
 				this.server!.once("error", (err: NodeJS.ErrnoException) => {
-					dbg("listen error: " + err.code + " " + err.message);
 					if (err.code === "EADDRINUSE") {
 						tryListen(port + 1);
 					} else {
@@ -408,7 +454,6 @@ export class StudioMode {
 					const address = this.server!.address() as any;
 					this.port = address.port;
 					const url = `http://127.0.0.1:${this.port}`;
-					console.log(`  Web UI → ${url}`);
 					const startCmd =
 						process.platform === "win32" ? "start" : process.platform === "darwin" ? "open" : "xdg-open";
 					exec(`${startCmd} ${url}`, () => {});
@@ -418,12 +463,9 @@ export class StudioMode {
 			tryListen(3135);
 		});
 
-		dbg("after listen await");
 		try {
 			const serverModule = await import("../../core/web-ui-server.js");
-			dbg("web-ui-server imported");
 			const { getProviders } = await import("moon-core");
-			dbg("moon-core imported");
 			serverModule.setAuthPanelStateProvider(() => {
 				const authStorage = this.runtime.session.modelRegistry.authStorage;
 				const providerMap = new Map();
@@ -512,7 +554,9 @@ export class StudioMode {
 				}
 			});
 			this.webUiServerInstance = serverModule.startWebUiServer({ port: 3131 });
-			console.log(`  Auth server  → ${this.webUiServerInstance.url}`);
+			// Print beautiful startup banner
+			const bridgeStatus = getBrowserBridgeStatus();
+			printStartupBanner(`http://127.0.0.1:${this.port}`, this.webUiServerInstance.url, bridgeStatus.port || 3133);
 		} catch (e) {
 			console.error("Failed to start Web UI Auth Server:", e);
 		}
