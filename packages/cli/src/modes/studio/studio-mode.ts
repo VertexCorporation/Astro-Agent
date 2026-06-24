@@ -372,23 +372,39 @@ export class StudioMode {
 	private webUiServerInstance: any = null;
 
 	async run() {
-		console.log("[DEBUG] run() started");
+		const dbg = (msg: string) => process.stderr.write("[WEBUI] " + msg + "\n");
+		dbg("run() started");
 		this.server = createServer((req, res) => this.handleRequest(req, res));
-		console.log("[DEBUG] server created");
+		dbg("server created");
 
-		await new Promise<void>((resolve, _reject) => {
+		await new Promise<void>((resolve) => {
+			const TIMEOUT_MS = 15000;
+			let settled = false;
+			const done = () => {
+				if (!settled) {
+					settled = true;
+					resolve();
+				}
+			};
+			const timer = setTimeout(() => {
+				dbg("TIMEOUT: listen timed out after " + TIMEOUT_MS + "ms");
+				done();
+			}, TIMEOUT_MS);
+
 			const tryListen = (port: number) => {
-				console.log(`[DEBUG] trying port ${port}`);
+				dbg("trying port " + port);
 				this.server!.once("error", (err: NodeJS.ErrnoException) => {
-					console.log(`[DEBUG] listen error: ${err.code} ${err.message}`);
+					dbg("listen error: " + err.code + " " + err.message);
 					if (err.code === "EADDRINUSE") {
 						tryListen(port + 1);
 					} else {
 						console.error("Web UI server error:", err.message);
-						resolve();
+						clearTimeout(timer);
+						done();
 					}
 				});
 				this.server!.listen(port, () => {
+					clearTimeout(timer);
 					const address = this.server!.address() as any;
 					this.port = address.port;
 					const url = `http://127.0.0.1:${this.port}`;
@@ -396,18 +412,18 @@ export class StudioMode {
 					const startCmd =
 						process.platform === "win32" ? "start" : process.platform === "darwin" ? "open" : "xdg-open";
 					exec(`${startCmd} ${url}`, () => {});
-					resolve();
+					done();
 				});
 			};
 			tryListen(3135);
 		});
 
-		console.log("[DEBUG] after listen await");
+		dbg("after listen await");
 		try {
 			const serverModule = await import("../../core/web-ui-server.js");
-			console.log("[DEBUG] web-ui-server imported");
+			dbg("web-ui-server imported");
 			const { getProviders } = await import("moon-core");
-			console.log("[DEBUG] moon-core imported");
+			dbg("moon-core imported");
 			serverModule.setAuthPanelStateProvider(() => {
 				const authStorage = this.runtime.session.modelRegistry.authStorage;
 				const providerMap = new Map();
