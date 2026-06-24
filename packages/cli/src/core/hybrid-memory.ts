@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { basename, extname, join } from "node:path";
 import { getEngineDir } from "../config.js";
+import { AstGraphManager, type DependencyGraph, type ImpactNode } from "./codebase-index/graph-ast.js";
 
 export const FORBIDDEN_MEMORY_PHRASES = [
 	"I can see...",
@@ -65,6 +66,7 @@ export class HybridMemorySystem {
 	private cacheFile: string;
 	private vectorFile: string;
 	private memoryFile: string;
+	private astManagerMap: Map<string, AstGraphManager> = new Map();
 
 	constructor() {
 		this.cacheDir = join(getEngineDir(), "hybrid_memory");
@@ -261,5 +263,22 @@ export class HybridMemorySystem {
 		if (kg.projectState && kg.projectState !== "Initializing...") parts.push(`Project: ${kg.projectState}`);
 		if (memories.length > 0) parts.push(`Notes: ${memories.slice(-5).join("; ")}`);
 		return parts.length > 0 ? parts.join("\n") : "";
+	}
+
+	public getAstManager(cwd: string): AstGraphManager {
+		if (!this.astManagerMap.has(cwd)) {
+			this.astManagerMap.set(cwd, new AstGraphManager(cwd));
+		}
+		return this.astManagerMap.get(cwd)!;
+	}
+
+	public getImpactAnalysis(cwd: string, targetFilePath: string, symbolName: string): ImpactNode[] {
+		const manager = this.getAstManager(cwd);
+		return manager.getImpactAnalysis(targetFilePath, symbolName);
+	}
+
+	public getHolisticMap(cwd: string): DependencyGraph {
+		const manager = this.getAstManager(cwd);
+		return manager.buildHolisticMap();
 	}
 }
