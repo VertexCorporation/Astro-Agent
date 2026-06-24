@@ -1140,28 +1140,7 @@
 	padding:0 0 8px 0; border-bottom:1px solid var(--border); margin-bottom:8px;
 }
 
-@media (max-width: 768px) {
-	#sidebar, #app-sidebar-toggle, #ide-pane, #ide-resizer { display:none !important; }
-	#chat-container { margin-left:0 !important; width:100% !important; }
-	.chat-inner { max-width:100% !important; }
-	.msg-bubble { max-width:100% !important; }
-	.user-bubble { max-width:92% !important; }
-	#prompt-input { font-size:16px !important; }
-	.input-box { margin:0 8px !important; border-radius:10px !important; }
-	#input-area { position:static !important; padding:8px 0 !important; background:var(--bg) !important; }
-	.input-footer-left > *:not(#char-count) { display:none !important; }
-	.input-wrap > div:not(.input-box) { display:none !important; }
-	#split-container { flex-direction:column !important; }
-	#main { display:flex !important; flex-direction:column !important; overflow:hidden !important; }
-	#mobile-tab-bar { display:flex !important; }
-	#mobile-status-bar { display:flex !important; }
-	body { overflow:hidden; height:100dvh; }
-	.action-bar { opacity:1 !important; }
-	.action-bar button { padding:10px !important; }
-	.modal { max-width:100% !important; margin:0 8px !important; max-height:90vh !important; }
-	#header { display:none !important; }
-	#mic-btn { display:none !important; }
-}
+
 </style>
 </head>
 <body>
@@ -4475,7 +4454,7 @@ async function fetchCommands() {
 }
 
 // ─── MOBILE DETECTION & SETUP ─────────────────────────────────────────────
-const isMobileMode = document.documentElement.getAttribute('data-mobile') === '1' || window.innerWidth < 768;
+const isMobileMode = document.documentElement.getAttribute('data-mobile') === '1';
 if (isMobileMode) {
 	document.body.classList.add('mobile-mode');
 	const chatView = document.getElementById('mobile-view-chat');
