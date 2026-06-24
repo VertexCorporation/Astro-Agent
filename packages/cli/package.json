@@ -8,9 +8,7 @@
 		"configDir": ".astroagent"
 	},
 	"bin": {
-		"astroagent": "dist/cli.js",
-		"astro": "dist/cli.js",
-		"asg": "dist/cli.js"
+		"astro": "dist/cli.js"
 	},
 	"main": "./dist/index.js",
 	"types": "./dist/index.d.ts",
