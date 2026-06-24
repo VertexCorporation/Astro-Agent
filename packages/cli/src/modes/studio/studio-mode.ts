@@ -661,9 +661,9 @@ export class StudioMode {
 
 		// Serve static assets from the project's assets/ directory
 		if (method === "GET" && url.pathname.startsWith("/assets/")) {
-			const fileName = url.pathname.slice("/assets/".length);
-			// Prevent path traversal
-			if (fileName.includes("..") || fileName.includes("/")) {
+			const fileName = decodeURIComponent(url.pathname.slice("/assets/".length));
+			// Prevent path traversal (allow forward slashes for subdirectories with non-ASCII names)
+			if (fileName.includes("..")) {
 				res.statusCode = 400;
 				res.end("Bad Request");
 				return;

@@ -1,4 +1,4 @@
-﻿{
+{
 	"name": "moon-tui",
 	"version": "49.0.0",
 	"description": "Terminal User Interface library with differential rendering for efficient text-based applications",
