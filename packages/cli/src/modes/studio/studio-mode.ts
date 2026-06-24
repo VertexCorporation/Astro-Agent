@@ -372,11 +372,15 @@ export class StudioMode {
 	private webUiServerInstance: any = null;
 
 	async run() {
+		console.log("[DEBUG] run() started");
 		this.server = createServer((req, res) => this.handleRequest(req, res));
+		console.log("[DEBUG] server created");
 
 		await new Promise<void>((resolve, _reject) => {
 			const tryListen = (port: number) => {
+				console.log(`[DEBUG] trying port ${port}`);
 				this.server!.once("error", (err: NodeJS.ErrnoException) => {
+					console.log(`[DEBUG] listen error: ${err.code} ${err.message}`);
 					if (err.code === "EADDRINUSE") {
 						tryListen(port + 1);
 					} else {
@@ -398,9 +402,12 @@ export class StudioMode {
 			tryListen(3135);
 		});
 
+		console.log("[DEBUG] after listen await");
 		try {
 			const serverModule = await import("../../core/web-ui-server.js");
+			console.log("[DEBUG] web-ui-server imported");
 			const { getProviders } = await import("moon-core");
+			console.log("[DEBUG] moon-core imported");
 			serverModule.setAuthPanelStateProvider(() => {
 				const authStorage = this.runtime.session.modelRegistry.authStorage;
 				const providerMap = new Map();
