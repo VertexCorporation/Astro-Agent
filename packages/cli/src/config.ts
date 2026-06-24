@@ -1,4 +1,4 @@
-/**
+﻿/**
  * CLI entry point for the refactored coding engine.
  * Uses main.ts with EngineSession and new mode modules.
  */
@@ -365,7 +365,7 @@ export const PACKAGE_NAME: string = pkg.name || "mooncode";
 export const APP_NAME: string = moonConfigName || "Moon";
 export const APP_TITLE: string = moonConfigName || "Moon";
 export const CONFIG_DIR_NAME: string = pkg.moonConfig?.configDir || ".moonagent";
-export const VERSION: string = pkg.version || "48.0.0";
+export const VERSION: string = pkg.version || "49.0.0";
 
 export const ENV_AGENT_DIR = `${APP_NAME.toUpperCase()}_CODING_AGENT_DIR`;
 export const ENV_SESSION_DIR = `${APP_NAME.toUpperCase()}_CODING_AGENT_SESSION_DIR`;

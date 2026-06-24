@@ -188,14 +188,21 @@ export class HybridMemorySystem {
 	}
 
 	public buildCodebaseMerkleTree(cwd: string): MerkleNode {
+		let fileCount = 0;
+		const MAX_FILES = 1000;
+
 		const buildNode = (currentPath: string): MerkleNode => {
+			if (fileCount >= MAX_FILES) {
+				return { name: basename(currentPath), type: "file", hash: "max_files_reached" };
+			}
+
 			const name = basename(currentPath);
 			const stat = statSync(currentPath);
 			if (stat.isDirectory()) {
 				const children: MerkleNode[] = [];
 				const items = readdirSync(currentPath);
 				for (const item of items) {
-					if (item === "node_modules" || item === ".git" || item === "dist") continue;
+					if (item === "node_modules" || item === ".git" || item === "dist" || item.startsWith(".")) continue;
 					try {
 						children.push(buildNode(join(currentPath, item)));
 					} catch {}
@@ -204,6 +211,9 @@ export class HybridMemorySystem {
 				for (const child of children) hasher.update(child.hash);
 				return { name, type: "directory", hash: hasher.digest("hex").slice(0, 12), children };
 			} else {
+				fileCount++;
+				if (fileCount >= MAX_FILES) return { name, type: "file", hash: "max_files_reached" };
+
 				const content = readFileSync(currentPath, "utf-8");
 				const fileHash = createHash("md5").update(content).digest("hex").slice(0, 12);
 				const ext = extname(currentPath);

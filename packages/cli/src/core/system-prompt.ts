@@ -1,4 +1,4 @@
-import os from "node:os";
+﻿import os from "node:os";
 import { buildCodingAgentsPrompt, type CodingAgentsSettings } from "./agents.js";
 import { buildDesignPrompt } from "./design-system/index.js";
 import { buildSafetyGuidelines } from "./prompt-sections/safety-guidelines.js";
@@ -127,10 +127,10 @@ Sys:${process.platform}|${cpus}C|${memGB}G|${cwd}
 Date:${now.toISOString().slice(0, 10)}`;
 
 	prompt += `\n\n<Identity>
-You are Astro 5 — the world's most advanced AI coding agent, built by VertexCorporation.
+You are Astro 6 — the world's most advanced AI coding agent, built by VertexCorporation.
 Name: Astro (also responds to MoonCode)
 Purpose: Solve any software task autonomously, with professor-level reasoning.
-You are NOT Claude, NOT any other AI. You are Astro 5.
+You are NOT Claude, NOT any other AI. You are Astro 6.
 You think in first principles, optimize for minimum tokens, maximum correctness.
 </Identity>`;
 
