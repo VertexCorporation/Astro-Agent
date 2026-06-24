@@ -372,6 +372,32 @@ export class StudioMode {
 	private webUiServerInstance: any = null;
 
 	async run() {
+		this.server = createServer((req, res) => this.handleRequest(req, res));
+
+		await new Promise<void>((resolve, _reject) => {
+			const tryListen = (port: number) => {
+				this.server!.once("error", (err: NodeJS.ErrnoException) => {
+					if (err.code === "EADDRINUSE") {
+						tryListen(port + 1);
+					} else {
+						console.error("Web UI server error:", err.message);
+						resolve();
+					}
+				});
+				this.server!.listen(port, () => {
+					const address = this.server!.address() as any;
+					this.port = address.port;
+					const url = `http://127.0.0.1:${this.port}`;
+					console.log(`  Web UI → ${url}`);
+					const startCmd =
+						process.platform === "win32" ? "start" : process.platform === "darwin" ? "open" : "xdg-open";
+					exec(`${startCmd} ${url}`, () => {});
+					resolve();
+				});
+			};
+			tryListen(3135);
+		});
+
 		try {
 			const serverModule = await import("../../core/web-ui-server.js");
 			const { getProviders } = await import("moon-core");
@@ -467,32 +493,6 @@ export class StudioMode {
 		} catch (e) {
 			console.error("Failed to start Web UI Auth Server:", e);
 		}
-
-		this.server = createServer((req, res) => this.handleRequest(req, res));
-
-		return new Promise<void>((resolve, _reject) => {
-			const tryListen = (port: number) => {
-				this.server!.once("error", (err: NodeJS.ErrnoException) => {
-					if (err.code === "EADDRINUSE") {
-						tryListen(port + 1);
-					} else {
-						console.error("Web UI server error:", err.message);
-						resolve();
-					}
-				});
-				this.server!.listen(port, () => {
-					const address = this.server!.address() as any;
-					this.port = address.port;
-					const url = `http://127.0.0.1:${this.port}`;
-					console.log(`  Web UI → ${url}`);
-					const startCmd =
-						process.platform === "win32" ? "start" : process.platform === "darwin" ? "open" : "xdg-open";
-					exec(`${startCmd} ${url}`, () => {});
-					resolve();
-				});
-			};
-			tryListen(3135);
-		});
 	}
 
 	private async handleRequest(req: IncomingMessage, res: ServerResponse) {
