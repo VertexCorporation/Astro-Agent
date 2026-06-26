@@ -380,21 +380,58 @@
 			position: relative;
 			transition: background-color 0.3s ease;
 		}
+		body.wallpaper-active #chat,
 		body.wallpaper-active #chat-container {
-			background: rgba(0,0,0,0.3);
-			backdrop-filter: blur(2px);
+			background: rgba(0,0,0,0.25);
+			backdrop-filter: blur(6px);
 		}
 		body.wallpaper-active #sidebar {
-			background: rgba(0,0,0,0.4);
-			backdrop-filter: blur(4px);
+			background: rgba(0,0,0,0.30);
+			backdrop-filter: blur(8px);
 		}
 		body.wallpaper-active #header {
-			background: rgba(0,0,0,0.3);
-			backdrop-filter: blur(4px);
+			background: rgba(0,0,0,0.25);
+			backdrop-filter: blur(8px);
+		}
+		body.wallpaper-active #input-area {
+			background: rgba(0,0,0,0.25) !important;
+			backdrop-filter: blur(20px);
 		}
 		body.wallpaper-active .input-box {
-			background: rgba(0,0,0,0.5);
+			background: rgba(0,0,0,0.35) !important;
 			backdrop-filter: blur(12px);
+		}
+		body.wallpaper-active .user-bubble {
+			background: rgba(0,0,0,0.30) !important;
+			backdrop-filter: blur(6px);
+		}
+		body.wallpaper-active .code-block {
+			background: rgba(0,0,0,0.25) !important;
+			backdrop-filter: blur(4px);
+		}
+		body.wallpaper-active .code-header {
+			background: rgba(0,0,0,0.20) !important;
+		}
+		body.wallpaper-active .tool-card {
+			background: rgba(0,0,0,0.25) !important;
+			backdrop-filter: blur(4px);
+		}
+		body.wallpaper-active .thinking-block {
+			background: rgba(0,0,0,0.25) !important;
+			backdrop-filter: blur(4px);
+		}
+		body.wallpaper-active .modal {
+			background: rgba(0,0,0,0.40) !important;
+			backdrop-filter: blur(8px);
+		}
+		body.wallpaper-active .form-input,
+		body.wallpaper-active .form-select,
+		body.wallpaper-active .model-search,
+		body.wallpaper-active .model-item {
+			background: rgba(0,0,0,0.30) !important;
+		}
+		body.wallpaper-active .assistant-content {
+			color: rgba(230,237,243,0.92);
 		}
 		.chat-inner { width: 100%; max-width: 820px; margin: 0 auto; padding: 0 20px; display: flex; flex-direction: column; gap: 16px; }
 
@@ -904,12 +941,6 @@
 		.btn-ghost:hover { background: color-mix(in srgb, var(--md-sys-color-primary) 8%, transparent); }
 		.btn-danger { background: var(--md-sys-color-error-container); color: var(--md-sys-color-on-error-container); }
 		.btn-danger:hover { background: color-mix(in srgb, var(--md-sys-color-error) 25%, var(--md-sys-color-error-container)); }
-		.p-btn { border-radius: var(--md-sys-shape-corner-full); border: 1px solid var(--md-sys-color-outline); background: transparent; color: var(--md-sys-color-on-surface); padding: 6px 16px; font-size: 0.8125rem; font-weight: 500; cursor: pointer; transition: all var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard); }
-		.p-btn:hover { background: var(--md-sys-color-surface-container-highest); }
-		.p-btn.secondary { border-color: var(--md-sys-color-outline); }
-		.p-btn.danger { color: var(--md-sys-color-error); border-color: color-mix(in srgb, var(--md-sys-color-error) 30%, transparent); }
-		.p-btn.danger:hover { background: var(--md-sys-color-error-container); }
-
 		/* ─── TOASTS ──────────────────────────────────────────────────────── */
 		#toast-container {
 			position: fixed;
@@ -1015,12 +1046,6 @@
 		.model-tab:hover { background: var(--md-sys-color-surface-container-highest); color: var(--md-sys-color-on-surface); }
 		.model-tab.active { background: var(--md-sys-color-surface-container-lowest); color: var(--md-sys-color-primary); box-shadow: var(--md-sys-elevation-level1); }
 		.model-tab .material-symbols-rounded { font-size: 16px; vertical-align: middle; margin-right: 4px; }
-		.model-search {
-			width: 100%; padding: 10px 16px; border: 1px solid var(--md-sys-color-outline); border-radius: var(--md-sys-shape-corner-extra-small);
-			background: var(--md-sys-color-surface-container-highest); color: var(--md-sys-color-on-surface);
-			font: var(--md-sys-typescale-body-medium); outline: none;
-			font-family: 'Inter', sans-serif; margin-bottom: 12px; box-sizing: border-box;
-		}
 		.model-search {
 			width: 100%; padding: 9px 14px; border: 1px solid var(--border); border-radius: 10px;
 			background: var(--glass-bg); color: var(--fg); font-size: 0.82rem; outline: none;
@@ -1552,6 +1577,8 @@
 @media(max-width:767px){body.mobile-mode{height:100dvh;overflow:hidden}body.mobile-mode #app-shell{height:calc(100dvh - var(--mobile-nav-h));padding-bottom:0}body.mobile-mode #sidebar,body.mobile-mode #ide-pane,body.mobile-mode #ide-resizer{display:none!important}body.mobile-mode #mobile-tab-bar{display:flex!important}body.mobile-mode #mobile-views{display:flex!important}body.mobile-mode #mobile-status-bar{display:flex!important}body.mobile-mode #split-container,body.mobile-mode #main{height:100%!important}body.mobile-mode #header{height:46px!important;min-height:46px!important;padding:0 10px!important}body.mobile-mode #token-pill,body.mobile-mode .model-select-btn{display:none!important}body.mobile-mode #chat-inner{padding:12px 0 8px!important;max-width:none!important}body.mobile-mode .msg-row{padding:4px 10px!important}body.mobile-mode .assistant-content{max-width:98%!important}body.mobile-mode .user-bubble{max-width:90%!important}body.mobile-mode #input-area{padding:8px 8px 10px!important}body.mobile-mode .input-box{border-radius:14px!important}body.mobile-mode #prompt-input{font-size:16px!important;min-height:46px!important}body.mobile-mode #scroll-btn{bottom:92px!important;right:12px!important}}
 @media(max-width:1080px){:root,[data-theme]{--sidebar-w:230px;--ide-w:260px}}@media(pointer:coarse){.tool-btn,.badge-btn,.mob-tab,.model-item,.cmd-item{min-height:44px}#send-btn,#stop-btn,#mic-btn{width:44px!important;height:44px!important}}
 .hidden{display:none!important}
+/* Wallpaper override (after V2 to beat !important) */
+body.wallpaper-active{background:transparent!important}
 /* ═════════ END ASTRO UI V2 OVERRIDE ═════════ */
 </style>
 </head>
