@@ -34,7 +34,7 @@ const INDEX_HTML = `
       <div class="logo">
         <div class="logo-circle"></div>
         <b>MoonCode</b>
-        <span class="version-tag">26v-6</span>
+        <span class="version-tag">26v-7</span>
       </div>
       <nav class="nav-links">
         <button id="tab-sessions" class="nav-btn">Session History</button>

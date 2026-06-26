@@ -50,7 +50,7 @@ function printStartupBanner(webUrl: string, authUrl: string, bridgePort: number)
 		"",
 		tl + border + tr,
 		side + pad("") + side,
-		side + pad(`  ${gold}✦${reset}  ${bold}${purple}Astro 6${reset}  ${dim}${white}v${VERSION}${reset}`) + side,
+		side + pad(`  ${gold}✦${reset}  ${bold}${purple}Astro 7${reset}  ${dim}${white}v${VERSION}${reset}`) + side,
 		side + pad(`     ${dim}${cyan}Vertex Corporation · AI Coding Agent${reset}`) + side,
 		side + pad("") + side,
 		side + pad(`  ${cyan}🌐${reset}  ${dim}Web UI${reset}     ${white}→  ${cyan}${webUrl}${reset}`) + side,
@@ -1866,7 +1866,7 @@ export class StudioMode {
 		if (method === "GET" && url.pathname === "/mobile") {
 			const html = this.getHtmlTemplate()
 				.replace('<html lang="en"', '<html lang="en" data-mobile="1"')
-				.replace("<title>Astro 6 🚀 – AI Coding Assistant</title>", "<title>Astro 6 🚀 – Mobile</title>");
+				.replace("<title>Astro 7 🚀 – AI Coding Assistant</title>", "<title>Astro 7 🚀 – Mobile</title>");
 			res.setHeader("Content-Type", "text/html; charset=utf-8");
 			res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
 			res.end(html);
