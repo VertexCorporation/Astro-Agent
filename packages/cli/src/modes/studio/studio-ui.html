@@ -2928,7 +2928,7 @@ function applyBackground(settings) {
 	document.body.classList.add('wallpaper-active');
 	let bgValue = settings.value;
 	if (settings.type === 'upload' || settings.type === 'image') {
-		if (layer) layer.style.backgroundImage = 'url(' + bgValue + ')';
+		if (layer) layer.style.backgroundImage = 'url("' + bgValue + '")';
 	} else if (settings.type === 'gradient') {
 		if (layer) layer.style.backgroundImage = bgValue;
 	}
