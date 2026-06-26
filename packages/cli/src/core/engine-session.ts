@@ -1269,10 +1269,10 @@ export class EngineSession {
 		const fusionState = this.settingsManager.getFusionMode();
 		if (fusionState.enabled && fusionState.thinkModel && fusionState.codeModel) {
 			promptGuidelines.push(
-				`[FUSION MODE ACTIVE] You are operating in Fusion Mode.`,
-				`- Think Model (Planner): ${fusionState.thinkModel.provider} / ${fusionState.thinkModel.id}`,
-				`- Code Model (Executor - You): ${fusionState.codeModel.provider} / ${fusionState.codeModel.id}`,
-				`The Think Model plans the solution and encloses its planning inside a <think>...</think> block. You must read the planning block, understand the steps, and execute them precisely using your available tools. Do not duplicate planning steps or rewrite the planning logic, just focus on implementing/coding the plan perfectly.`,
+				`FUSION MODE: A senior architect AI (${fusionState.thinkModel.id}) has already produced a <plan> above.`,
+				`Your role (${fusionState.codeModel.id}): implement that plan faithfully using your tools.`,
+				`Do NOT re-plan, re-architect, or question the plan. Read each step and execute it.`,
+				`If a step is ambiguous, use your best judgment to complete it — do not ask for clarification.`,
 			);
 		}
 

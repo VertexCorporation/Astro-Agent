@@ -11,13 +11,13 @@ import * as path from "node:path";
 import { spawn, spawnSync } from "child_process";
 import {
 	type AssistantMessage,
-	completeSimple,
 	getProviders,
 	type ImageContent,
 	type Message,
 	type Model,
 	type OAuthProviderId,
 } from "moon-core";
+import { runFusionThink } from "../../core/fusion.js";
 import type { EngineMessage } from "moon-engine";
 import type {
 	AutocompleteItem,
@@ -1146,59 +1146,21 @@ export class InteractiveMode {
 					promptInput = `[Sistem: Kullanıcının talebi üzerine Scratch/TurboWarp MCP entegrasyonu (scratch_*) otomatik olarak bağlandı/aktif edildi. Lütfen projedeki sprite'ları, sahneleri, blokları, değişkenleri ve listeleri scratch_* araçları ile kontrol et ve düzenlemeleri yap. Chrome extension'ın yüklü ve aktif olduğundan emin olun.]\n\n${userInput}`;
 				}
 
-				// --- FUSION MODE HANDLING ---
+				// --- FUSION MODE ---
 				const fusionState = this.settingsManager.getFusionMode();
-				if (fusionState.enabled && fusionState.thinkModel && fusionState.codeModel) {
-					try {
-						this.showStatus(`🔥 Fusion Mode: Düşünülüyor (${fusionState.thinkModel.id})...`);
-
-						// Setup loader
-						this.loadingAnimation = new BorderedLoader("Fusion Thinking", bg1);
-						this.statusContainer.addChild(this.loadingAnimation);
-						this.ui.requestRender();
-
-						const thinkResponse = await completeSimple(
-							{ provider: fusionState.thinkModel.provider, id: fusionState.thinkModel.id },
-							{
-								systemPrompt:
-									"Sen çok zeki bir planlama ve analiz asistanısın. Asla kod yazma. Sadece plan yap, mimariyi çıkar ve adım adım ne yapılması gerektiğini `<think>...</think>` blokları arasına yazarak açıklayıcı şekilde asıl kodlayıcıya aktar.",
-								messages: [
-									...this.sessionManager.buildSessionContext().messages.map((m: any) => ({
-										role: m.role,
-										content: m.content,
-									})),
-									{ role: "user", content: [{ type: "text", text: promptInput }], timestamp: Date.now() },
-								],
-							},
-							{
-								apiKey: this.session.modelRegistry.authStorage.get(fusionState.thinkModel.provider)?.apiKey,
-								maxTokens: 8000,
-							},
-						);
-
-						if (this.loadingAnimation) {
-							this.loadingAnimation.stop();
-							this.statusContainer.removeChild(this.loadingAnimation);
-							this.loadingAnimation = undefined;
-						}
-
-						if (thinkResponse.stopReason !== "error" && thinkResponse.stopReason !== "aborted") {
-							const thinkText = thinkResponse.content.find((c: any) => c.type === "text")?.text || "";
-							if (thinkText) {
-								promptInput = `<think>\n${thinkText}\n</think>\n\n${promptInput}`;
-								this.showStatus(
-									`🔥 Fusion Mode: Düşünce tamamlandı. Kodlanıyor (${fusionState.codeModel.id})...`,
-								);
-							}
-						}
-					} catch (e: any) {
-						if (this.loadingAnimation) {
-							this.loadingAnimation.stop();
-							this.statusContainer.removeChild(this.loadingAnimation);
-							this.loadingAnimation = undefined;
-						}
-						this.showError(`Fusion Think Error: ${e.message}`);
-					}
+				const fusionResult = await runFusionThink(
+					{ enabled: fusionState.enabled, thinkModel: fusionState.thinkModel ?? null, codeModel: fusionState.codeModel ?? null },
+					promptInput,
+					{
+						modelRegistry: {
+							find: (p, id) => this.session.modelRegistry.find(p, id) as any,
+							authStorage: { get: (p) => ({ key: (this.session.modelRegistry.authStorage.get(p) as any)?.key || "" }) },
+						},
+						onStatus: (msg) => this.showStatus(msg),
+					},
+				);
+				if (fusionResult) {
+					promptInput = `<plan>\n${fusionResult.plan}\n</plan>\n\n${promptInput}`;
 				}
 				// ----------------------------
 

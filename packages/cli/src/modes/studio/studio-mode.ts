@@ -3,10 +3,10 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import os from "node:os";
 import { promisify } from "node:util";
 import fs, { promises as fsPromises } from "fs";
-import { completeSimple } from "moon-core";
 import path, { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import { getEngineDir, getPackageDir, VERSION } from "../../config.js";
+import { runFusionThink } from "../../core/fusion.js";
 import { getBrowserBridgeStatus } from "../../core/browser-bridge-server.js";
 import type { EngineSessionRuntime } from "../../core/engine-session-runtime.js";
 import { buildSessionInfo, listSessionsFromDir, SessionManager } from "../../core/session-manager.js";
@@ -867,64 +867,21 @@ export class StudioMode {
 					}
 
 					if (!handled) {
-						// --- FUSION MODE HANDLING ---
+						// --- FUSION MODE ---
 						const fusionState = this.runtime.session.settingsManager.getFusionMode();
-						if (fusionState.enabled && fusionState.thinkModel && fusionState.codeModel) {
-							try {
-								this.broadcastEvent({
-									type: "terminal_log",
-									data: `\n🔥 Fusion Mode: Thinking (${fusionState.thinkModel.id})...\n`,
-								});
-								const thinkModelObj = this.runtime.session.modelRegistry.find(
-									fusionState.thinkModel.provider,
-									fusionState.thinkModel.id,
-								);
-								if (!thinkModelObj) throw new Error(`Model not found: ${fusionState.thinkModel.id}`);
-								const thinkResponse = await completeSimple(
-									thinkModelObj,
-									{
-										systemPrompt:
-											"You are a highly intelligent planning and analysis assistant. Never write code. Only plan, extract architecture, and describe step by step what needs to be done inside `<think>.</think>` blocks for the coder to implement.",
-										messages: [
-											...(this.runtime.session.engine.state.messages || []).map((m: any) => ({
-												role: m.role,
-												content: m.content,
-											})),
-											{
-												role: "user",
-												content: [{ type: "text", text: effectivePrompt }],
-												timestamp: Date.now(),
-											},
-										] as any[],
-									},
-									{
-										apiKey: (
-											this.runtime.session.modelRegistry.authStorage.get(
-												fusionState.thinkModel.provider,
-											) as any
-										)?.apiKey,
-										maxTokens: 8000,
-									},
-								);
-
-								if (thinkResponse.stopReason !== "error" && thinkResponse.stopReason !== "aborted") {
-									const thinkText =
-										(thinkResponse.content.find((c: any) => c.type === "text") as any)?.text || "";
-									if (thinkText) {
-										effectivePrompt = `<think>\n${thinkText}\n</think>\n\n${effectivePrompt}`;
-										this.broadcastEvent({
-											type: "terminal_log",
-											data: `🔥 Fusion Mode: Thought completed. Coding (${fusionState.codeModel.id})...\n`,
-										});
-									}
-								}
-							} catch (e: any) {
-								console.error("Fusion Think error in Web Mode:", e);
-								this.broadcastEvent({
-									type: "terminal_log",
-									data: `⚠️ Fusion Think Error: ${e.message || e}\n`,
-								});
-							}
+						const fusionResult = await runFusionThink(
+							{ enabled: fusionState.enabled, thinkModel: fusionState.thinkModel ?? null, codeModel: fusionState.codeModel ?? null },
+							effectivePrompt,
+							{
+								modelRegistry: {
+									find: (p, id) => this.runtime.session.modelRegistry.find(p, id) as any,
+									authStorage: { get: (p) => ({ key: (this.runtime.session.modelRegistry.authStorage.get(p) as any)?.key || "" }) },
+								},
+								onStatus: (msg) => this.broadcastEvent({ type: "terminal_log", data: msg + "\n" }),
+							},
+						);
+						if (fusionResult) {
+							effectivePrompt = `<plan>\n${fusionResult.plan}\n</plan>\n\n${effectivePrompt}`;
 						}
 
 						this.runtime.session
