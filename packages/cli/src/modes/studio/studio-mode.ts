@@ -1404,6 +1404,43 @@ export class StudioMode {
 			return;
 		}
 
+		if (method === "POST" && url.pathname === "/api/fusion-plan") {
+			let body = "";
+			req.on("data", (chunk) => (body += chunk));
+			req.on("end", async () => {
+				try {
+					const { task } = JSON.parse(body);
+					const fusionState = this.runtime.session.settingsManager.getFusionMode();
+					if (!fusionState.enabled || !fusionState.thinkModel || !fusionState.codeModel) {
+						res.setHeader("Content-Type", "application/json");
+						res.end(JSON.stringify({ plan: null, error: "Fusion mode not configured" }));
+						return;
+					}
+					const { runFusionThink } = await import("../../core/fusion.js");
+					const result = await runFusionThink(
+						{ enabled: true, thinkModel: fusionState.thinkModel ?? null, codeModel: fusionState.codeModel ?? null },
+						task,
+						{
+							modelRegistry: {
+								find: (p: string, id: string) => this.runtime.session.modelRegistry.find(p, id) as any,
+								authStorage: { get: (p: string) => ({ key: (this.runtime.session.modelRegistry.authStorage.get(p) as any)?.key || "" }) },
+							},
+						},
+					);
+					res.setHeader("Content-Type", "application/json");
+					if (result) {
+						res.end(JSON.stringify({ plan: result.plan, steps: [] }));
+					} else {
+						res.end(JSON.stringify({ plan: null, error: "Think model failed" }));
+					}
+				} catch (e: any) {
+					res.statusCode = 500;
+					res.end(JSON.stringify({ error: e.message }));
+				}
+			});
+			return;
+		}
+
 		if (method === "POST" && url.pathname === "/api/set-fusion") {
 			let body = "";
 			req.on("data", (chunk) => {

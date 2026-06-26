@@ -1581,7 +1581,20 @@ body{background:radial-gradient(circle at 20% 0%,var(--ambient-1),transparent 34
 
 /* ═══════ IDE PANE ═══════ */
 #ide-resizer{width:5px;background:transparent;cursor:col-resize;flex-shrink:0}#ide-resizer:hover{background:var(--md-sys-color-outline-variant)}
-#ide-pane{width:var(--ide-w);min-width:240px;max-width:46vw;background:var(--md-sys-color-surface-container);border-left:1px solid var(--md-sys-color-outline-variant);height:100vh;overflow:hidden;flex-shrink:0;display:flex;flex-direction:column}
+#ide-pane{width:var(--ide-w);min-width:240px;max-width:60vw;background:var(--md-sys-color-surface-container);border-left:1px solid var(--md-sys-color-outline-variant);height:100vh;overflow:hidden;flex-shrink:0;display:flex;flex-direction:column}
+.ide-panel{flex:1;min-height:0;overflow:hidden;display:none;flex-direction:column}
+.ide-panel.active{display:flex}
+.ide-tab:hover{color:var(--fg)!important;background:rgba(255,255,255,0.04)}
+.ide-tab.active{color:var(--accent)!important;border-bottom-color:var(--accent)!important}
+#plan-content h1,#plan-content h2,#plan-content h3{color:var(--fg);margin:12px 0 6px}
+#plan-content h1{font-size:1rem}#plan-content h2{font-size:0.92rem}#plan-content h3{font-size:0.85rem}
+#plan-content ul,#plan-content ol{padding-left:18px;margin:4px 0}
+#plan-content li{margin:2px 0}
+#plan-content code{background:var(--surface2);padding:1px 5px;border-radius:4px;font-size:0.78rem;font-family:'JetBrains Mono',monospace}
+#plan-content pre{background:var(--surface2);padding:10px;border-radius:8px;overflow-x:auto;margin:8px 0}
+#plan-content pre code{background:transparent;padding:0}
+#plan-content blockquote{border-left:2px solid var(--accent);padding-left:10px;margin:6px 0;color:var(--muted)}
+#plan-content hr{border:none;border-top:1px solid var(--border);margin:12px 0}
 .ide-item{border-radius:var(--md-sys-shape-corner-small);padding:6px 8px;font:var(--md-sys-typescale-body-small);display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--fg);transition:background 0.1s}
 .ide-item:hover{background:var(--md-sys-color-surface-container-high);color:var(--md-sys-color-on-surface)}
 
@@ -1858,6 +1871,9 @@ body.wallpaper-active{background:transparent!important}
 						<button id="web-btn" class="badge-btn" onclick="toggleWeb()" title="Toggle web search" style="padding:4px 8px; font-size:0.8rem; background:transparent; border:1px solid var(--border); border-radius:6px;">
 							<span class="material-symbols-rounded" style="font-size:15px; color:var(--muted);">language</span>
 						</button>
+						<button id="plan-btn" class="badge-btn" onclick="togglePlanMode()" title="Plan modu: AI yanıtlamadan önce plan sunar" style="padding:4px 8px; font-size:0.8rem; background:transparent; border:1px solid var(--border); border-radius:6px;">
+							<span class="material-symbols-rounded" style="font-size:15px; color:var(--muted);">account_tree</span>
+						</button>
 						<button onclick="openModal('modelModal')" class="badge-btn" style="font-size:0.8rem;">
 							<span id="input-model-badge" style="font-family:'JetBrains Mono',monospace;">—</span>
 							<span class="material-symbols-rounded" style="font-size:11px;">keyboard_arrow_down</span>
@@ -1891,26 +1907,53 @@ body.wallpaper-active{background:transparent!important}
 <!-- Resizer -->
 <div id="ide-resizer" style="width:6px; cursor:col-resize; background:transparent; transition:background 0.2s; z-index:100;" onmouseover="this.style.background='var(--border)'" onmouseout="this.style.background='transparent'"></div>
 <!-- IDE Pane (Context Panel) -->
-<div id="ide-pane" style="display:flex; flex-direction:column; background:var(--glass-bg); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border-left:1px solid var(--border); width: 280px; flex-shrink:0; position:relative;">
-	<div style="padding:12px 14px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
-		<span style="font-weight:600; font-size:0.8rem; color:var(--muted); letter-spacing:0.03em; text-transform:uppercase;">
-			<span class="material-symbols-rounded" style="font-size:15px;vertical-align:middle;margin-right:5px;color:var(--accent);">neurology</span>Bağlam
-		</span>
-		<div style="display:flex; gap:2px;">
-			<button onclick="toggleTodoPanel()" class="tool-btn" style="padding:3px; border-radius:8px;" title="Plan"><span class="material-symbols-rounded" style="font-size:15px;">checklist</span></button>
-			<button onclick="fetchIDETree()" class="tool-btn" style="padding:3px; border-radius:8px;" title="Yenile"><span class="material-symbols-rounded" style="font-size:15px;">refresh</span></button>
-			<button onclick="toggleIDE()" class="tool-btn" style="padding:3px; border-radius:8px;" title="Kapat"><span class="material-symbols-rounded" style="font-size:15px;">close</span></button>
+<div id="ide-pane" style="display:flex; flex-direction:column; background:var(--glass-bg); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border-left:1px solid var(--border); width: 360px; flex-shrink:0; position:relative;">
+	<!-- Tabs -->
+	<div style="display:flex; border-bottom:1px solid var(--border); background:var(--surface2); flex-shrink:0;">
+		<button class="ide-tab active" data-panel="files" onclick="switchIdeTab('files')" style="flex:1;padding:8px 6px;border:none;background:transparent;cursor:pointer;font-size:0.75rem;color:var(--muted);display:flex;align-items:center;justify-content:center;gap:4px;border-bottom:2px solid var(--accent);font-family:inherit;transition:all 0.15s;">
+			<span class="material-symbols-rounded" style="font-size:14px;">folder</span> Dosyalar
+		</button>
+		<button class="ide-tab" data-panel="plan" onclick="switchIdeTab('plan')" style="flex:1;padding:8px 6px;border:none;background:transparent;cursor:pointer;font-size:0.75rem;color:var(--muted);display:flex;align-items:center;justify-content:center;gap:4px;border-bottom:2px solid transparent;font-family:inherit;transition:all 0.15s;">
+			<span class="material-symbols-rounded" style="font-size:14px;">account_tree</span> Plan
+		</button>
+		<button class="ide-tab" data-panel="todo" onclick="switchIdeTab('todo')" style="flex:1;padding:8px 6px;border:none;background:transparent;cursor:pointer;font-size:0.75rem;color:var(--muted);display:flex;align-items:center;justify-content:center;gap:4px;border-bottom:2px solid transparent;font-family:inherit;transition:all 0.15s;">
+			<span class="material-symbols-rounded" style="font-size:14px;">checklist</span> Görev
+		</button>
+		<button onclick="toggleIDE()" class="tool-btn" style="padding:3px;margin:3px;" title="Kapat"><span class="material-symbols-rounded" style="font-size:15px;">close</span></button>
+	</div>
+
+	<!-- File Tree Panel -->
+	<div id="ide-file-tree" class="ide-panel active" style="flex:1; overflow-y:auto; padding:10px; font-size:0.82rem; font-family:'Inter',sans-serif;"></div>
+
+	<!-- Plan Panel -->
+	<div id="plan-panel" class="ide-panel" style="display:none;flex:1;flex-direction:column;overflow:hidden;">
+		<div id="plan-content" style="flex:1;overflow-y:auto;padding:14px;font-size:0.82rem;line-height:1.6;">
+			<div class="todo-empty">Plan modu kapalı.<br>Mesaj kutusundaki <b>Plan</b> butonuna basarak etkinleştirin.</div>
 		</div>
+		<div id="plan-footer" style="display:none;padding:10px 14px;border-top:1px solid var(--border);gap:6px;flex-shrink:0;">
+			<button onclick="editPlan()" class="tool-btn" style="padding:6px 14px;border-radius:8px;font-size:0.78rem;display:flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:14px;">edit</span> Düzenle</button>
+			<button onclick="approvePlan()" style="padding:6px 14px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:0.78rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px;margin-left:auto;font-family:inherit;"><span class="material-symbols-rounded" style="font-size:14px;">check_circle</span> Onayla</button>
+		</div>
+		<textarea id="plan-editor" style="display:none;flex:1;border:none;resize:none;padding:14px;font-family:'JetBrains Mono',monospace;font-size:0.78rem;background:var(--bg);color:var(--fg);outline:none;overflow:auto;line-height:1.6;"></textarea>
 	</div>
-	<div id="ide-file-tree" style="flex:1; overflow-y:auto; padding:10px; font-size:0.82rem; font-family:'Inter',sans-serif;"></div>
-	<div id="todo-panel" style="display:none; flex-direction:column; overflow-y:auto; font-size:0.82rem;">
-		<div class="todo-header"><span class="material-symbols-rounded" style="font-size:17px;color:var(--accent);">checklist</span> Plan <button onclick="todoClear()" class="tool-btn" style="padding:2px; border-radius:6px;" title="Temizle"><span class="material-symbols-rounded" style="font-size:14px;color:var(--accent3);">delete</span></button><button onclick="fetchTodoList()" class="tool-btn" style="padding:2px; border-radius:6px;" title="Yenile"><span class="material-symbols-rounded" style="font-size:14px;">refresh</span></button><span class="todo-stats">0/0</span></div>
-		<div id="todo-content" class="todo-timeline"><div class="todo-empty">Henüz plan öğesi yok.<br>AI yeni bir göreve başladığında burada görünecek.</div></div>
+
+	<!-- Todo Panel -->
+	<div id="todo-panel" class="ide-panel" style="display:none;flex-direction:column;overflow:hidden;">
+		<div style="padding:8px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;font-weight:600;font-size:0.82rem;flex-shrink:0;">
+			<span class="material-symbols-rounded" style="font-size:16px;color:var(--accent);">checklist</span>
+			<span style="flex:1;">Görevler</span>
+			<button onclick="todoClear()" class="tool-btn" style="padding:2px;border-radius:6px;" title="Temizle"><span class="material-symbols-rounded" style="font-size:13px;color:var(--accent3);">delete</span></button>
+			<button onclick="fetchTodoList()" class="tool-btn" style="padding:2px;border-radius:6px;" title="Yenile"><span class="material-symbols-rounded" style="font-size:13px;">refresh</span></button>
+			<span class="todo-stats" style="font-size:0.7rem;color:var(--muted);background:var(--bg);padding:2px 7px;border-radius:999px;">0/0</span>
+		</div>
+		<div id="todo-content" class="todo-timeline" style="flex:1;overflow-y:auto;padding:12px 8px;"><div class="todo-empty">Henüz plan öğesi yok.<br>AI yeni bir göreve başladığında burada görünecek.</div></div>
 	</div>
+
+	<!-- Code Viewer -->
 	<div id="ide-code-container" style="flex:1; display:none; flex-direction:column; overflow:hidden; position:relative;">
 		<div style="padding:8px 12px; border-bottom:1px solid var(--border); font-size:0.8rem; display:flex; justify-content:space-between; align-items:center; background:var(--surface2);">
 			<span id="ide-code-title" style="font-family:'JetBrains Mono',monospace; color:var(--accent); font-size:0.78rem;">file.ts</span>
-			<button onclick="document.getElementById('ide-code-container').style.display='none'; document.getElementById('ide-file-tree').style.display='block';" class="tool-btn" style="padding:2px; border-radius:6px;"><span class="material-symbols-rounded" style="font-size:14px;">close</span></button>
+			<button onclick="closeCodeViewer()" class="tool-btn" style="padding:2px; border-radius:6px;"><span class="material-symbols-rounded" style="font-size:14px;">close</span></button>
 		</div>
 		<div style="flex:1; overflow:auto; padding:12px;">
 			<pre style="margin:0;"><code id="ide-code-viewer" class="hljs" style="font-family:'JetBrains Mono',monospace; font-size:0.78rem; background:transparent;"></code></pre>
@@ -4718,6 +4761,16 @@ async function sendMessage() {
 	const text = promptInput.value.trim();
 	if (!text || isGenerating) return;
 
+	// Plan mode check: generate plan first before sending
+	if (_planMode && !_currentPlan?.approved) {
+		_pendingPlanText = text;
+		promptInput.value = '';
+		autoResize();
+		hideAutocomplete();
+		await generatePlan(text);
+		return;
+	}
+
 	// Process images/files if any
 	const images = [];
 	for (const file of attachedFiles) {
@@ -4768,6 +4821,36 @@ async function sendMessage() {
 	} catch(e) {
 		setGeneratingState(false);
 		appendMessage('assistant', 'Bağlantı hatası: sunucuya ulaşılamıyor.');
+	}
+}
+
+// ─── PLAN GENERATION ─────────────────────────────────────────────────────
+async function generatePlan(taskText) {
+	const content = document.getElementById('plan-content');
+	if (content) {
+		content.style.display = 'block';
+		content.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);"><span class="material-symbols-rounded" style="font-size:28px;display:block;margin-bottom:10px;animation:spin 1s linear infinite;">sync</span>Plan oluşturuluyor...</div>';
+	}
+	switchIdeTab('plan');
+
+	try {
+		const resp = await safeFetchJSON('/api/fusion-plan', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ task: taskText }),
+		});
+		if (resp && resp.plan) {
+			setPlan(resp.plan, resp.steps || []);
+		} else {
+			if (content) content.innerHTML = '<div class="todo-empty" style="padding:30px;">Plan oluşturulamadı. Normal modda devam ediliyor.</div>';
+			// Retry without plan mode
+			const ta = document.getElementById('prompt-input');
+			if (ta) { ta.value = taskText; sendMessage(); }
+		}
+	} catch (e) {
+		if (content) content.innerHTML = `<div class="todo-empty" style="padding:30px;">Plan hatası. Normal modda devam ediliyor.</div>`;
+		const ta = document.getElementById('prompt-input');
+		if (ta) { ta.value = taskText; sendMessage(); }
 	}
 }
 
@@ -6895,6 +6978,133 @@ window.addEventListener('DOMContentLoaded', () => {
 			isResizing = false;
 			document.body.style.cursor = '';
 		});
+	}
+
+	// ─── PLAN MODE ─────────────────────────────────
+	let _planMode = false;
+	let _currentPlan = null; // { markdown, steps, approved }
+	let _pendingPlanText = null;
+
+	function togglePlanMode() {
+		_planMode = !_planMode;
+		const btn = document.getElementById('plan-btn');
+		if (btn) {
+			btn.style.borderColor = _planMode ? 'var(--accent)' : 'var(--border)';
+			btn.style.background = _planMode ? 'rgba(108,143,255,0.12)' : 'transparent';
+			const icon = btn.querySelector('span');
+			if (icon) icon.style.color = _planMode ? 'var(--accent)' : 'var(--muted)';
+		}
+		if (_planMode) switchIdeTab('plan');
+	}
+
+	function switchIdeTab(tab) {
+		document.querySelectorAll('.ide-tab').forEach(t => {
+			t.classList.remove('active');
+			t.style.borderBottomColor = 'transparent';
+			t.style.color = 'var(--muted)';
+		});
+		const activeTab = document.querySelector(`.ide-tab[data-panel="${tab}"]`);
+		if (activeTab) {
+			activeTab.classList.add('active');
+			activeTab.style.borderBottomColor = 'var(--accent)';
+			activeTab.style.color = 'var(--accent)';
+		}
+		document.querySelectorAll('.ide-panel').forEach(p => p.style.display = 'none');
+		const panel = document.getElementById(tab === 'files' ? 'ide-file-tree' : tab === 'plan' ? 'plan-panel' : 'todo-panel');
+		if (panel) {
+			panel.style.display = 'flex';
+			if (tab === 'todo') fetchTodoList();
+		}
+		const pane = document.getElementById('ide-pane');
+		if (pane && pane.style.display === 'none') pane.style.display = 'flex';
+	}
+
+	function setPlan(markdown, steps) {
+		_currentPlan = { markdown, steps: steps || [], approved: false };
+		const content = document.getElementById('plan-content');
+		const footer = document.getElementById('plan-footer');
+		const editor = document.getElementById('plan-editor');
+		if (!content) return;
+		content.style.display = 'block';
+		content.innerHTML = marked.parse(markdown);
+		if (footer) { footer.style.display = 'flex'; footer.innerHTML = '<button onclick="editPlan()" class="tool-btn" style="padding:6px 14px;border-radius:8px;font-size:0.78rem;display:flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:14px;">edit</span> Düzenle</button><button onclick="approvePlan()" style="padding:6px 14px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:0.78rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px;margin-left:auto;font-family:inherit;"><span class="material-symbols-rounded" style="font-size:14px;">check_circle</span> Onayla</button>'; }
+		if (editor) editor.style.display = 'none';
+		switchIdeTab('plan');
+	}
+
+	function editPlan() {
+		if (!_currentPlan) return;
+		const content = document.getElementById('plan-content');
+		const footer = document.getElementById('plan-footer');
+		const editor = document.getElementById('plan-editor');
+		if (!content || !editor) return;
+		content.style.display = 'none';
+		if (footer) footer.style.display = 'none';
+		editor.style.display = 'block';
+		editor.value = _currentPlan.markdown;
+		editor.focus();
+		if (footer) {
+			footer.style.display = 'flex';
+			footer.innerHTML = '<button onclick="cancelEditPlan()" class="tool-btn" style="padding:6px 14px;border-radius:8px;font-size:0.78rem;">İptal</button><button onclick="saveEditPlan()" style="padding:6px 14px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:0.78rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px;margin-left:auto;font-family:inherit;"><span class="material-symbols-rounded" style="font-size:14px;">save</span> Kaydet</button>';
+		}
+	}
+
+	function saveEditPlan() {
+		const editor = document.getElementById('plan-editor');
+		if (!editor || !_currentPlan) return;
+		_currentPlan.markdown = editor.value;
+		_currentPlan.approved = false;
+		const content = document.getElementById('plan-content');
+		const footer = document.getElementById('plan-footer');
+		if (content) { content.style.display = 'block'; content.innerHTML = marked.parse(_currentPlan.markdown); }
+		editor.style.display = 'none';
+		if (footer) {
+			footer.style.display = 'flex';
+			footer.innerHTML = '<button onclick="editPlan()" class="tool-btn" style="padding:6px 14px;border-radius:8px;font-size:0.78rem;display:flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:14px;">edit</span> Düzenle</button><button onclick="approvePlan()" style="padding:6px 14px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:0.78rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px;margin-left:auto;font-family:inherit;"><span class="material-symbols-rounded" style="font-size:14px;">check_circle</span> Onayla</button>';
+		}
+	}
+
+	function cancelEditPlan() {
+		const content = document.getElementById('plan-content');
+		const editor = document.getElementById('plan-editor');
+		const footer = document.getElementById('plan-footer');
+		if (!content || !editor || !_currentPlan) return;
+		content.style.display = 'block';
+		content.innerHTML = marked.parse(_currentPlan.markdown);
+		editor.style.display = 'none';
+		if (footer) {
+			footer.style.display = 'flex';
+			footer.innerHTML = '<button onclick="editPlan()" class="tool-btn" style="padding:6px 14px;border-radius:8px;font-size:0.78rem;display:flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:14px;">edit</span> Düzenle</button><button onclick="approvePlan()" style="padding:6px 14px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:0.78rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px;margin-left:auto;font-family:inherit;"><span class="material-symbols-rounded" style="font-size:14px;">check_circle</span> Onayla</button>';
+		}
+	}
+
+	function approvePlan() {
+		if (!_currentPlan) return;
+		_currentPlan.approved = true;
+		const footer = document.getElementById('plan-footer');
+		if (footer) {
+			footer.innerHTML = '<span style="font-size:0.78rem;color:var(--accent2);display:flex;align-items:center;gap:4px;"><span class="material-symbols-rounded" style="font-size:14px;">check_circle</span> Plan onaylandı ✅</span>';
+		}
+		if (_pendingPlanText) {
+			const fullText = `<plan>\n${_currentPlan.markdown}\n</plan>\n\n${_pendingPlanText}`;
+			_pendingPlanText = null;
+			// Inject into the input and send via existing pipeline
+			const ta = document.getElementById('prompt-input');
+			if (ta) {
+				ta.value = fullText;
+				autoResize();
+			}
+			// Remove plan mode after approval
+			if (_planMode) togglePlanMode();
+			sendMessage();
+		}
+	}
+
+	function closeCodeViewer() {
+		const cc = document.getElementById('ide-code-container');
+		const ft = document.getElementById('ide-file-tree');
+		if (cc) cc.style.display = 'none';
+		if (ft) ft.style.display = 'block';
 	}
 </script></body>
 </html>
