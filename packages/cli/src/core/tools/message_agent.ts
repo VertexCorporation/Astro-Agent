@@ -1,7 +1,7 @@
 import type { EngineTool } from "moon-engine";
 import { type Static, Type } from "typebox";
 import type { ToolDefinition } from "../extensions/types.js";
-import { activeAgents } from "./invoke_subagent.js";
+import { activeAgents, getWorkerPool } from "./invoke_subagent.js";
 import { wrapToolDefinition } from "./tool-definition-wrapper.js";
 
 const messageAgentSchema = Type.Object({
@@ -21,7 +21,7 @@ export function createMessageAgentToolDefinition(): ToolDefinition<typeof messag
 		name: "message_agent",
 		label: "message agent",
 		description:
-			"Multi-Agent Swarm: Send an IPC message to another active sub-agent. This allows collaboration between specialized agents (e.g. Researcher sending docs to Coder).",
+			"Multi-Agent Swarm: Send an IPC message to another active sub-agent running in a separate thread. This allows collaboration between specialized agents (e.g. Researcher sending docs to Coder).",
 		promptSnippet: "Send message to a running sub-agent",
 		parameters: messageAgentSchema,
 		async execute(_toolCallId, { targetAgentId, message }, _signal, _onUpdate, _ctx) {
@@ -39,8 +39,7 @@ export function createMessageAgentToolDefinition(): ToolDefinition<typeof messag
 				throw new Error("Message is required when targetAgentId is not 'list'.");
 			}
 
-			const targetEngine = activeAgents.get(targetAgentId);
-			if (!targetEngine) {
+			if (!activeAgents.has(targetAgentId)) {
 				return {
 					content: [
 						{
@@ -52,9 +51,7 @@ export function createMessageAgentToolDefinition(): ToolDefinition<typeof messag
 				};
 			}
 
-			// Fire and forget prompt to the background engine
-			// We append a system prefix to let the agent know it's an IPC message
-			targetEngine.prompt(`[IPC MESSAGE from another Agent]\n\n${message}`);
+			getWorkerPool().sendMessage(targetAgentId, message);
 
 			return {
 				content: [{ type: "text", text: `Message successfully delivered to agent '${targetAgentId}'.` }],

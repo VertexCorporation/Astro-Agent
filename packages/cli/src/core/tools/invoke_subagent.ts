@@ -1,11 +1,8 @@
-// @ts-nocheck
-
 import { EventEmitter } from "node:events";
 import type { EngineTool } from "moon-engine";
-import { Engine } from "moon-engine";
 import { type Static, Type } from "typebox";
 import type { ToolDefinition } from "../extensions/types.js";
-import { createCodingTools } from "./index.js";
+import { WorkerPool } from "./worker-pool.js";
 import { wrapToolDefinition } from "./tool-definition-wrapper.js";
 
 const invokeSubagentSchema = Type.Object({
@@ -17,9 +14,19 @@ const invokeSubagentSchema = Type.Object({
 export type InvokeSubagentInput = Static<typeof invokeSubagentSchema>;
 
 export const subagentEventEmitter = new EventEmitter();
+export const activeAgents = new Map<string, true>();
 
-// IPC Registry
-export const activeAgents = new Map<string, Engine>();
+let pool: WorkerPool | null = null;
+export function getWorkerPool(): WorkerPool {
+	if (!pool) {
+		const workerUrl = new URL("invoke-subagent-worker.js", import.meta.url).href;
+		pool = new WorkerPool(workerUrl);
+		pool.on("start", (payload: unknown) => subagentEventEmitter.emit("start", payload));
+		pool.on("update", (payload: unknown) => subagentEventEmitter.emit("update", payload));
+		pool.on("end", (payload: unknown) => subagentEventEmitter.emit("end", payload));
+	}
+	return pool;
+}
 
 export function createInvokeSubagentToolDefinition(
 	cwd: string,
@@ -28,7 +35,7 @@ export function createInvokeSubagentToolDefinition(
 		name: "invoke_subagent",
 		label: "invoke subagent",
 		description:
-			"Spawn a new sub-agent to perform a task. The sub-agent runs independently in the background. Other agents can message this agent using its TaskName.",
+			"Spawn a new sub-agent to perform a task. The sub-agent runs independently in the background (separate thread). Other agents can message this agent using its TaskName.",
 		promptSnippet: "Delegate a complex task to a sub-agent",
 		parameters: invokeSubagentSchema,
 		async execute(_toolCallId, { TaskName, Task, Context }, _signal, onUpdate, ctx) {
@@ -40,63 +47,35 @@ export function createInvokeSubagentToolDefinition(
 				throw new Error(`An agent with TaskName '${TaskName}' is already running.`);
 			}
 
-			// Report that the agent has started
 			if (onUpdate) {
 				onUpdate({
-					content: [{ type: "text", text: `[Sub-agent '${TaskName}' spawned. Waiting for completion...]` }],
+					content: [{ type: "text", text: `[Sub-agent '${TaskName}' spawned in separate thread. Waiting for completion...]` }],
 					details: undefined,
 				});
 			}
 
-			const engine = new Engine({
-				initialState: {
-					model: ctx.model,
-					systemPrompt: `You are a MoonCode sub-agent. Your ID is '${TaskName}'.\n\nTask Details:\n${Task}\n\nContext:\n${Context ?? "None"}\n\nYou can communicate with other agents via the message_agent tool.\n\n${ctx.getSystemPrompt()}`,
-					tools: createCodingTools(cwd),
-				},
-			});
+			const systemPrompt = `You are a MoonCode sub-agent. Your ID is '${TaskName}'.\n\nTask Details:\n${Task}\n\nContext:\n${Context ?? "None"}\n\nYou can communicate with other agents via the message_agent tool.\n\n${ctx.getSystemPrompt()}`;
 
-			activeAgents.set(TaskName, engine);
+			activeAgents.set(TaskName, true);
+			subagentEventEmitter.emit("start", { id: TaskName, taskName: TaskName });
 
-			subagentEventEmitter.emit("start", { id: TaskName, taskName: TaskName, engine });
-
-			engine.subscribe((event) => {
-				subagentEventEmitter.emit("update", { id: TaskName, event });
-			});
+			const p = getWorkerPool();
 
 			try {
-				const onAbort = () => {
-					engine.abort();
-				};
-				if (_signal) {
-					if (_signal.aborted) onAbort();
-					else _signal.addEventListener("abort", onAbort, { once: true });
-				}
+				const result = await p.runTask(
+					{
+						taskName: TaskName,
+						task: Task,
+						cwd,
+						systemPrompt,
+						model: ctx.model,
+					},
+					_signal,
+				);
 
-				await engine.prompt(Task);
-
-				// Await completion
-				await engine.waitForIdle();
-
-				if (_signal) _signal.removeEventListener("abort", onAbort);
-				if (_signal?.aborted) throw new Error("Sub-agent execution aborted by user.");
-
-				const finalMessages = engine.state.messages;
-				const assistantMessages = finalMessages.filter((m) => m.role === "assistant");
-				const finalOutput =
-					assistantMessages.length > 0
-						? assistantMessages[assistantMessages.length - 1].content
-								.filter((c) => c.type === "text")
-								.map((c) => c.text)
-								.join("\n")
-						: "Task completed with no text output.";
-
-				return {
-					content: [{ type: "text", text: `Sub-agent completed task '${TaskName}'.\n\nResult:\n${finalOutput}` }],
-					details: undefined,
-				};
-			} catch (err: any) {
-				throw new Error(`Sub-agent failed: ${err.message}`);
+				return result as any;
+			} catch (err: unknown) {
+				throw new Error(`Sub-agent failed: ${(err as Error).message}`);
 			} finally {
 				activeAgents.delete(TaskName);
 				subagentEventEmitter.emit("end", { id: TaskName });
