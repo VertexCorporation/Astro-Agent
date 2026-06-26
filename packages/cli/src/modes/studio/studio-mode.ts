@@ -11,7 +11,7 @@ import { getBrowserBridgeStatus } from "../../core/browser-bridge-server.js";
 import type { EngineSessionRuntime } from "../../core/engine-session-runtime.js";
 import { buildSessionInfo, listSessionsFromDir, SessionManager } from "../../core/session-manager.js";
 import { BUILTIN_SLASH_COMMANDS } from "../../core/slash-commands.js";
-import { getTodoSnapshot } from "../../core/tools/todo.js";
+import { getTodoSnapshot, applyTodoAction } from "../../core/tools/todo.js";
 import { getMcpPanelState, setMcpPanelStateProvider, webUiMcpActionListeners } from "../../core/web-ui-server.js";
 import type { InteractiveModeOptions } from "../interactive/interactive-mode.js";
 
@@ -1839,10 +1839,28 @@ export class StudioMode {
 			return;
 		}
 
-		if (method === "GET" && url.pathname === "/api/todo") {
-			res.setHeader("Content-Type", "application/json");
-			res.end(JSON.stringify(getTodoSnapshot()));
-			return;
+		if (url.pathname === "/api/todo") {
+			if (method === "GET") {
+				res.setHeader("Content-Type", "application/json");
+				res.end(JSON.stringify(getTodoSnapshot()));
+				return;
+			}
+			if (method === "POST") {
+				let body = "";
+				req.on("data", (chunk) => (body += chunk));
+				req.on("end", () => {
+					try {
+						const { action, id, text } = JSON.parse(body);
+						const result = applyTodoAction(action, { id, text });
+						res.setHeader("Content-Type", "application/json");
+						res.end(JSON.stringify({ ...result, ...getTodoSnapshot() }));
+					} catch (e: any) {
+						res.statusCode = 400;
+						res.end(JSON.stringify({ ok: false, error: e.message }));
+					}
+				});
+				return;
+			}
 		}
 
 		if (method === "GET" && url.pathname === "/mobile") {

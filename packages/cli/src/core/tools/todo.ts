@@ -210,6 +210,59 @@ export function getTodoSnapshot(): { items: TodoItem[]; count: number; done: num
 	return { items, count: items.length, done: items.filter((i) => i.done).length };
 }
 
+/** Apply a todo action (for API/UI use — shared with the tool) */
+export function applyTodoAction(action: string, params: { text?: string; id?: number }): { ok: boolean; error?: string } {
+	switch (action) {
+		case "add": {
+			if (!params.text || params.text.trim().length === 0) return { ok: false, error: "text required" };
+			const item: TodoItem = { id: nextId++, text: params.text.trim(), done: false, createdAt: Date.now() };
+			todoStore.set(item.id, item);
+			saveStore();
+			return { ok: true };
+		}
+		case "check": {
+			if (params.id === undefined || params.id === null) return { ok: false, error: "id required" };
+			const ci = todoStore.get(params.id);
+			if (!ci) return { ok: false, error: `Task #${params.id} not found` };
+			ci.done = true;
+			saveStore();
+			return { ok: true };
+		}
+		case "uncheck": {
+			if (params.id === undefined || params.id === null) return { ok: false, error: "id required" };
+			const ui = todoStore.get(params.id);
+			if (!ui) return { ok: false, error: `Task #${params.id} not found` };
+			ui.done = false;
+			saveStore();
+			return { ok: true };
+		}
+		case "remove": {
+			if (params.id === undefined || params.id === null) return { ok: false, error: "id required" };
+			if (!todoStore.has(params.id)) return { ok: false, error: `Task #${params.id} not found` };
+			todoStore.delete(params.id);
+			saveStore();
+			return { ok: true };
+		}
+		case "clear": {
+			todoStore.clear();
+			nextId = 1;
+			saveStore();
+			return { ok: true };
+		}
+		case "edit": {
+			if (params.id === undefined || params.id === null) return { ok: false, error: "id required" };
+			if (!params.text || params.text.trim().length === 0) return { ok: false, error: "text required" };
+			const ei = todoStore.get(params.id);
+			if (!ei) return { ok: false, error: `Task #${params.id} not found` };
+			ei.text = params.text.trim();
+			saveStore();
+			return { ok: true };
+		}
+		default:
+			return { ok: false, error: `Unknown action: ${action}` };
+	}
+}
+
 export function createTodoTool(): EngineTool<TodoToolInput> {
 	return wrapToolDefinition(createTodoToolDefinition());
 }

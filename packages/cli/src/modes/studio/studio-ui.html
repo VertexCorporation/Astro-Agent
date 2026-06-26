@@ -1355,6 +1355,7 @@
   .todo-stop:last-child .todo-line { display:none; }
   .todo-text { padding-top:2px; flex:1; min-width:0; }
   .todo-label { color:var(--fg); font-size:0.8rem; line-height:1.4; display:block; word-break:break-word; }
+  .todo-edit-input { background:var(--surface2); border:1px solid var(--accent); color:var(--fg); border-radius:4px; outline:none; }
   .todo-stop.done .todo-label { color:var(--muted); text-decoration:line-through; }
 
 /* ─── MOBILE MODE ──────────────────────────────────────────────────── */
@@ -1903,7 +1904,7 @@ body.wallpaper-active{background:transparent!important}
 	</div>
 	<div id="ide-file-tree" style="flex:1; overflow-y:auto; padding:10px; font-size:0.82rem; font-family:'Inter',sans-serif;"></div>
 	<div id="todo-panel" style="display:none; flex-direction:column; overflow-y:auto; font-size:0.82rem;">
-		<div class="todo-header"><span class="material-symbols-rounded" style="font-size:17px;color:var(--accent);">checklist</span> Plan <button onclick="fetchTodoList()" class="tool-btn" style="padding:2px; border-radius:6px; margin-left:auto;" title="Yenile"><span class="material-symbols-rounded" style="font-size:14px;">refresh</span></button><span class="todo-stats">0/0</span></div>
+		<div class="todo-header"><span class="material-symbols-rounded" style="font-size:17px;color:var(--accent);">checklist</span> Plan <button onclick="todoClear()" class="tool-btn" style="padding:2px; border-radius:6px;" title="Temizle"><span class="material-symbols-rounded" style="font-size:14px;color:var(--accent3);">delete</span></button><button onclick="fetchTodoList()" class="tool-btn" style="padding:2px; border-radius:6px;" title="Yenile"><span class="material-symbols-rounded" style="font-size:14px;">refresh</span></button><span class="todo-stats">0/0</span></div>
 		<div id="todo-content" class="todo-timeline"><div class="todo-empty">Henüz plan öğesi yok.<br>AI yeni bir göreve başladığında burada görünecek.</div></div>
 	</div>
 	<div id="ide-code-container" style="flex:1; display:none; flex-direction:column; overflow:hidden; position:relative;">
@@ -3370,6 +3371,41 @@ function refreshTodoHeader(count, done) {
 	}
 }
 let _lastTodoCount = 0;
+function todoAction(action, id, text) {
+	safeFetchJSON('/api/todo', {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ action, id, text }),
+		showError: true,
+	}).then(() => fetchTodoList()).catch(() => fetchTodoList());
+}
+function todoCheck(id) { todoAction('check', id); }
+function todoUncheck(id) { todoAction('uncheck', id); }
+function todoRemove(id) { todoAction('remove', id); }
+function todoClear() { if (confirm('Tüm plan öğelerini temizle?')) todoAction('clear'); }
+function todoEdit(id) {
+	const el = document.getElementById('todo-edit-' + id);
+	if (!el) return;
+	const current = el.textContent;
+	const input = document.createElement('input');
+	input.type = 'text';
+	input.value = current;
+	input.className = 'form-input todo-edit-input';
+	input.style.cssText = 'width:100%;padding:2px 6px;font-size:0.8rem;';
+	input.onblur = function() {
+		const val = input.value.trim();
+		if (val && val !== current) todoAction('edit', id, val);
+		else el.textContent = current;
+	};
+	input.onkeydown = function(e) {
+		if (e.key === 'Enter') input.blur();
+		if (e.key === 'Escape') { el.textContent = current; }
+	};
+	el.textContent = '';
+	el.appendChild(input);
+	input.focus();
+	input.select();
+}
 function fetchTodoList() {
 	safeFetchJSON('/api/todo', { cache: 'no-store', showError: false }).then(data => {
 		const items = data.items || [];
@@ -3387,8 +3423,21 @@ function fetchTodoList() {
 			? '<div class="todo-empty">Henüz plan öğesi yok.<br>AI yeni bir göreve başladığında burada görünecek.</div>'
 			: items.map((item, i) => {
 				const cls = item.done ? 'todo-stop done' : i === 0 ? 'todo-stop current' : 'todo-stop';
-				const icon = item.done ? 'check' : i === 0 ? 'hourglass_bottom' : 'horizontal_rule';
-				return `<div class="${cls}"><div class="todo-dot"><span class="material-symbols-rounded" style="font-size:22px;">${icon}</span></div><div class="todo-text"><span class="todo-label">${escHtml(item.text)}</span></div></div>`;
+				const icon = item.done ? 'check_circle' : i === 0 ? 'hourglass_bottom' : 'radio_button_unchecked';
+				const toggleIcon = item.done ? 'undo' : 'check_circle';
+				const toggleFn = item.done ? 'todoUncheck' : 'todoCheck';
+				return `<div class="${cls}">
+					<div class="todo-dot" onclick="${toggleFn}(${item.id})" style="cursor:pointer;" title="${item.done ? 'İptal' : 'Tamamla'}">
+						<span class="material-symbols-rounded" style="font-size:22px;">${icon}</span>
+					</div>
+					<div class="todo-text">
+						<span class="todo-label" id="todo-edit-${item.id}" ondblclick="todoEdit(${item.id})" style="cursor:text;">${escHtml(item.text)}</span>
+					</div>
+					<div style="display:flex;gap:2px;flex-shrink:0;align-items:center;padding-left:4px;">
+						<button onclick="todoEdit(${item.id})" class="tool-btn" style="padding:2px;border-radius:4px;width:20px;height:20px;" title="Düzenle"><span class="material-symbols-rounded" style="font-size:12px;">edit</span></button>
+						<button onclick="todoRemove(${item.id})" class="tool-btn" style="padding:2px;border-radius:4px;width:20px;height:20px;color:var(--accent3);" title="Sil"><span class="material-symbols-rounded" style="font-size:12px;">close</span></button>
+					</div>
+				</div>`;
 			}).join('');
 	}).catch(() => {});
 }
