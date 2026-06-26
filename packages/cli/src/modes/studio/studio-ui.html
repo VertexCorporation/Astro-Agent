@@ -2931,9 +2931,9 @@ let _bgSettings = { type: 'none', value: '', blur: 0, opacity: 40, brightness: 1
 
 function toggleBgOptions() {
 	const type = document.getElementById('set-bg-type')?.value || 'none';
-	document.getElementById('bg-image-options').style.display = type === 'image' ? 'block' : 'none';
-	document.getElementById('bg-upload-options').style.display = type === 'upload' ? 'block' : 'none';
-	document.getElementById('bg-gradient-options').style.display = type === 'gradient' ? 'block' : 'none';
+	const img=document.getElementById("bg-image-options");if(img)img.style.display=type === 'image' ? 'block' : 'none';
+	const upl=document.getElementById("bg-upload-options");if(upl)upl.style.display=type === 'upload' ? 'block' : 'none';
+	const grad=document.getElementById("bg-gradient-options");if(grad)grad.style.display=type === 'gradient' ? 'block' : 'none';
 }
 
 function selectBgPreset(el) {
@@ -2974,9 +2974,9 @@ function updateBgPreview() {
 	const blur = parseInt(document.getElementById('set-bg-blur')?.value || '0');
 	const opacity = parseInt(document.getElementById('set-bg-opacity')?.value || '40');
 	const brightness = parseInt(document.getElementById('set-bg-brightness')?.value || '100');
-	document.getElementById('bg-blur-val').textContent = blur + 'px';
-	document.getElementById('bg-opacity-val').textContent = opacity + '%';
-	document.getElementById('bg-brightness-val').textContent = brightness + '%';
+	const bv2=document.getElementById("bg-blur-val");if(bv2)bv2.textContent=blur+"px";
+	const ov2=document.getElementById("bg-opacity-val");if(ov2)ov2.textContent=opacity+"%";
+	const brv2=document.getElementById("bg-brightness-val");if(brv2)brv2.textContent=brightness+"%";
 	_bgSettings.blur = blur;
 	_bgSettings.opacity = opacity;
 	_bgSettings.brightness = brightness;
@@ -3030,9 +3030,9 @@ function resetBg() {
 	if (opEl) opEl.value = '40';
 	const brEl = document.getElementById('set-bg-brightness');
 	if (brEl) brEl.value = '100';
-	document.getElementById('bg-blur-val').textContent = '0px';
-	document.getElementById('bg-opacity-val').textContent = '40%';
-	document.getElementById('bg-brightness-val').textContent = '100%';
+	const bv3=document.getElementById("bg-blur-val");if(bv3)bv3.textContent="0px";
+	const ov3=document.getElementById("bg-opacity-val");if(ov3)ov3.textContent="40%";
+	const brv3=document.getElementById("bg-brightness-val");if(brv3)brv3.textContent="100%";
 	document.querySelectorAll('.bg-preset').forEach(p => p.classList.remove('active'));
 	toggleBgOptions();
 	applyBackground(_bgSettings);
@@ -3101,14 +3101,14 @@ function loadBgSettings() {
 	const urlEl = document.getElementById('set-bg-url');
 	if (urlEl) urlEl.value = _bgSettings.type === 'image' ? _bgSettings.value : '';
 	const blurEl = document.getElementById('set-bg-blur');
-	if (blurEl) blurEl.value = _bgSettings.blur || 0;
+	if (blurEl) blurEl.value = _bgSettings.blur ?? 0;
 	const opEl = document.getElementById('set-bg-opacity');
-	if (opEl) opEl.value = _bgSettings.opacity || 40;
+	if (opEl) opEl.value = _bgSettings.opacity ?? 40;
 	const brEl = document.getElementById('set-bg-brightness');
-	if (brEl) brEl.value = _bgSettings.brightness || 100;
-	document.getElementById('bg-blur-val').textContent = (_bgSettings.blur || 0) + 'px';
-	document.getElementById('bg-opacity-val').textContent = (_bgSettings.opacity || 40) + '%';
-	document.getElementById('bg-brightness-val').textContent = (_bgSettings.brightness || 100) + '%';
+	if (brEl) brEl.value = _bgSettings.brightness ?? 100;
+	const bv=document.getElementById("bg-blur-val");if(bv)bv.textContent=(_bgSettings.blur??0) + 'px';
+	const ov=document.getElementById("bg-opacity-val");if(ov)ov.textContent=(_bgSettings.opacity??40) + '%';
+	const brv=document.getElementById("bg-brightness-val");if(brv)brv.textContent=(_bgSettings.brightness??100) + '%';
 	toggleBgOptions();
 	if (_bgSettings.type === 'gradient') {
 		document.querySelectorAll('.bg-preset').forEach(p => {
@@ -3209,8 +3209,8 @@ function handleThemeIconUpload(input) {
 function updateThemeBgPreview() {
 	const blur = parseInt(document.getElementById('theme-bg-blur')?.value || '0');
 	const opacity = parseInt(document.getElementById('theme-bg-opacity')?.value || '40');
-	document.getElementById('theme-blur-val').textContent = blur + 'px';
-	document.getElementById('theme-opacity-val').textContent = opacity + '%';
+	const tb2=document.getElementById("theme-blur-val");if(tb2)tb2.textContent=blur+"px";
+	const to2=document.getElementById("theme-opacity-val");if(to2)to2.textContent=opacity+"%";
 	_themeBgPending.blur = blur;
 	_themeBgPending.opacity = opacity;
 	_themeBgPending.brightness = _themeBgPending.brightness ?? _bgSettings.brightness ?? 100;
@@ -3254,8 +3254,8 @@ function resetThemeBg() {
 	const opEl = document.getElementById('theme-bg-opacity');
 	if (blurEl) blurEl.value = '0';
 	if (opEl) opEl.value = '40';
-	document.getElementById('theme-blur-val').textContent = '0px';
-	document.getElementById('theme-opacity-val').textContent = '40%';
+	const tb3=document.getElementById("theme-blur-val");if(tb3)tb3.textContent="0px";
+	const to3=document.getElementById("theme-opacity-val");if(to3)to3.textContent="40%";
 	const uploadInput = document.getElementById('theme-bg-upload-input');
 	if (uploadInput) uploadInput.value = '';
 	_themeBgPending = { type: 'none', value: '', blur: 0, opacity: 40, brightness: _bgSettings.brightness ?? 100 };
@@ -3268,11 +3268,11 @@ function resetThemeBg() {
 function initThemeModalBg() {
 	const blurEl = document.getElementById('theme-bg-blur');
 	const opEl = document.getElementById('theme-bg-opacity');
-	if (blurEl) blurEl.value = _bgSettings.blur || 0;
-	if (opEl) opEl.value = _bgSettings.opacity || 40;
-	document.getElementById('theme-blur-val').textContent = (_bgSettings.blur || 0) + 'px';
-	document.getElementById('theme-opacity-val').textContent = (_bgSettings.opacity || 40) + '%';
-	_themeBgPending = { type: _bgSettings.type || 'none', value: _bgSettings.value || '', blur: _bgSettings.blur || 0, opacity: _bgSettings.opacity || 40, brightness: _bgSettings.brightness || 100 };
+	if (blurEl) blurEl.value = _bgSettings.blur ?? 0;
+	if (opEl) opEl.value = _bgSettings.opacity ?? 40;
+	const tb=document.getElementById("theme-blur-val");if(tb)tb.textContent=(_bgSettings.blur??0) + 'px';
+	const to=document.getElementById("theme-opacity-val");if(to)to.textContent=(_bgSettings.opacity??40) + '%';
+	_themeBgPending = { type: _bgSettings.type || 'none', value: _bgSettings.value || '', blur: _bgSettings.blur ?? 0, opacity: _bgSettings.opacity ?? 40, brightness: _bgSettings.brightness ?? 100 };
 
 	document.querySelectorAll('.bg-opt-btn').forEach(b => b.classList.remove('active'));
 	if (_bgSettings.type === 'none' || !_bgSettings.value) {
