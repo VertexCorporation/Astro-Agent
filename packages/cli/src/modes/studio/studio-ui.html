@@ -433,6 +433,33 @@
 		body.wallpaper-active .assistant-content {
 			color: rgba(230,237,243,0.92);
 		}
+		body.wallpaper-active .material-symbols-rounded {
+			color: rgba(230,237,243,0.85);
+		}
+		body.wallpaper-active .badge-btn span,
+		body.wallpaper-active .tool-btn span {
+			color: rgba(230,237,243,0.80);
+		}
+		body.wallpaper-active .status-pill,
+		body.wallpaper-active #cwd-display {
+			color: rgba(230,237,243,0.75);
+		}
+		body.wallpaper-active #sidebar-conversations .sidebar-item {
+			color: rgba(230,237,243,0.80);
+		}
+		body.wallpaper-active .chat-inner .prose {
+			color: rgba(230,237,243,0.90);
+		}
+		body.wallpaper-active .muted,
+		body.wallpaper-active .char-count {
+			color: rgba(230,237,243,0.55);
+		}
+		body.wallpaper-active #prompt-input::placeholder {
+			color: rgba(230,237,243,0.45);
+		}
+		body.wallpaper-active .input-footer .badge-btn {
+			color: rgba(230,237,243,0.70);
+		}
 		.chat-inner { width: 100%; max-width: 820px; margin: 0 auto; padding: 0 20px; display: flex; flex-direction: column; gap: 16px; }
 
 		/* ─── MESSAGES ─────────────────────────────────────────────────── */
@@ -2917,6 +2944,10 @@ function updateBgPreview() {
 function applyBackground(settings) {
 	const layer = document.getElementById('wallpaper-layer');
 	const overlay = document.getElementById('wallpaper-overlay');
+	settings = settings || { type: 'none', value: '', blur: 0, opacity: 40, brightness: 100 };
+	settings.blur = settings.blur ?? 0;
+	settings.opacity = settings.opacity ?? 40;
+	settings.brightness = settings.brightness ?? 100;
 
 	if (settings.type === 'none' || !settings.value) {
 		document.body.classList.remove('wallpaper-active');
@@ -2933,11 +2964,11 @@ function applyBackground(settings) {
 		if (layer) layer.style.backgroundImage = bgValue;
 	}
 	if (layer) {
-		layer.style.filter = 'blur(' + settings.blur + 'px) brightness(' + settings.brightness + '%)';
+		layer.style.filter = 'blur(' + (settings.blur ?? 0) + 'px) brightness(' + (settings.brightness ?? 100) + '%)';
 		layer.classList.add('active');
 	}
 	if (overlay) {
-		overlay.style.background = 'rgba(0,0,0,' + (settings.opacity / 100 * 0.5) + ')';
+		overlay.style.background = 'rgba(0,0,0,' + ((settings.opacity ?? 40) / 100 * 0.5) + ')';
 	}
 }
 
@@ -3076,15 +3107,18 @@ function selectThemeBg(id) {
 	const btn = document.querySelector(`.bg-opt-btn[data-bg="${id}"]`);
 	if (btn) btn.classList.add('active');
 	const icon = _themeBgPending._pendingIcon;
+	const blur = parseInt(document.getElementById('theme-bg-blur')?.value || '0');
+	const opacity = parseInt(document.getElementById('theme-bg-opacity')?.value || '40');
+	const brightness = _bgSettings.brightness ?? 100;
 
 	if (id === 'none') {
-		_themeBgPending = { type: 'none', value: '', _pendingIcon: icon };
+		_themeBgPending = { type: 'none', value: '', blur, opacity, brightness, _pendingIcon: icon };
 	} else if (id === 'custom') {
 		return;
 	} else if (_bgGradients[id]) {
-		_themeBgPending = { type: 'gradient', value: _bgGradients[id], _pendingIcon: icon };
+		_themeBgPending = { type: 'gradient', value: _bgGradients[id], blur, opacity, brightness, _pendingIcon: icon };
 	} else if (_bgImages[id]) {
-		_themeBgPending = { type: 'image', value: window.location.origin + _bgImages[id], _pendingIcon: icon };
+		_themeBgPending = { type: 'image', value: window.location.origin + _bgImages[id], blur, opacity, brightness, _pendingIcon: icon };
 	}
 	updateThemeBgPreview();
 }
@@ -3135,7 +3169,7 @@ function updateThemeBgPreview() {
 	document.getElementById('theme-opacity-val').textContent = opacity + '%';
 	_themeBgPending.blur = blur;
 	_themeBgPending.opacity = opacity;
-	_themeBgPending.brightness = 100;
+	_themeBgPending.brightness = _themeBgPending.brightness ?? _bgSettings.brightness ?? 100;
 	applyBackground(_themeBgPending);
 }
 
@@ -3148,9 +3182,10 @@ function handleThemeBgUpload(input) {
 	if (customBtn) customBtn.classList.add('active');
 	const blur = parseInt(document.getElementById('theme-bg-blur')?.value || '0');
 	const opacity = parseInt(document.getElementById('theme-bg-opacity')?.value || '40');
+	const brightness = _bgSettings.brightness ?? 100;
 	const reader = new FileReader();
 	reader.onload = function(e) {
-		_themeBgPending = { type: 'upload', value: e.target.result, blur, opacity, brightness: 100 };
+		_themeBgPending = { type: 'upload', value: e.target.result, blur, opacity, brightness };
 		updateThemeBgPreview();
 	};
 	reader.readAsDataURL(file);
@@ -3160,9 +3195,9 @@ function applyThemeBg() {
 	_bgSettings = {
 		type: _themeBgPending.type || 'none',
 		value: _themeBgPending.value || '',
-		blur: parseInt(document.getElementById('theme-bg-blur')?.value || '0'),
-		opacity: parseInt(document.getElementById('theme-bg-opacity')?.value || '40'),
-		brightness: 100,
+		blur: _themeBgPending.blur ?? 0,
+		opacity: _themeBgPending.opacity ?? 40,
+		brightness: _themeBgPending.brightness ?? 100,
 	};
 	saveBgSettings();
 	applyBackground(_bgSettings);
@@ -3179,7 +3214,7 @@ function resetThemeBg() {
 	document.getElementById('theme-opacity-val').textContent = '40%';
 	const uploadInput = document.getElementById('theme-bg-upload-input');
 	if (uploadInput) uploadInput.value = '';
-	_themeBgPending = { type: 'none', value: '', blur: 0, opacity: 40, brightness: 100 };
+	_themeBgPending = { type: 'none', value: '', blur: 0, opacity: 40, brightness: _bgSettings.brightness ?? 100 };
 	document.querySelectorAll('.bg-opt-btn').forEach(b => b.classList.remove('active'));
 	const noneBtn = document.querySelector('.bg-opt-btn[data-bg="none"]');
 	if (noneBtn) noneBtn.classList.add('active');
@@ -3318,6 +3353,7 @@ setInterval(fetchTodoList, 2000);
 function closeModal(id) {
 	if (id) document.getElementById(id)?.classList.remove('active');
 	else document.querySelectorAll('.modal-overlay').forEach(el => el.classList.remove('active'));
+	if (id === 'themeModal') applyBackground(_bgSettings);
 }
 function overlayClose(e, id) {
 	if (e.target === e.currentTarget) closeModal(id);
