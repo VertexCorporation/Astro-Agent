@@ -1710,30 +1710,6 @@ async function generateModels() {
 	const ANTIGRAVITY_ENDPOINT = "https://daily-cloudcode-pa.sandbox.googleapis.com";
 	const antigravityModels: Model<"google-antigravity">[] = [
 		{
-			id: "antigravity-gemini-3-5-flash-medium",
-			name: "Gemini 3.5 Flash (Medium)",
-			api: "google-antigravity",
-			provider: "antigravity",
-			baseUrl: ANTIGRAVITY_ENDPOINT,
-			reasoning: false,
-			input: ["text", "image"],
-			cost: { input: 0.5, output: 3, cacheRead: 0.5, cacheWrite: 0 },
-			contextWindow: 1048576,
-			maxTokens: 65536,
-		},
-		{
-			id: "antigravity-gemini-3-5-flash-high",
-			name: "Gemini 3.5 Flash (High)",
-			api: "google-antigravity",
-			provider: "antigravity",
-			baseUrl: ANTIGRAVITY_ENDPOINT,
-			reasoning: true,
-			input: ["text", "image"],
-			cost: { input: 0.5, output: 3, cacheRead: 0.5, cacheWrite: 0 },
-			contextWindow: 1048576,
-			maxTokens: 65536,
-		},
-		{
 			id: "antigravity-gemini-3-5-flash-low",
 			name: "Gemini 3.5 Flash (Low)",
 			api: "google-antigravity",
@@ -1748,18 +1724,6 @@ async function generateModels() {
 		{
 			id: "antigravity-gemini-3-1-pro-low",
 			name: "Gemini 3.1 Pro (Low)",
-			api: "google-antigravity",
-			provider: "antigravity",
-			baseUrl: ANTIGRAVITY_ENDPOINT,
-			reasoning: true,
-			input: ["text", "image"],
-			cost: { input: 2, output: 12, cacheRead: 0.2, cacheWrite: 2.375 },
-			contextWindow: 1048576,
-			maxTokens: 65535,
-		},
-		{
-			id: "antigravity-gemini-3-1-pro-high",
-			name: "Gemini 3.1 Pro (High)",
 			api: "google-antigravity",
 			provider: "antigravity",
 			baseUrl: ANTIGRAVITY_ENDPOINT,
@@ -1793,18 +1757,6 @@ async function generateModels() {
 			contextWindow: 200000,
 			maxTokens: 64000,
 		},
-		{
-			id: "antigravity-gpt-oss-120b-medium",
-			name: "GPT-OSS 120B (Medium)",
-			api: "google-antigravity",
-			provider: "antigravity",
-			baseUrl: ANTIGRAVITY_ENDPOINT,
-			reasoning: false,
-			input: ["text", "image"],
-			cost: { input: 0.5, output: 2, cacheRead: 0, cacheWrite: 0 },
-			contextWindow: 128000,
-			maxTokens: 16384,
-		}
 	];
 	allModels.push(...antigravityModels);
 
