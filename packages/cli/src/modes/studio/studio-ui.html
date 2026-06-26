@@ -144,31 +144,50 @@
  --sidebar: var(--md-sys-color-surface-container-lowest);
  --surface: var(--md-sys-color-surface-container);
  --surface2: var(--md-sys-color-surface-container-highest);
- --border: var(--md-sys-color-outline);
- --border-light: var(--md-sys-color-outline-variant);
  --fg: var(--md-sys-color-on-surface);
  --muted: var(--md-sys-color-on-surface-variant);
  --accent: var(--md-sys-color-primary);
  --accent2: var(--md-sys-color-tertiary);
  --accent3: var(--md-sys-color-error);
- --accent-glow: color-mix(in srgb, var(--md-sys-color-primary) 25%, transparent);
- --accent2-glow: color-mix(in srgb, var(--md-sys-color-tertiary) 20%, transparent);
- --user-bubble: var(--md-sys-color-primary-container);
- --user-border: var(--md-sys-color-outline);
  --code-bg: var(--md-sys-color-surface-container-high);
- --msg-shadow: var(--md-sys-elevation-level3);
- --glass-bg: color-mix(in srgb, var(--md-sys-color-surface-container) 70%, transparent);
- --glass-border: var(--md-sys-color-outline);
  --radius-sm: var(--md-sys-shape-corner-extra-small);
  --radius-md: var(--md-sys-shape-corner-small);
  --radius-lg: var(--md-sys-shape-corner-medium);
  --radius-xl: var(--md-sys-shape-corner-large);
- --ambient-1: color-mix(in srgb, var(--md-sys-color-primary) 4%, transparent);
- --ambient-2: color-mix(in srgb, var(--md-sys-color-secondary) 3%, transparent);
- --ambient-3: color-mix(in srgb, var(--md-sys-color-tertiary) 3%, transparent);
- --shadow: var(--md-sys-elevation-level3);
- --shadow-sm: var(--md-sys-elevation-level1);
- --shadow-md: var(--md-sys-elevation-level2);
+}
+[data-theme="dark"], [data-theme="dark"] * {
+ --border: rgba(240,246,252,0.10);
+ --border-light: rgba(240,246,252,0.18);
+ --accent-glow: rgba(88,166,255,0.25);
+ --accent2-glow: rgba(244,143,177,0.20);
+ --user-bubble: rgba(30,58,95,0.85);
+ --user-border: rgba(144,202,249,0.25);
+ --msg-shadow: 0 2px 20px rgba(0,0,0,0.40);
+ --glass-bg: rgba(26,32,41,0.65);
+ --glass-border: rgba(240,246,252,0.08);
+ --ambient-1: rgba(88,166,255,0.04);
+ --ambient-2: rgba(128,203,196,0.03);
+ --ambient-3: rgba(244,143,177,0.03);
+ --shadow: 0 8px 24px rgba(0,0,0,0.45);
+ --shadow-sm: 0 1px 0 rgba(0,0,0,0.30);
+ --shadow-md: 0 3px 6px rgba(0,0,0,0.40);
+}
+[data-theme="light"], [data-theme="light"] * {
+ --border: rgba(31,35,40,0.12);
+ --border-light: rgba(31,35,40,0.20);
+ --accent-glow: rgba(21,101,192,0.18);
+ --accent2-glow: rgba(194,24,91,0.15);
+ --user-bubble: rgba(209,228,255,0.90);
+ --user-border: rgba(21,101,192,0.20);
+ --msg-shadow: 0 2px 20px rgba(31,35,40,0.06);
+ --glass-bg: rgba(255,255,255,0.70);
+ --glass-border: rgba(31,35,40,0.08);
+ --ambient-1: rgba(21,101,192,0.04);
+ --ambient-2: rgba(0,121,107,0.03);
+ --ambient-3: rgba(194,24,91,0.03);
+ --shadow: 0 4px 12px rgba(31,35,40,0.10);
+ --shadow-sm: 0 1px 0 rgba(31,35,40,0.06);
+ --shadow-md: 0 2px 6px rgba(31,35,40,0.08);
 }
 
 		/* ─── BASE ──────────────────────────────────────────────────────── */
@@ -1001,6 +1020,7 @@
 			background: var(--md-sys-color-surface-container-highest); color: var(--md-sys-color-on-surface);
 			font: var(--md-sys-typescale-body-medium); outline: none;
 			font-family: 'Inter', sans-serif; margin-bottom: 12px; box-sizing: border-box;
+		}
 		.model-search {
 			width: 100%; padding: 9px 14px; border: 1px solid var(--border); border-radius: 10px;
 			background: var(--glass-bg); color: var(--fg); font-size: 0.82rem; outline: none;
@@ -2268,19 +2288,19 @@
 			<div style="font-size:0.75rem;font-weight:500;color:var(--muted);margin:6px 0 8px;">Wallpapers</div>
 			<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;" id="theme-wallpaper-images">
 				<button class="bg-opt-btn" data-bg="wp1" onclick="selectThemeBg('wp1')" style="background:var(--surface2);padding:3px 6px;">
-					<img src="/assets/%C4%B0con%20and%20Wallpaper/Wallpeper%20(1).jpg" style="width:40px;height:28px;border-radius:4px;object-fit:cover;">
+					<img src="/assets/%C4%B0con%20and%20Wallpaper/Wallpeper%20%20(1).jpg" style="width:40px;height:28px;border-radius:4px;object-fit:cover;">
 				</button>
 				<button class="bg-opt-btn" data-bg="wp2" onclick="selectThemeBg('wp2')" style="background:var(--surface2);padding:3px 6px;">
-					<img src="/assets/%C4%B0con%20and%20Wallpaper/Wallpeper%20(2).jpg" style="width:40px;height:28px;border-radius:4px;object-fit:cover;">
+					<img src="/assets/%C4%B0con%20and%20Wallpaper/Wallpeper%20%20(2).jpg" style="width:40px;height:28px;border-radius:4px;object-fit:cover;">
 				</button>
 				<button class="bg-opt-btn" data-bg="wp3" onclick="selectThemeBg('wp3')" style="background:var(--surface2);padding:3px 6px;">
-					<img src="/assets/%C4%B0con%20and%20Wallpaper/Wallpeper%20(3).jpg" style="width:40px;height:28px;border-radius:4px;object-fit:cover;">
+					<img src="/assets/%C4%B0con%20and%20Wallpaper/Wallpeper%20%20(3).jpg" style="width:40px;height:28px;border-radius:4px;object-fit:cover;">
 				</button>
 				<button class="bg-opt-btn" data-bg="wp4" onclick="selectThemeBg('wp4')" style="background:var(--surface2);padding:3px 6px;">
-					<img src="/assets/%C4%B0con%20and%20Wallpaper/Wallpeper%20(4).jpg" style="width:40px;height:28px;border-radius:4px;object-fit:cover;">
+					<img src="/assets/%C4%B0con%20and%20Wallpaper/Wallpeper%20%20(4).jpg" style="width:40px;height:28px;border-radius:4px;object-fit:cover;">
 				</button>
 				<button class="bg-opt-btn" data-bg="wp5" onclick="selectThemeBg('wp5')" style="background:var(--surface2);padding:3px 6px;">
-					<img src="/assets/%C4%B0con%20and%20Wallpaper/Wallpeper%20(5).jpg" style="width:40px;height:28px;border-radius:4px;object-fit:cover;">
+					<img src="/assets/%C4%B0con%20and%20Wallpaper/Wallpeper%20%20(5).jpg" style="width:40px;height:28px;border-radius:4px;object-fit:cover;">
 				</button>
 			</div>
 
@@ -2996,11 +3016,11 @@ const _bgGradients = {
 	gradient6: 'linear-gradient(135deg,#a18cd1,#fbc2eb)',
 };
 const _bgImages = {
-	'wp1': '/assets/%C4%B0con%20and%20Wallpaper/Wallpeper%20(1).jpg',
-	'wp2': '/assets/%C4%B0con%20and%20Wallpaper/Wallpeper%20(2).jpg',
-	'wp3': '/assets/%C4%B0con%20and%20Wallpaper/Wallpeper%20(3).jpg',
-	'wp4': '/assets/%C4%B0con%20and%20Wallpaper/Wallpeper%20(4).jpg',
-	'wp5': '/assets/%C4%B0con%20and%20Wallpaper/Wallpeper%20(5).jpg',
+	'wp1': '/assets/%C4%B0con%20and%20Wallpaper/Wallpeper%20%20(1).jpg',
+	'wp2': '/assets/%C4%B0con%20and%20Wallpaper/Wallpeper%20%20(2).jpg',
+	'wp3': '/assets/%C4%B0con%20and%20Wallpaper/Wallpeper%20%20(3).jpg',
+	'wp4': '/assets/%C4%B0con%20and%20Wallpaper/Wallpeper%20%20(4).jpg',
+	'wp5': '/assets/%C4%B0con%20and%20Wallpaper/Wallpeper%20%20(5).jpg',
 };
 const _userIcons = {
 	'default': '/assets/Mooncodewhitelogo.png',

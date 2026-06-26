@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1,
+    "text": "Mevcut studio-ui.html'i tam oku (tüm bölümler: CSS theming, HTML body, JS logic)",
+    "done": false,
+    "createdAt": 1782387533551
+  },
+  {
+    "id": 2,
+    "text": "Snapshot al (güvenli başlangıç noktası)",
+    "done": false,
+    "createdAt": 1782387535989
+  },
+  {
+    "id": 3,
+    "text": "Sıfırdan yeni studio-ui.html yaz: Premium Dark SaaS, mobil alt-sekme + masaüstü sidebar layout, tüm tema sistemi düzgün, responsive, kod hataları temizlenmiş",
+    "done": false,
+    "createdAt": 1782387540466
+  },
+  {
+    "id": 4,
+    "text": "Build test et + studio-mode.ts'de gerekli düzeltmeleri yap",
+    "done": false,
+    "createdAt": 1782387543934
+  }
+]

@@ -1070,7 +1070,7 @@ export class EngineSession {
 			})
 			.map(([name, config]) => ({
 				name,
-				...config,
+				config,
 			}));
 
 		if (this._mcpManager) {
