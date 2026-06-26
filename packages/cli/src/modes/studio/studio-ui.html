@@ -235,6 +235,14 @@
 			100% { transform: translate(1%,-1%) scale(0.95); opacity:0.6; }
 		}
 		/* Wallpaper layer */
+		#error-banner {
+			position: fixed; top: 0; left: 0; right: 0; z-index: 10001;
+			padding: 8px 16px; font-size: 0.82rem; color: #fff;
+			background: linear-gradient(90deg,#e74c3c,#c0392b);
+			text-align: center; font-weight: 500;
+			transform: translateY(-100%); transition: transform 0.3s ease;
+		}
+		#error-banner.visible { transform: translateY(0); }
 		#wallpaper-layer {
 			position: fixed; inset: 0;
 			z-index: 0;
@@ -1604,6 +1612,7 @@ body.wallpaper-active{background:transparent!important}
 
 <div id="wallpaper-layer"></div>
 <div id="wallpaper-overlay"></div>
+<div id="error-banner"></div>
 
 <!-- Mobile Status Bar -->
 <div id="mobile-status-bar">
@@ -2762,6 +2771,24 @@ marked.setOptions({ renderer, breaks: true, gfm: true });
 
 
 
+// ─── GLOBAL ERROR HANDLER ─────────────────────────────────────────────────
+window.onerror = function(msg, source, line, col, err) {
+	const el = document.getElementById('error-banner');
+	if (!el) return;
+	el.textContent = '⚠ Error: ' + (err?.message || msg || 'unknown');
+	el.classList.add('visible');
+	clearTimeout(el._hideTimer);
+	el._hideTimer = setTimeout(() => el.classList.remove('visible'), 8000);
+};
+window.addEventListener('unhandledrejection', function(e) {
+	window.onerror(e.reason?.message || 'Unhandled Promise rejection', '', 0, 0, e.reason);
+});
+// Cleanup on page unload
+window.addEventListener('beforeunload', function() {
+	__abortControllers.forEach(c => c.abort());
+	__abortControllers.clear();
+});
+
 // ─── STATE ────────────────────────────────────────────────────────────────
 const chatInner = document.getElementById('chat-inner');
 const chatContainer = document.getElementById('chat-container');
@@ -2782,6 +2809,45 @@ let cmdIndex = -1;
 let availableCommands = [];
 let filteredCommands = [];
 let acIndex = -1;
+
+// ─── SAFE FETCH WRAPPER ──────────────────────────────────────────────────
+const __abortControllers = new Map();
+function safeFetch(url, opts = {}) {
+	const { timeout = 15000, retries = 1, showError = true, ...fetchOpts } = opts;
+	const controller = new AbortController();
+	fetchOpts.signal = controller.signal;
+	const key = url + JSON.stringify(fetchOpts);
+	// Abort previous request to same endpoint
+	if (__abortControllers.has(key)) __abortControllers.get(key).abort();
+	__abortControllers.set(key, controller);
+
+	const timer = setTimeout(() => controller.abort(), timeout);
+	return (async function attempt(n) {
+		try {
+			const res = await fetch(url, fetchOpts);
+			clearTimeout(timer);
+			__abortControllers.delete(key);
+			if (!res.ok) {
+				const txt = await res.text().catch(() => '');
+				throw new Error(`HTTP ${res.status}: ${txt.slice(0, 120)}`);
+			}
+			return res;
+		} catch (e) {
+			clearTimeout(timer);
+			__abortControllers.delete(key);
+			if (e.name === 'AbortError') {
+				if (showError) toast('Request timed out: ' + url, 'error');
+				throw e;
+			}
+			if (n < retries) return attempt(n + 1);
+			if (showError) toast('Network error: ' + e.message, 'error');
+			throw e;
+		}
+	})(0);
+}
+function safeFetchJSON(url, opts = {}) {
+	return safeFetch(url, opts).then(r => r.json());
+}
 
 // ─── MODEL CAPABILITIES ──────────────────────────────────────────────────
 let _modelSupportsThinking = false;
@@ -3305,7 +3371,7 @@ function refreshTodoHeader(count, done) {
 }
 let _lastTodoCount = 0;
 function fetchTodoList() {
-	fetch('/api/todo', { cache: 'no-store' }).then(r => r.json()).then(data => {
+	safeFetchJSON('/api/todo', { cache: 'no-store', showError: false }).then(data => {
 		const items = data.items || [];
 		const total = data.count || 0;
 		const done = data.done || 0;
@@ -3326,8 +3392,12 @@ function fetchTodoList() {
 			}).join('');
 	}).catch(() => {});
 }
-// Auto-refresh todo every 2s (always fetches, even when hidden)
-setInterval(fetchTodoList, 2000);
+// Auto-refresh todo every 2s (pauses when tab is hidden)
+let _todoInterval = setInterval(fetchTodoList, 2000);
+document.addEventListener('visibilitychange', function() {
+	if (document.hidden) { clearInterval(_todoInterval); _todoInterval = null; }
+	else if (!_todoInterval) _todoInterval = setInterval(fetchTodoList, 2000);
+});
 function closeModal(id) {
 	if (id) document.getElementById(id)?.classList.remove('active');
 	else document.querySelectorAll('.modal-overlay').forEach(el => el.classList.remove('active'));
@@ -4966,11 +5036,12 @@ async function loadModels() {
 	const list = document.getElementById('model-list');
 	list.innerHTML = emptyModelMsg('Loading models...');
 	try {
-		const res = await fetch('/api/models');
+		const res = await safeFetch('/api/models', { timeout: 20000 });
 		_allModels = await res.json();
 		filterModels('');
 	} catch(e) {
 		list.innerHTML = emptyModelMsg('Failed to load models');
+		toast('Failed to load models: ' + (e.message || 'connection error'), 'error');
 	}
 }
 
