@@ -1,6 +1,6 @@
-import { Worker } from "node:worker_threads";
 import { EventEmitter } from "node:events";
 import { cpus } from "node:os";
+import { Worker } from "node:worker_threads";
 
 export interface SubAgentTask {
 	taskName: string;
@@ -139,8 +139,6 @@ export class WorkerPool extends EventEmitter {
 		if (!entry) return;
 
 		const next = this.queue.shift()!;
-		this.executeOnWorker(entry, next.task, next.signal)
-			.then(next.resolve)
-			.catch(next.reject);
+		this.executeOnWorker(entry, next.task, next.signal).then(next.resolve).catch(next.reject);
 	}
 }

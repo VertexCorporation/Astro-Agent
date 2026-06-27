@@ -211,7 +211,10 @@ export function getTodoSnapshot(): { items: TodoItem[]; count: number; done: num
 }
 
 /** Apply a todo action (for API/UI use — shared with the tool) */
-export function applyTodoAction(action: string, params: { text?: string; id?: number }): { ok: boolean; error?: string } {
+export function applyTodoAction(
+	action: string,
+	params: { text?: string; id?: number },
+): { ok: boolean; error?: string } {
 	switch (action) {
 		case "add": {
 			if (!params.text || params.text.trim().length === 0) return { ok: false, error: "text required" };

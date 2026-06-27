@@ -3,9 +3,9 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Astro 7 🚀 – AI Coding Assistant</title>
+	<title>Astro 8 🚀 PRO – AI Coding Assistant</title>
 	<link rel="icon" type="image/png" href="/assets/Mooncodewhitelogo.png">
-	<meta name="description" content="Astro 7 🚀 – World's most advanced AI coding assistant">
+	<meta name="description" content="Astro 8 🚀 PRO – World's most advanced AI coding assistant">
 
 	<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
@@ -1358,8 +1358,10 @@
   .todo-edit-input { background:var(--surface2); border:1px solid var(--accent); color:var(--fg); border-radius:4px; outline:none; }
   .todo-stop.done .todo-label { color:var(--muted); text-decoration:line-through; }
 
-/* ─── MOBILE MODE ──────────────────────────────────────────────────── */
-#mobile-tab-bar { display:none; }
+/* ─── MOBILE MODE (REMOVED) ─────────────────────────────────────────── */
+#mobile-tab-bar, #mobile-views, #mobile-status-bar, .mobile-view, .mobile-settings-row,
+#mobile-view-status, #mobile-view-history, #mobile-view-settings, .mob-tab,
+[data-mobile] { display:none !important; }
 [data-mobile="1"] body.mobile-mode #sidebar,
 [data-mobile="1"] body.mobile-mode #app-sidebar-toggle,
 [data-mobile="1"] body.mobile-mode .model-select-btn,
@@ -1698,7 +1700,7 @@ body.wallpaper-active{background:transparent!important}
 			<span class="ms-value" id="mob-reasoning" style="cursor:pointer;" onclick="openModal('reasoningModal')">Low</span>
 		</div>
 		<div style="margin-top:auto;padding:16px 0;text-align:center;font-size:0.7rem;color:var(--muted);">
-			Astro 7 🚀 v48
+			Astro 8 🚀 PRO v48
 		</div>
 	</div>
 </div>
@@ -1741,6 +1743,7 @@ body.wallpaper-active{background:transparent!important}
 			<button onclick="openSemanticBrain()" class="tool-btn" style="width:28px;height:28px;border-radius:8px;" title="Bellek"><span class="material-symbols-rounded" style="font-size:15px;">neurology</span></button>
 			<button onclick="openMCP()" class="tool-btn" style="width:28px;height:28px;border-radius:8px;" title="Eklentiler"><span class="material-symbols-rounded" style="font-size:15px;">extension</span></button>
 			<button onclick="toggleTodoPanel()" class="tool-btn" style="width:28px;height:28px;border-radius:8px;" title="Plan"><span class="material-symbols-rounded" style="font-size:15px;">checklist</span></button>
+			<button onclick="toggleAgentsPanel()" class="tool-btn" style="width:28px;height:28px;border-radius:8px;" title="Sub-Ajanlar (Ctrl+X)"><span class="material-symbols-rounded" style="font-size:15px;">psychology</span></button>
 			<button onclick="openModal('settingsModal')" class="tool-btn" style="width:28px;height:28px;border-radius:8px;" title="Ayarlar"><span class="material-symbols-rounded" style="font-size:15px;">settings</span></button>
 			<button onclick="openModal('themeModal')" class="tool-btn" style="width:28px;height:28px;border-radius:8px;" title="Tema"><span class="material-symbols-rounded" style="font-size:15px;">palette</span></button>
 		</div>
@@ -1855,7 +1858,7 @@ body.wallpaper-active{background:transparent!important}
 			<div id="attachment-preview" class="hidden" style="padding:6px 14px;display:flex;gap:6px;flex-wrap:wrap;"></div>
 
 			<div class="input-box">
-				<textarea id="prompt-input" rows="1" placeholder="Astro 7 🚀'a mesaj yaz... (Enter = gönder, Shift+Enter = yeni satır)"></textarea>
+				<textarea id="prompt-input" rows="1" placeholder="Astro 8 🚀 PRO'a mesaj yaz... (Enter = gönder, Shift+Enter = yeni satır)"></textarea>
 				<div class="input-footer">
 					<div class="input-footer-left">
 						<input id="file-input" type="file" class="hidden" multiple onchange="handleFileAttach(this)">
@@ -1899,7 +1902,7 @@ body.wallpaper-active{background:transparent!important}
 				</div>
 			</div>
 			<div style="text-align:center;font-size:0.85rem;color:var(--muted);margin-top:6px;opacity:0.5;">
-				Astro 7 🚀 AI can make mistakes. Verify critical information.
+				Astro 8 🚀 PRO AI can make mistakes. Verify critical information.
 			</div>
 		</div>
 	</div>
@@ -1919,7 +1922,11 @@ body.wallpaper-active{background:transparent!important}
 		<button class="ide-tab" data-panel="todo" onclick="switchIdeTab('todo')" style="flex:1;padding:8px 6px;border:none;background:transparent;cursor:pointer;font-size:0.75rem;color:var(--muted);display:flex;align-items:center;justify-content:center;gap:4px;border-bottom:2px solid transparent;font-family:inherit;transition:all 0.15s;">
 			<span class="material-symbols-rounded" style="font-size:14px;">checklist</span> Görev
 		</button>
-		<button onclick="toggleIDE()" class="tool-btn" style="padding:3px;margin:3px;" title="Kapat"><span class="material-symbols-rounded" style="font-size:15px;">close</span></button>
+		<button class="ide-tab" data-panel="agents" onclick="switchIdeTab('agents')" id="agents-tab" style="flex:1;padding:8px 6px;border:none;background:transparent;cursor:pointer;font-size:0.75rem;color:var(--muted);display:flex;align-items:center;justify-content:center;gap:4px;border-bottom:2px solid transparent;font-family:inherit;transition:all 0.15s;">
+			<span class="material-symbols-rounded" style="font-size:14px;">psychology</span> Ajanlar
+			<span id="agents-badge" style="display:none;background:var(--accent);color:#fff;font-size:0.6rem;border-radius:999px;padding:1px 5px;min-width:14px;text-align:center;"></span>
+		</button>
+		<button onclick="toggleIDE()" class="tool-btn" style="padding:3px;margin:3px;" title="Kapat (Ctrl+X)"><span class="material-symbols-rounded" style="font-size:15px;">close</span></button>
 	</div>
 
 	<!-- File Tree Panel -->
@@ -1947,6 +1954,18 @@ body.wallpaper-active{background:transparent!important}
 			<span class="todo-stats" style="font-size:0.7rem;color:var(--muted);background:var(--bg);padding:2px 7px;border-radius:999px;">0/0</span>
 		</div>
 		<div id="todo-content" class="todo-timeline" style="flex:1;overflow-y:auto;padding:12px 8px;"><div class="todo-empty">Henüz plan öğesi yok.<br>AI yeni bir göreve başladığında burada görünecek.</div></div>
+	</div>
+
+	<!-- Sub-Agents Panel -->
+	<div id="agents-panel" class="ide-panel" style="display:none;flex-direction:column;overflow:hidden;">
+		<div style="padding:8px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;font-weight:600;font-size:0.82rem;flex-shrink:0;">
+			<span class="material-symbols-rounded" style="font-size:16px;color:var(--accent);">psychology</span>
+			<span style="flex:1;">Sub-Ajanlar</span>
+			<button onclick="clearFinishedAgents()" class="tool-btn" style="padding:2px;border-radius:6px;" title="Bitmişleri temizle"><span class="material-symbols-rounded" style="font-size:13px;color:var(--accent3);">delete</span></button>
+		</div>
+		<div id="agents-content" style="flex:1;overflow-y:auto;padding:8px;">
+			<div class="todo-empty">Aktif sub-ajan yok.<br>AI bir invoke_subagent tool'u kullandığında burada görünecek.</div>
+		</div>
 	</div>
 
 	<!-- Code Viewer -->
@@ -1983,11 +2002,19 @@ body.wallpaper-active{background:transparent!important}
 				<div style="font-size:0.82rem;color:var(--muted);margin-bottom:16px;line-height:1.5;"><strong style="color:var(--fg);">Fuzion Mod</strong> — İki farklı model aynı anda çalışır.<br><span style="color:var(--accent);">Think</span> modeli düşünür. <span style="color:var(--accent2);">Code</span> modeli kodu yazar.</div>
 				<div style="margin-bottom:12px;">
 					<div style="font-size:0.75rem;font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.06em;">Think Modeli</div>
-					<select id="fusion-think-model" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--fg);font-size:0.82rem;font-family:inherit;"><option value="">Seç...</option></select>
+					<div style="position:relative;">
+						<input type="text" id="fusion-think-search" placeholder="Model ara..." autocomplete="off" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--fg);font-size:0.82rem;font-family:inherit;outline:none;box-sizing:border-box;" oninput="filterFusionModels(this.value,'think')" onfocus="showFusionDropdown('think')" onblur="setTimeout(()=>hideFusionDropdown('think'),150)">
+						<input type="hidden" id="fusion-think-model" value="">
+						<div id="fusion-think-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;max-height:200px;overflow-y:auto;background:var(--surface);border:1px solid var(--border);border-radius:0 0 8px 8px;z-index:100;box-shadow:0 8px 24px rgba(0,0,0,0.3);"></div>
+					</div>
 				</div>
 				<div style="margin-bottom:16px;">
 					<div style="font-size:0.75rem;font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.06em;">Code Modeli</div>
-					<select id="fusion-code-model" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--fg);font-size:0.82rem;font-family:inherit;"><option value="">Seç...</option></select>
+					<div style="position:relative;">
+						<input type="text" id="fusion-code-search" placeholder="Model ara..." autocomplete="off" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--fg);font-size:0.82rem;font-family:inherit;outline:none;box-sizing:border-box;" oninput="filterFusionModels(this.value,'code')" onfocus="showFusionDropdown('code')" onblur="setTimeout(()=>hideFusionDropdown('code'),150)">
+						<input type="hidden" id="fusion-code-model" value="">
+						<div id="fusion-code-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;max-height:200px;overflow-y:auto;background:var(--surface);border:1px solid var(--border);border-radius:0 0 8px 8px;z-index:100;box-shadow:0 8px 24px rgba(0,0,0,0.3);"></div>
+					</div>
 				</div>
 				<button onclick="enableFusionMode()" style="width:100%;padding:10px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-size:0.85rem;font-weight:700;cursor:pointer;font-family:inherit;"><span class="material-symbols-rounded" style="font-size:16px;vertical-align:middle;margin-right:4px;">merge</span>Fuzion Modu Etkinleştir</button>
 				<div id="fusion-status" style="display:none;margin-top:10px;font-size:0.78rem;color:var(--accent2);text-align:center;"></div>
@@ -2096,7 +2123,7 @@ body.wallpaper-active{background:transparent!important}
 							<span class="material-symbols-rounded icon-primary" style="font-size:18px;">extension</span>
 							Browser Bridge Extension
 						</label>
-						<div style="font-size:0.8rem;color:var(--muted);margin-bottom:8px;">Load this unpacked extension in Chrome/Edge (<code>chrome://extensions</code>) to enable Astro 7 🚀 browser control.</div>
+						<div style="font-size:0.8rem;color:var(--muted);margin-bottom:8px;">Load this unpacked extension in Chrome/Edge (<code>chrome://extensions</code>) to enable Astro 8 🚀 PRO browser control.</div>
 						<div style="display:flex; gap:8px;">
 							<input type="text" id="browser-extension-path" readonly style="flex:1; background:var(--bg); border:1px solid var(--border); border-radius:6px; font-size:0.85rem; padding:8px 12px; color:var(--accent); cursor:pointer; text-align:center; transition: all 0.2s;" onclick="copyBrowserExtensionPath()" value="Click here to reveal & copy path">
 							<button class="btn btn-primary" onclick="copyBrowserExtensionPath()">
@@ -2105,21 +2132,15 @@ body.wallpaper-active{background:transparent!important}
 						</div>
 					</div>
 
-					<div class="form-group" style="margin-top: 16px; background: rgba(74,222,128,0.04); border: 1px solid rgba(74,222,128,0.12); padding: 12px; border-radius: 2px;" id="mobile-pair-section">
+					<div class="form-group" style="margin-top: 16px; background: rgba(255,152,0,0.04); border: 1px solid rgba(255,152,0,0.12); padding: 12px; border-radius: 2px;" id="mobile-pair-section">
 						<label class="form-label" style="display:flex; align-items:center; gap:6px;">
-							<span class="material-symbols-rounded icon-success" style="font-size:18px;">smartphone</span>
-							Telefonunuza Bağlayın
+							<span class="material-symbols-rounded" style="font-size:18px;color:#ff9800;">smartphone</span>
+							Mobil Bağlantı
 						</label>
-						<div style="font-size:0.8rem;color:var(--muted);margin-bottom:8px;">Aynı Wi-Fi ağındaki telefonunuzla QR kodu okutarak bağlanın. Telefondan yazdıklarınız anlık olarak burada görünür.</div>
-						<div id="mobile-qr-container" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:8px 0;">
-							<div id="mobile-qr-code" style="background:#fff;border-radius:8px;padding:8px;width:180px;height:180px;display:flex;align-items:center;justify-content:center;">
-								<span style="color:#999;font-size:0.8rem;">Yükleniyor...</span>
-							</div>
-							<div id="mobile-url-text" style="font-size:0.75rem;color:var(--muted);font-family:'JetBrains Mono',monospace;text-align:center;word-break:break-all;"></div>
-							<div id="mobile-connected-status" style="display:none;align-items:center;gap:6px;padding:6px 12px;background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.25);border-radius:6px;font-size:0.8rem;color:var(--accent2);">
-								<span class="material-symbols-rounded" style="font-size:16px;">check_circle</span>
-								<span>Telefon bağlandı! Mesajlar anlık senkronize.</span>
-							</div>
+						<div style="font-size:0.8rem;color:var(--muted);margin-bottom:8px;">Mobil bağlantı şu anda bakımdadır. Yakında tekrar kullanıma sunulacaktır.</div>
+						<div style="text-align:center;padding:12px;background:rgba(255,152,0,0.06);border-radius:8px;font-size:0.8rem;color:var(--muted);">
+							<span class="material-symbols-rounded" style="font-size:28px;display:block;margin-bottom:6px;color:#ff9800;">construction</span>
+							<strong>BAKIMDA</strong>
 						</div>
 					</div>
 				</div>
@@ -2127,7 +2148,7 @@ body.wallpaper-active{background:transparent!important}
 				<!-- Compaction Panel -->
 				<div class="stab-panel" id="stab-compaction">
 					<div style="font-size: 0.9rem; font-weight: 600; margin-bottom: 4px; color: var(--fg);">Memory &amp; Compaction</div>
-					<div style="font-size:0.72rem; color:var(--muted); margin-bottom:14px; line-height: 1.4;">Konuşma belleği nasıl yönetilsin? Astro 7 🚀 token kullanımını otomatik ayarlar.</div>
+					<div style="font-size:0.72rem; color:var(--muted); margin-bottom:14px; line-height: 1.4;">Konuşma belleği nasıl yönetilsin? Astro 8 🚀 PRO token kullanımını otomatik ayarlar.</div>
 
 					<div style="display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 16px;">
 					<div class="profile-card" data-val="aggressive" onclick="selectProfileCard('aggressive')" style="border: 1px solid var(--border); border-radius: 10px; padding: 14px; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; gap: 6px; background: var(--bg2);">
@@ -2195,7 +2216,7 @@ body.wallpaper-active{background:transparent!important}
 					<div class="form-group">
 						<label class="form-label">AI Name</label>
 						<div style="font-size:0.78rem;color:var(--muted);margin-bottom:4px;">What should the AI call itself?</div>
-						<input type="text" id="set-ai-name" placeholder="Astro 7 🚀" value="" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:0.85rem;color:var(--fg);outline:none;">
+						<input type="text" id="set-ai-name" placeholder="Astro 8 🚀 PRO" value="" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:0.85rem;color:var(--fg);outline:none;">
 					</div>
 
 					<div class="form-group" style="margin-top:16px;">
@@ -2649,7 +2670,7 @@ body.wallpaper-active{background:transparent!important}
 				<span class="material-symbols-rounded" style="font-size:16px;color:#ff4444;flex-shrink:0;margin-top:1px;">warning</span>
 				<div>
 					<div style="font-weight:600;color:var(--fg);margin-bottom:2px;">No browser connected</div>
-					<div>Follow the 4 steps above. When Astro 7 🚀 needs a browser, it auto-launches Chrome with the extension pre-loaded.</div>
+					<div>Follow the 4 steps above. When Astro 8 🚀 PRO needs a browser, it auto-launches Chrome with the extension pre-loaded.</div>
 				</div>
 			</div>
 		</div>
@@ -3386,6 +3407,137 @@ function openModal(id) {
 function openMCP() {
 	openModal('mcpModal');
 }
+// ─── SUB-AGENT TRACKING ─────────────────────────────────────────────────
+let _agents = {}; // id -> { taskName, startTime, toolCalls, status, events }
+let _agentIds = [];
+
+function toggleAgentsPanel() {
+	const pane = document.getElementById('ide-pane');
+	if (pane && (pane.style.display === 'none' || !pane.offsetParent)) {
+		pane.style.display = 'flex';
+	}
+	switchIdeTab('agents');
+}
+
+function clearFinishedAgents() {
+	for (const id of Object.keys(_agents)) {
+		if (_agents[id].status !== 'running') {
+			delete _agents[id];
+		}
+	}
+	_agentIds = Object.keys(_agents);
+	renderAgentsPanel();
+}
+
+function renderAgentsPanel() {
+	const content = document.getElementById('agents-content');
+	const badge = document.getElementById('agents-badge');
+	if (!content) return;
+	const ids = Object.keys(_agents);
+	if (!ids.length) {
+		content.innerHTML = '<div class="todo-empty">Aktif sub-ajan yok.<br>AI bir invoke_subagent tool\'u kullandığında burada görünecek.</div>';
+		if (badge) badge.style.display = 'none';
+		return;
+	}
+	const running = ids.filter(id => _agents[id].status === 'running').length;
+	if (badge) {
+		if (running > 0) {
+			badge.style.display = 'inline';
+			badge.textContent = running;
+		} else {
+			badge.style.display = 'none';
+		}
+	}
+	content.innerHTML = ids.map(id => {
+		const a = _agents[id];
+		const elapsed = a.status === 'running' ? ((Date.now() - a.startTime) / 1000).toFixed(1) : a.duration ? a.duration.toFixed(1) : '?';
+		const statusIcon = a.status === 'running' ? '<span class="material-symbols-rounded" style="font-size:14px;color:var(--accent);animation:spin 1s linear infinite;">sync</span>' : a.status === 'completed' ? '<span class="material-symbols-rounded" style="font-size:14px;color:var(--accent2);">check_circle</span>' : '<span class="material-symbols-rounded" style="font-size:14px;color:#ff6464;">error</span>';
+		const statusColor = a.status === 'running' ? 'var(--accent)' : a.status === 'completed' ? 'var(--accent2)' : '#ff6464';
+		const liveContent = a.content ? `<div style="margin-top:4px;padding-top:4px;border-top:1px solid var(--border);max-height:120px;overflow-y:auto;font-size:0.72rem;color:var(--fg);line-height:1.4;white-space:pre-wrap;word-break:break-word;">${escapeHtml(a.content)}</div>` : '';
+		return `<div style="padding:8px 10px;border-radius:8px;background:var(--surface2);margin-bottom:6px;border-left:3px solid ${statusColor};">
+			<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+				${statusIcon}
+				<span style="font-size:0.8rem;font-weight:600;color:var(--fg);flex:1;">${escapeHtml(a.taskName)}</span>
+				<span style="font-size:0.7rem;color:var(--muted);">${elapsed}s</span>
+			</div>
+			<div style="display:flex;gap:12px;font-size:0.72rem;color:var(--muted);">
+				<span>🔧 ${a.toolCalls} toolcalls</span>
+				<span>⏱️ ${elapsed}s</span>
+			</div>
+			${liveContent}
+		</div>`;
+	}).join('');
+}
+
+function handleSubagentEvent(data) {
+	if (data.type === 'subagent_start') {
+		_agents[data.id] = { taskName: data.taskName, startTime: Date.now(), toolCalls: 0, status: 'running', duration: 0, events: [] };
+		if (!_agentIds.includes(data.id)) _agentIds.push(data.id);
+		renderAgentsPanel();
+		// Auto-open panel
+		const pane = document.getElementById('ide-pane');
+		if (pane && (pane.style.display === 'none' || !pane.offsetParent)) {
+			pane.style.display = 'flex';
+		}
+		switchIdeTab('agents');
+	} else if (data.type === 'subagent_update') {
+		const a = _agents[data.id];
+		if (!a) return;
+		if (data.toolCalls !== undefined) a.toolCalls = data.toolCalls;
+		if (data.content) a.content = data.content;
+		if (data.event) {
+			const eventName = data.event.type || '';
+			const toolName = data.event.toolName || '';
+			if (eventName) a.events.push(eventName + (toolName ? ': ' + toolName : ''));
+		}
+		renderAgentsPanel();
+	} else if (data.type === 'subagent_end') {
+		const a = _agents[data.id];
+		if (!a) return;
+		a.status = 'completed';
+		a.duration = data.duration || 0;
+		a.toolCalls = data.toolCalls || a.toolCalls;
+		renderAgentsPanel();
+		// Auto-remove after 20 seconds
+		setTimeout(() => {
+			if (_agents[data.id]) {
+				delete _agents[data.id];
+				const idx = _agentIds.indexOf(data.id);
+				if (idx !== -1) _agentIds.splice(idx, 1);
+				renderAgentsPanel();
+			}
+		}, 20000);
+
+		// Add chat summary line
+		const summaryId = 'subagent-summary-' + data.id;
+		if (!document.getElementById(summaryId)) {
+			const row = document.createElement('div');
+			row.id = summaryId;
+			row.className = 'msg-row assistant';
+			row.style = 'opacity:0.85;';
+			row.innerHTML = `<div class="assistant-content" style="padding:6px 14px;font-size:0.8rem;">
+				<div style="display:flex;align-items:center;gap:6px;color:var(--accent2);">
+					<span class="material-symbols-rounded" style="font-size:16px;">check_circle</span>
+					<span style="font-weight:600;">${escapeHtml(data.taskName || data.id)}</span>
+				</div>
+				<div style="margin-top:2px;color:var(--muted);font-size:0.75rem;">
+					↳ ${data.toolCalls || 0} toolcalls · ${data.duration ? data.duration.toFixed(1) : '?'}s
+				</div>
+			</div>`;
+			const indicator = document.getElementById('global-indicator');
+			const chatInner = document.getElementById('chat-inner');
+			if (indicator) chatInner.insertBefore(row, indicator);
+			else chatInner.appendChild(row);
+			// Auto-scroll if near bottom
+			const chatContainer = document.getElementById('chat-container');
+			if (chatContainer) {
+				const nearBottom = chatContainer.scrollHeight - chatContainer.scrollTop - chatContainer.clientHeight < 120;
+				if (nearBottom) chatContainer.scrollTop = chatContainer.scrollHeight;
+			}
+		}
+	}
+}
+
 function toggleTodoPanel() {
 	const pane = document.getElementById('ide-pane');
 	const panel = document.getElementById('todo-panel');
@@ -3926,12 +4078,12 @@ function searchChat(query) {
 // ─── EXPORT ───────────────────────────────────────────────────────────────
 function exportChat() {
 	const rows = chatInner.querySelectorAll('.msg-row');
-	let md = `# Astro 7 🚀 Chat Export\n\n_${new Date().toLocaleString('en-US')}_\n\n---\n\n`;
+	let md = `# Astro 8 🚀 PRO Chat Export\n\n_${new Date().toLocaleString('en-US')}_\n\n---\n\n`;
 	rows.forEach(row => {
 		const isUser = row.classList.contains('user');
 		const bubble = row.querySelector('.user-bubble, .assistant-content');
 		if (!bubble) return;
-		md += `**${isUser ? 'User' : 'Astro 7 🚀'}**\n\n${bubble.textContent.trim()}\n\n---\n\n`;
+		md += `**${isUser ? 'User' : 'Astro 8 🚀 PRO'}**\n\n${bubble.textContent.trim()}\n\n---\n\n`;
 	});
 	const blob = new Blob([md], { type: 'text/markdown' });
 	const url = URL.createObjectURL(blob);
@@ -4151,6 +4303,7 @@ document.addEventListener('keydown', (e) => {
 		else if (e.key === 'b') { e.preventDefault(); toggleSidebar(); }
 		else if (e.key === 'f') { e.preventDefault(); toggleSearch(); }
 		else if (e.key === 'n') { e.preventDefault(); newConversationChat(); }
+		else if (e.key === 'x') { e.preventDefault(); toggleAgentsPanel(); }
 	}
 	if (e.key === 'Escape') {
 		if (document.querySelector('.modal-overlay.active')) {
@@ -4650,7 +4803,7 @@ function renderTool(toolCallId, name, args, status, result) {
 
 		let previewBtnHtml = '';
 		if ((nameLC.includes('browser_tabs') || nameLC.includes('browser_page')) && t.args && t.args.url) {
-			previewBtnHtml = `<button class="p-btn secondary" style="font-size:0.85rem; padding:2px 6px; margin-left:auto;" onclick="window.open('${escapeHtml(t.args.url)}', 'Astro 7 🚀Preview', 'width=1000,height=800')"><span class="material-symbols-rounded" style="font-size:12px; margin-right:4px;">open_in_new</span>Ön İzleme Yap</button>`;
+			previewBtnHtml = `<button class="p-btn secondary" style="font-size:0.85rem; padding:2px 6px; margin-left:auto;" onclick="window.open('${escapeHtml(t.args.url)}', 'Astro 8 🚀 PROPreview', 'width=1000,height=800')"><span class="material-symbols-rounded" style="font-size:12px; margin-right:4px;">open_in_new</span>Ön İzleme Yap</button>`;
 		}
 
 		
@@ -4827,11 +4980,22 @@ async function sendMessage() {
 // ─── PLAN GENERATION ─────────────────────────────────────────────────────
 async function generatePlan(taskText) {
 	const content = document.getElementById('plan-content');
+	const planMsgId = 'plan-' + Date.now();
+
+	// Show user message and plan placeholder in chat
+	appendMessage('user', taskText);
+	const planRowId = appendMessage('assistant', '');
+	const planMsgEl = document.getElementById(planRowId);
+	if (planMsgEl) planMsgEl.style.opacity = '0.85';
+
+	// Show loading in plan panel
 	if (content) {
 		content.style.display = 'block';
 		content.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);"><span class="material-symbols-rounded" style="font-size:28px;display:block;margin-bottom:10px;animation:spin 1s linear infinite;">sync</span>Plan oluşturuluyor...</div>';
 	}
 	switchIdeTab('plan');
+
+	updateMessage(planRowId, '<div style="color:var(--muted);display:flex;align-items:center;gap:8px;padding:8px 0;"><span class="material-symbols-rounded" style="animation:spin 1s linear infinite;font-size:16px;">sync</span>Plan oluşturuluyor...</div>', false);
 
 	try {
 		const resp = await safeFetchJSON('/api/fusion-plan', {
@@ -4841,14 +5005,17 @@ async function generatePlan(taskText) {
 		});
 		if (resp && resp.plan) {
 			setPlan(resp.plan, resp.steps || []);
+			updateMessage(planRowId, marked.parse(resp.plan), false);
 		} else {
-			if (content) content.innerHTML = '<div class="todo-empty" style="padding:30px;">Plan oluşturulamadı. Normal modda devam ediliyor.</div>';
-			// Retry without plan mode
+			const errMsg = resp?.error || 'Plan oluşturulamadı';
+			if (content) content.innerHTML = `<div class="todo-empty" style="padding:30px;">${errMsg}. Normal modda devam ediliyor.</div>`;
+			updateMessage(planRowId, `<div style="color:var(--muted);padding:8px 0;">${errMsg}</div>`, false);
 			const ta = document.getElementById('prompt-input');
 			if (ta) { ta.value = taskText; sendMessage(); }
 		}
 	} catch (e) {
 		if (content) content.innerHTML = `<div class="todo-empty" style="padding:30px;">Plan hatası. Normal modda devam ediliyor.</div>`;
+		updateMessage(planRowId, '<div style="color:#ff6464;padding:8px 0;">Plan oluşturulamadı. Normal modda devam ediliyor.</div>', false);
 		const ta = document.getElementById('prompt-input');
 		if (ta) { ta.value = taskText; sendMessage(); }
 	}
@@ -4869,7 +5036,7 @@ function newChat() {
 	chatInner.innerHTML = `
 		<div id="empty-state">
 			<div class="empty-orb" style="background:none;border:none;">
-				<img src="/assets/Mooncodewhitelogo.png" alt="Astro 7 🚀" style="width:68px;height:68px;border-radius:18px;object-fit:cover;filter:drop-shadow(0 0 20px rgba(108,143,255,0.4));" onerror="this.style.display='none'">
+				<img src="/assets/Mooncodewhitelogo.png" alt="Astro 8 🚀 PRO" style="width:68px;height:68px;border-radius:18px;object-fit:cover;filter:drop-shadow(0 0 20px rgba(108,143,255,0.4));" onerror="this.style.display='none'">
 			</div>
 			<h2 style="font-size:1.3rem;font-weight:600;margin:0 0 8px;">How can I help you today?</h2>
 			<p style="color:var(--muted);font-size:0.85rem;margin:0 0 28px;max-width:400px;line-height:1.6;">Kod yaz, hata ayıkla, yeniden düzenle veya sıfırdan bir proje başlat.</p>
@@ -5008,33 +5175,99 @@ function switchModelTab(tab) {
 		if (modelSearch) modelSearch.value = '';
 		filterModels('');
 	} else {
-		_populateFusionSelects();
+		_initFusionSearch();
 	}
 }
 
-function _populateFusionSelects() {
-	const thinkSel = document.getElementById('fusion-think-model');
-	const codeSel = document.getElementById('fusion-code-model');
-	if (!thinkSel || !codeSel || !_allModels.length) return;
-	const opts = _allModels.map(m => `<option value="${m.provider}::${m.id}">${m.provider} / ${m.name}</option>`).join('');
-	thinkSel.innerHTML = '<option value="">Seç...</option>' + opts;
-	codeSel.innerHTML = '<option value="">Seç...</option>' + opts;
+let _fusionDropdownTimeout = null;
+function _initFusionSearch() {
+	if (!_allModels.length) return;
 	const fusionData = localStorage.getItem('mc-fusion');
 	if (fusionData) {
 		try {
 			const parsed = JSON.parse(fusionData);
-			if (parsed.think) thinkSel.value = parsed.think.provider + '::' + parsed.think.id;
-			if (parsed.code) codeSel.value = parsed.code.provider + '::' + parsed.code.id;
+			if (parsed.think) {
+				const thinkInput = document.getElementById('fusion-think-search');
+				const thinkHidden = document.getElementById('fusion-think-model');
+				if (thinkInput && thinkHidden) {
+					const label = _allModels.find(m => m.provider === parsed.think.provider && m.id === parsed.think.id);
+					thinkInput.value = label ? `${label.provider} / ${label.name}` : '';
+					thinkHidden.value = parsed.think.provider + '::' + parsed.think.id;
+				}
+			}
+			if (parsed.code) {
+				const codeInput = document.getElementById('fusion-code-search');
+				const codeHidden = document.getElementById('fusion-code-model');
+				if (codeInput && codeHidden) {
+					const label = _allModels.find(m => m.provider === parsed.code.provider && m.id === parsed.code.id);
+					codeInput.value = label ? `${label.provider} / ${label.name}` : '';
+					codeHidden.value = parsed.code.provider + '::' + parsed.code.id;
+				}
+			}
 		} catch(e){ console.warn('Silently caught error:', e); }
 	}
 }
 
+function filterFusionModels(query, type) {
+	const isThink = type === 'think';
+	const input = document.getElementById(isThink ? 'fusion-think-search' : 'fusion-code-search');
+	const dropdown = document.getElementById(isThink ? 'fusion-think-dropdown' : 'fusion-code-dropdown');
+	if (!dropdown) return;
+	const q = (query || '').toLowerCase().trim();
+	const filtered = q ? _allModels.filter(m =>
+		m.name.toLowerCase().includes(q) ||
+		m.id.toLowerCase().includes(q) ||
+		m.provider.toLowerCase().includes(q) ||
+		m.id.split('/').pop().toLowerCase().includes(q)
+	) : _allModels;
+	if (!filtered.length) {
+		dropdown.innerHTML = '<div style="padding:8px 10px;color:var(--muted);font-size:0.78rem;">Model bulunamadı</div>';
+		dropdown.style.display = 'block';
+		return;
+	}
+	dropdown.innerHTML = filtered.map(m => {
+		const val = `${m.provider}::${m.id}`;
+		const label = `${m.provider} / ${m.name}`;
+		const sel = input?.dataset?.selectedVal === val;
+		return `<div style="padding:8px 10px;cursor:pointer;font-size:0.8rem;color:var(--fg);border-bottom:1px solid var(--border);background:${sel ? 'var(--accent-dim)' : 'transparent'};" onmousedown="selectFusionModel('${m.provider}','${m.id}','${label.replace(/'/g, "\\'")}','${type}')">${label}</div>`;
+	}).join('');
+	dropdown.style.display = 'block';
+}
+
+function showFusionDropdown(type) {
+	if (_fusionDropdownTimeout) clearTimeout(_fusionDropdownTimeout);
+	const isThink = type === 'think';
+	const input = document.getElementById(isThink ? 'fusion-think-search' : 'fusion-code-search');
+	const dropdown = document.getElementById(isThink ? 'fusion-think-dropdown' : 'fusion-code-dropdown');
+	if (!dropdown || !input) return;
+	if (!dropdown.children.length) filterFusionModels(input.value, type);
+	dropdown.style.display = 'block';
+}
+
+function hideFusionDropdown(type) {
+	const isThink = type === 'think';
+	const dropdown = document.getElementById(isThink ? 'fusion-think-dropdown' : 'fusion-code-dropdown');
+	if (dropdown) dropdown.style.display = 'none';
+}
+
+function selectFusionModel(provider, id, label, type) {
+	const isThink = type === 'think';
+	const input = document.getElementById(isThink ? 'fusion-think-search' : 'fusion-code-search');
+	const hidden = document.getElementById(isThink ? 'fusion-think-model' : 'fusion-code-model');
+	const dropdown = document.getElementById(isThink ? 'fusion-think-dropdown' : 'fusion-code-dropdown');
+	if (!input || !hidden || !dropdown) return;
+	input.value = label;
+	input.dataset.selectedVal = `${provider}::${id}`;
+	hidden.value = `${provider}::${id}`;
+	dropdown.style.display = 'none';
+}
+
 function enableFusionMode() {
-	const thinkSel = document.getElementById('fusion-think-model');
-	const codeSel = document.getElementById('fusion-code-model');
+	const thinkHidden = document.getElementById('fusion-think-model');
+	const codeHidden = document.getElementById('fusion-code-model');
 	const status = document.getElementById('fusion-status');
-	const thinkVal = thinkSel?.value;
-	const codeVal = codeSel?.value;
+	const thinkVal = thinkHidden?.value;
+	const codeVal = codeHidden?.value;
 	if (!thinkVal || !codeVal) { toast('İki model de seçilmeli', 'error'); return; }
 	if (thinkVal === codeVal) { toast('Farklı modeller seçin', 'error'); return; }
 	const [tp, ti] = thinkVal.split('::');
@@ -5835,7 +6068,7 @@ es.onerror = (err) => {
     const notConnectedUI = document.getElementById('bridge-not-connected');
     if(notConnectedUI) {
         notConnectedUI.classList.remove('hidden');
-        notConnectedUI.innerHTML = '<div style="font-weight:600;color:var(--fg);margin-bottom:2px;">Connection Lost</div><div style="opacity:0.8">Trying to reconnect to Astro 7 🚀 server...</div>';
+        notConnectedUI.innerHTML = '<div style="font-weight:600;color:var(--fg);margin-bottom:2px;">Connection Lost</div><div style="opacity:0.8">Trying to reconnect to Astro 8 🚀 PRO server...</div>';
     }
     // Tarayıcı EventSource'u otomatik dener, ancak sunucu tamamen kapandıysa manuel tetikleme gerekebilir.
     // Kullanıcı mesaj yazarken sayfa yenilenmesin diye textarea kontrolü ekle.
@@ -5862,6 +6095,11 @@ es.onmessage = (e) => {
 				if (statusEl) statusEl.style.display = 'none';
 				if (indicatorEl) indicatorEl.style.display = 'none';
 			}
+			return;
+		}
+
+		if (data.type === 'subagent_start' || data.type === 'subagent_update' || data.type === 'subagent_end') {
+			handleSubagentEvent(data);
 			return;
 		}
 
@@ -6636,7 +6874,7 @@ function saveSessionRules() {
 		<div style="width:80px;height:80px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;box-shadow:0 0 30px var(--accent);">
 			<span class="material-symbols-rounded" style="font-size:40px;color:white;">auto_awesome</span>
 		</div>
-		<h1 style="font-family:'Inter', sans-serif;font-size:1.8rem;margin-bottom:10px;color:var(--fg);">Welcome to Astro 7 🚀</h1>
+		<h1 style="font-family:'Inter', sans-serif;font-size:1.8rem;margin-bottom:10px;color:var(--fg);">Welcome to Astro 8 🚀 PRO</h1>
 		<p style="color:var(--muted);font-size:1rem;margin-bottom:30px;line-height:1.5;">Meet your advanced AI coding assistant.<br>Here is what you need to know:</p>
 		
 		<div style="text-align:left;margin-bottom:30px;display:flex;flex-direction:column;gap:15px;">
@@ -7010,7 +7248,7 @@ window.addEventListener('DOMContentLoaded', () => {
 			activeTab.style.color = 'var(--accent)';
 		}
 		document.querySelectorAll('.ide-panel').forEach(p => p.style.display = 'none');
-		const panel = document.getElementById(tab === 'files' ? 'ide-file-tree' : tab === 'plan' ? 'plan-panel' : 'todo-panel');
+		const panel = document.getElementById(tab === 'files' ? 'ide-file-tree' : tab === 'plan' ? 'plan-panel' : tab === 'agents' ? 'agents-panel' : 'todo-panel');
 		if (panel) {
 			panel.style.display = 'flex';
 			if (tab === 'todo') fetchTodoList();

@@ -895,6 +895,7 @@ export class SettingsManager {
 			this.globalSettings.fusionMode.enabled = enabled;
 		}
 		this.markModified("fusionMode", "enabled");
+		this.save();
 	}
 
 	setFusionThinkModel(provider: string, id: string): void {
@@ -904,6 +905,7 @@ export class SettingsManager {
 			this.globalSettings.fusionMode.thinkModel = { provider, id };
 		}
 		this.markModified("fusionMode", "thinkModel");
+		this.save();
 	}
 
 	setFusionCodeModel(provider: string, id: string): void {
@@ -913,6 +915,7 @@ export class SettingsManager {
 			this.globalSettings.fusionMode.codeModel = { provider, id };
 		}
 		this.markModified("fusionMode", "codeModel");
+		this.save();
 	}
 
 	isFusionModeEnabled(): boolean {

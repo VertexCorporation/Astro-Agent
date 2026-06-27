@@ -451,10 +451,7 @@ let BUILTIN_THEMES: Record<string, ThemeJson> | undefined;
 function getBuiltinThemes(): Record<string, ThemeJson> {
 	if (!BUILTIN_THEMES) {
 		const themesDir = getThemesDir();
-		const builtinThemeFiles = [
-			"github-light.json",
-			"github-dark.json",
-		];
+		const builtinThemeFiles = ["github-light.json", "github-dark.json"];
 		BUILTIN_THEMES = {};
 		for (const file of builtinThemeFiles) {
 			const themePath = path.join(themesDir, file);
@@ -658,7 +655,7 @@ function _detectTerminalBackground(): "dark" | "light" {
 }
 
 function getDefaultTheme(): string {
-	return "better chroma dark";
+	return "github-dark";
 }
 
 function normalizeThemeName(name: string | undefined): string {

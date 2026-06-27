@@ -89,6 +89,15 @@ The main user-facing web interface is served by `web-mode.ts` on **port 3135**.
 | Browser can't connect | Run `mooncode`, check bridge port, restart extension |
 | High token usage | Append `/compact` to session prompt |
 
+## Roadmap (Priority Order)
+
+1. **Sub-agent parallelization** — Engine agent layer: Worker Threads / child_process for parallel, non-blocking sub-agent execution
+2. **`@ts-nocheck` cleanup** — Remove all `@ts-nocheck` directives file-by-file, add proper types
+3. **Tests** — Unit/integration tests for critical paths: sendMessage, conversation CRUD, MCP panel, todo
+4. **Monolithic HTML split** — Split `studio-ui.html` into separate CSS, JS modules, and HTML templates
+5. **Polling → WebSocket/SSE** — Replace HTTP polling (todo, conversations, status) with push-based events
+6. **State management** — Replace global `let` variables with a store pattern (zustand or custom Proxy-based)
+
 ## Build & Run
 
 ```bash

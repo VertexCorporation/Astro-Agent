@@ -6,12 +6,13 @@ import fs, { promises as fsPromises } from "fs";
 import path, { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import { getEngineDir, getPackageDir, VERSION } from "../../config.js";
-import { runFusionThink } from "../../core/fusion.js";
 import { getBrowserBridgeStatus } from "../../core/browser-bridge-server.js";
 import type { EngineSessionRuntime } from "../../core/engine-session-runtime.js";
+import { runFusionThink } from "../../core/fusion.js";
 import { buildSessionInfo, listSessionsFromDir, SessionManager } from "../../core/session-manager.js";
 import { BUILTIN_SLASH_COMMANDS } from "../../core/slash-commands.js";
-import { getTodoSnapshot, applyTodoAction } from "../../core/tools/todo.js";
+import { subagentEventEmitter } from "../../core/tools/invoke_subagent.js";
+import { applyTodoAction, getTodoSnapshot } from "../../core/tools/todo.js";
 import { getMcpPanelState, setMcpPanelStateProvider, webUiMcpActionListeners } from "../../core/web-ui-server.js";
 import type { InteractiveModeOptions } from "../interactive/interactive-mode.js";
 
@@ -34,11 +35,11 @@ function printStartupBanner(webUrl: string, authUrl: string, bridgePort: number)
 
 	const width = 56;
 	const border = purple + "─".repeat(width) + reset;
-	const tl = purple + "╭" + reset;
-	const tr = purple + "╮" + reset;
-	const bl = purple + "╰" + reset;
-	const br = purple + "╯" + reset;
-	const side = purple + "│" + reset;
+	const tl = `${purple}╭${reset}`;
+	const tr = `${purple}╮${reset}`;
+	const bl = `${purple}╰${reset}`;
+	const br = `${purple}╯${reset}`;
+	const side = `${purple}│${reset}`;
 	const pad = (text: string, fill = " "): string => {
 		// Strip ANSI codes for length calculation
 		const plain = text.replace(/\x1b\[[0-9;]*m/g, "");
@@ -50,7 +51,7 @@ function printStartupBanner(webUrl: string, authUrl: string, bridgePort: number)
 		"",
 		tl + border + tr,
 		side + pad("") + side,
-		side + pad(`  ${gold}✦${reset}  ${bold}${purple}Astro 7${reset}  ${dim}${white}v${VERSION}${reset}`) + side,
+		side + pad(`  ${gold}✦${reset}  ${bold}${purple}Astro 8 PRO${reset}  ${dim}${white}v${VERSION}${reset}`) + side,
 		side + pad(`     ${dim}${cyan}Vertex Corporation · AI Coding Agent${reset}`) + side,
 		side + pad("") + side,
 		side + pad(`  ${cyan}🌐${reset}  ${dim}Web UI${reset}     ${white}→  ${cyan}${webUrl}${reset}`) + side,
@@ -67,7 +68,7 @@ function printStartupBanner(webUrl: string, authUrl: string, bridgePort: number)
 		"",
 	];
 
-	process.stdout.write(lines.join("\n") + "\n");
+	process.stdout.write(`${lines.join("\n")}\n`);
 }
 export class StudioMode {
 	private runtime: EngineSessionRuntime;
@@ -121,6 +122,7 @@ export class StudioMode {
 		});
 
 		this.registerMcpPanel();
+		this.initSubagentBroadcast();
 		this.runtime.session.extensionRunner.setUIContext({
 			select: async (_title: string, _options: string[]) => {
 				return new Promise<string | undefined>((resolve) => {
@@ -367,20 +369,6 @@ export class StudioMode {
 		}
 	}
 
-	private getLocalIp(): string {
-		try {
-			const interfaces = os.networkInterfaces();
-			for (const name of Object.keys(interfaces)) {
-				for (const iface of interfaces[name] || []) {
-					if (iface.family === "IPv4" && !iface.internal) {
-						return iface.address;
-					}
-				}
-			}
-		} catch (_) {}
-		return "127.0.0.1";
-	}
-
 	private broadcastMobileStatus() {
 		this.broadcastEvent({
 			type: "mobile_status",
@@ -560,6 +548,86 @@ export class StudioMode {
 		} catch (e) {
 			console.error("Failed to start Web UI Auth Server:", e);
 		}
+	}
+
+	private _subagentState = new Map<
+		string,
+		{ taskName: string; startTime: number; toolCalls: number; status: string }
+	>();
+	private _subagentBound = false;
+
+	private initSubagentBroadcast() {
+		if (this._subagentBound) return;
+		this._subagentBound = true;
+		subagentEventEmitter.on("start", (payload: any) => {
+			const id = payload?.id || payload?.taskName;
+			if (!id) return;
+			this._subagentState.set(id, {
+				taskName: payload.taskName || id,
+				startTime: Date.now(),
+				toolCalls: 0,
+				status: "running",
+			});
+			this.broadcastEvent({
+				type: "subagent_start",
+				id,
+				taskName: payload.taskName || id,
+			});
+		});
+
+		subagentEventEmitter.on("update", (payload: any) => {
+			const id = payload?.id;
+			if (!id) return;
+			const state = this._subagentState.get(id);
+			if (!state) return;
+			let contentText: string | undefined;
+			const event = payload.event;
+			if (event?.type === "tool_execution_start" || event?.type === "tool_execution_end") {
+				state.toolCalls++;
+			}
+			// Extract text content from message events for live streaming in UI
+			if (event?.type === "message_update" || event?.type === "message_end") {
+				const msg = event.message;
+				if (msg?.content) {
+					if (typeof msg.content === "string") {
+						contentText = msg.content;
+					} else if (Array.isArray(msg.content)) {
+						contentText = msg.content
+							.filter((c: any) => c.type === "text")
+							.map((c: any) => c.text)
+							.join("\n");
+					}
+				}
+			}
+			this.broadcastEvent({
+				type: "subagent_update",
+				id,
+				event: payload.event,
+				status: state.status,
+				toolCalls: state.toolCalls,
+				content: contentText,
+			});
+		});
+
+		subagentEventEmitter.on("end", (payload: any) => {
+			const id = payload?.id;
+			if (!id) return;
+			const state = this._subagentState.get(id);
+			const duration = state ? ((Date.now() - state.startTime) / 1000).toFixed(1) : "?";
+			this._subagentState.set(id, {
+				taskName: state?.taskName || id,
+				startTime: state?.startTime || 0,
+				toolCalls: state?.toolCalls || 0,
+				status: "completed",
+			});
+			this.broadcastEvent({
+				type: "subagent_end",
+				id,
+				taskName: state?.taskName || id,
+				duration: parseFloat(duration),
+				toolCalls: state?.toolCalls || 0,
+			});
+		});
 	}
 
 	private async handleRequest(req: IncomingMessage, res: ServerResponse) {
@@ -870,14 +938,22 @@ export class StudioMode {
 						// --- FUSION MODE ---
 						const fusionState = this.runtime.session.settingsManager.getFusionMode();
 						const fusionResult = await runFusionThink(
-							{ enabled: fusionState.enabled, thinkModel: fusionState.thinkModel ?? null, codeModel: fusionState.codeModel ?? null },
+							{
+								enabled: fusionState.enabled,
+								thinkModel: fusionState.thinkModel ?? null,
+								codeModel: fusionState.codeModel ?? null,
+							},
 							effectivePrompt,
 							{
 								modelRegistry: {
 									find: (p, id) => this.runtime.session.modelRegistry.find(p, id) as any,
-									authStorage: { get: (p) => ({ key: (this.runtime.session.modelRegistry.authStorage.get(p) as any)?.key || "" }) },
+									authStorage: {
+										get: (p) => ({
+											key: (this.runtime.session.modelRegistry.authStorage.get(p) as any)?.key || "",
+										}),
+									},
 								},
-								onStatus: (msg) => this.broadcastEvent({ type: "terminal_log", data: msg + "\n" }),
+								onStatus: (msg) => this.broadcastEvent({ type: "terminal_log", data: `${msg}\n` }),
 							},
 						);
 						if (fusionResult) {
@@ -1406,7 +1482,9 @@ export class StudioMode {
 
 		if (method === "POST" && url.pathname === "/api/fusion-plan") {
 			let body = "";
-			req.on("data", (chunk) => (body += chunk));
+			req.on("data", (chunk) => {
+				body += chunk;
+			});
 			req.on("end", async () => {
 				try {
 					const { task } = JSON.parse(body);
@@ -1418,12 +1496,20 @@ export class StudioMode {
 					}
 					const { runFusionThink } = await import("../../core/fusion.js");
 					const result = await runFusionThink(
-						{ enabled: true, thinkModel: fusionState.thinkModel ?? null, codeModel: fusionState.codeModel ?? null },
+						{
+							enabled: true,
+							thinkModel: fusionState.thinkModel ?? null,
+							codeModel: fusionState.codeModel ?? null,
+						},
 						task,
 						{
 							modelRegistry: {
 								find: (p: string, id: string) => this.runtime.session.modelRegistry.find(p, id) as any,
-								authStorage: { get: (p: string) => ({ key: (this.runtime.session.modelRegistry.authStorage.get(p) as any)?.key || "" }) },
+								authStorage: {
+									get: (p: string) => ({
+										key: (this.runtime.session.modelRegistry.authStorage.get(p) as any)?.key || "",
+									}),
+								},
 							},
 						},
 					);
@@ -1841,7 +1927,9 @@ export class StudioMode {
 			}
 			if (method === "POST") {
 				let body = "";
-				req.on("data", (chunk) => (body += chunk));
+				req.on("data", (chunk) => {
+					body += chunk;
+				});
 				req.on("end", () => {
 					try {
 						const { action, id, text } = JSON.parse(body);
@@ -1855,43 +1943,6 @@ export class StudioMode {
 				});
 				return;
 			}
-		}
-
-		if (method === "GET" && url.pathname === "/mobile") {
-			const html = this.getHtmlTemplate()
-				.replace('<html lang="en"', '<html lang="en" data-mobile="1"')
-				.replace("<title>Astro 7 🚀 – AI Coding Assistant</title>", "<title>Astro 7 🚀 – Mobile</title>");
-			res.setHeader("Content-Type", "text/html; charset=utf-8");
-			res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
-			res.end(html);
-			return;
-		}
-
-		if (method === "GET" && url.pathname === "/api/mobile/qr") {
-			const localIp = this.getLocalIp();
-			const mobileUrl = `http://${localIp}:${this.port}/mobile`;
-			res.setHeader("Content-Type", "application/json");
-			res.end(
-				JSON.stringify({
-					url: mobileUrl,
-					ip: localIp,
-					port: this.port,
-					connected: this.mobileClients.size > 0,
-					mobileCount: this.mobileClients.size,
-				}),
-			);
-			return;
-		}
-
-		if (method === "GET" && url.pathname === "/api/mobile/status") {
-			res.setHeader("Content-Type", "application/json");
-			res.end(
-				JSON.stringify({
-					connected: this.mobileClients.size > 0,
-					mobileCount: this.mobileClients.size,
-				}),
-			);
-			return;
 		}
 
 		res.statusCode = 404;

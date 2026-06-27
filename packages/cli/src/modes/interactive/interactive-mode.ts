@@ -17,7 +17,6 @@ import {
 	type Model,
 	type OAuthProviderId,
 } from "moon-core";
-import { runFusionThink } from "../../core/fusion.js";
 import type { EngineMessage } from "moon-engine";
 import type {
 	AutocompleteItem,
@@ -76,6 +75,7 @@ import type {
 	ExtensionWidgetOptions,
 } from "../../core/extensions/index.js";
 import { FooterDataProvider, type ReadonlyFooterDataProvider } from "../../core/footer-data-provider.js";
+import { runFusionThink } from "../../core/fusion.js";
 import { type AppKeybinding, KeybindingsManager } from "../../core/keybindings.js";
 import { createCompactionSummaryMessage } from "../../core/messages.js";
 import {
@@ -1149,12 +1149,18 @@ export class InteractiveMode {
 				// --- FUSION MODE ---
 				const fusionState = this.settingsManager.getFusionMode();
 				const fusionResult = await runFusionThink(
-					{ enabled: fusionState.enabled, thinkModel: fusionState.thinkModel ?? null, codeModel: fusionState.codeModel ?? null },
+					{
+						enabled: fusionState.enabled,
+						thinkModel: fusionState.thinkModel ?? null,
+						codeModel: fusionState.codeModel ?? null,
+					},
 					promptInput,
 					{
 						modelRegistry: {
 							find: (p, id) => this.session.modelRegistry.find(p, id) as any,
-							authStorage: { get: (p) => ({ key: (this.session.modelRegistry.authStorage.get(p) as any)?.key || "" }) },
+							authStorage: {
+								get: (p) => ({ key: (this.session.modelRegistry.authStorage.get(p) as any)?.key || "" }),
+							},
 						},
 						onStatus: (msg) => this.showStatus(msg),
 					},

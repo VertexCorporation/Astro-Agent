@@ -15,7 +15,11 @@ parentPort!.on("message", async (msg: Record<string, unknown>) => {
 				model: unknown;
 			};
 
-			parentPort!.postMessage({ type: "event", name: "start", payload: { id: task.taskName, taskName: task.taskName } });
+			parentPort!.postMessage({
+				type: "event",
+				name: "start",
+				payload: { id: task.taskName, taskName: task.taskName },
+			});
 
 			engine = new Engine({
 				initialState: {

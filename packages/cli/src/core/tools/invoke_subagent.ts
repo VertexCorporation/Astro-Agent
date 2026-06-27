@@ -2,8 +2,8 @@ import { EventEmitter } from "node:events";
 import type { EngineTool } from "moon-engine";
 import { type Static, Type } from "typebox";
 import type { ToolDefinition } from "../extensions/types.js";
-import { WorkerPool } from "./worker-pool.js";
 import { wrapToolDefinition } from "./tool-definition-wrapper.js";
+import { WorkerPool } from "./worker-pool.js";
 
 const invokeSubagentSchema = Type.Object({
 	TaskName: Type.String({ description: "Short human-readable name of the task. Also used as the agent ID for IPC." }),
@@ -49,7 +49,12 @@ export function createInvokeSubagentToolDefinition(
 
 			if (onUpdate) {
 				onUpdate({
-					content: [{ type: "text", text: `[Sub-agent '${TaskName}' spawned in separate thread. Waiting for completion...]` }],
+					content: [
+						{
+							type: "text",
+							text: `[Sub-agent '${TaskName}' spawned in separate thread. Waiting for completion...]`,
+						},
+					],
 					details: undefined,
 				});
 			}
