@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="assets/astro_pro_dashboard.png" alt="Astro PRO Banner" style="width: 100%; border-radius: 12px; border: 1px solid #222736;" />
+  <img src="assets/banner.png" alt="Astro PRO Banner" width="100%" />
 </div>
 
 # Astro (PRO)
@@ -72,6 +72,10 @@ Astro (PRO) ile geleneksel araçların (Cursor vb.) gerçek kod tabanı testleri
     </tr>
   </tbody>
 </table>
+
+<div align="center">
+  <img src="assets/banner.png" alt="Astro PRO Karşılaştırma Görseli" width="100%" />
+</div>
 
 ---
 
