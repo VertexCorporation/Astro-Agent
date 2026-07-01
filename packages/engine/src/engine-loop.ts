@@ -288,6 +288,8 @@ async function runLoop(
  * Stream an assistant response from the Provider.
  * This is where EngineMessage[] gets transformed to Message[] for the Provider.
  */
+import { extractAndSaveFacts, memoryMiddleware } from "./memory-middleware.js";
+
 async function streamAssistantResponse(
 	context: EngineContext,
 	config: EngineLoopConfig,
@@ -300,6 +302,10 @@ async function streamAssistantResponse(
 	if (config.transformContext) {
 		messages = await config.transformContext(messages, signal);
 	}
+
+	// AGI REVOLUTION: Apply Memory Middleware (RFF + Grover Oracle + SQLite R-Graph)
+	const memResult = await memoryMiddleware(messages);
+	messages = memResult.messages;
 
 	// Convert to Provider-compatible messages (EngineMessage[] → Message[])
 	const llmMessages = await config.convertToLlm(messages);
@@ -358,6 +364,18 @@ async function streamAssistantResponse(
 			case "done":
 			case "error": {
 				const finalMessage = await response.result();
+
+				// AGI REVOLUTION: Extract facts after response
+				if (event.type === "done" && finalMessage) {
+					const userMessages = messages.filter((m) => m.role === "user");
+					const lastUser = userMessages[userMessages.length - 1];
+					const userText = lastUser && typeof lastUser.content === "string" ? lastUser.content : "";
+					const assistantText = finalMessage.content
+						.filter((c) => c.type === "text")
+						.map((c: any) => c.text)
+						.join(" ");
+					extractAndSaveFacts(userText, assistantText);
+				}
 				if (addedPartial) {
 					context.messages[context.messages.length - 1] = finalMessage;
 				} else {

@@ -3,6 +3,11 @@ export { Type } from "typebox";
 
 export * from "./api-registry.js";
 export * from "./env-api-keys.js";
+export * from "./memory/db.js";
+export * from "./memory/dssc.js";
+// Memory Sub-System
+export * from "./memory/quantum.js";
+export * from "./memory/rff.js";
 export * from "./models.js";
 export type { BedrockOptions, BedrockThinkingDisplay } from "./providers/amazon-bedrock.js";
 export type { AnthropicEffort, AnthropicOptions, AnthropicThinkingDisplay } from "./providers/anthropic.js";
@@ -31,6 +36,7 @@ export * from "./utils/audit-manager.js";
 export * from "./utils/event-stream.js";
 export * from "./utils/json-parse.js";
 export * from "./utils/native-bridge.js";
+
 export type {
 	OAuthAuthInfo,
 	OAuthCredentials,

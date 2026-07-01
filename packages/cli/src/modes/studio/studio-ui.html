@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
 	<meta charset="UTF-8">
@@ -1710,7 +1710,7 @@ body.wallpaper-active{background:transparent!important}
 <div id="sidebar">
 	<div style="padding:12px 14px; display:flex; align-items:center; gap:8px; flex-shrink:0;">
 		<div style="width:24px;height:24px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:800;color:#fff;flex-shrink:0;">✦</div>
-		<span style="font-weight:700;font-size:0.9rem;background:linear-gradient(135deg,var(--fg),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Astro</span>
+		<span style="font-weight:700;font-size:0.9rem;background:linear-gradient(135deg,var(--fg),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Astro (PRO)</span>
 		<button onclick="toggleSidebar()" class="tool-btn" style="margin-left:auto;padding:2px;border-radius:6px;">
 			<span class="material-symbols-rounded" style="font-size:15px;">close</span>
 		</button>
@@ -1742,10 +1742,8 @@ body.wallpaper-active{background:transparent!important}
 		<div style="display:flex; justify-content:space-between; align-items:center;">
 			<button onclick="openSemanticBrain()" class="tool-btn" style="width:28px;height:28px;border-radius:8px;" title="Bellek"><span class="material-symbols-rounded" style="font-size:15px;">neurology</span></button>
 			<button onclick="openMCP()" class="tool-btn" style="width:28px;height:28px;border-radius:8px;" title="Eklentiler"><span class="material-symbols-rounded" style="font-size:15px;">extension</span></button>
-			<button onclick="toggleTodoPanel()" class="tool-btn" style="width:28px;height:28px;border-radius:8px;" title="Plan"><span class="material-symbols-rounded" style="font-size:15px;">checklist</span></button>
 			<button onclick="toggleAgentsPanel()" class="tool-btn" style="width:28px;height:28px;border-radius:8px;" title="Sub-Ajanlar (Ctrl+X)"><span class="material-symbols-rounded" style="font-size:15px;">psychology</span></button>
 			<button onclick="openModal('settingsModal')" class="tool-btn" style="width:28px;height:28px;border-radius:8px;" title="Ayarlar"><span class="material-symbols-rounded" style="font-size:15px;">settings</span></button>
-			<button onclick="openModal('themeModal')" class="tool-btn" style="width:28px;height:28px;border-radius:8px;" title="Tema"><span class="material-symbols-rounded" style="font-size:15px;">palette</span></button>
 		</div>
 		<div id="sidebar-user-section" style="display:flex;align-items:center;gap:6px;padding:3px 4px;margin-top:6px;border-radius:8px;">
 			<div id="sidebar-avatar" style="width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:none;align-items:center;justify-content:center;font-size:0.55rem;font-weight:700;color:#fff;flex-shrink:0;">U</div>
@@ -1874,9 +1872,7 @@ body.wallpaper-active{background:transparent!important}
 						<button id="web-btn" class="badge-btn" onclick="toggleWeb()" title="Toggle web search" style="padding:4px 8px; font-size:0.8rem; background:transparent; border:1px solid var(--border); border-radius:6px;">
 							<span class="material-symbols-rounded" style="font-size:15px; color:var(--muted);">language</span>
 						</button>
-						<button id="plan-btn" class="badge-btn" onclick="togglePlanMode()" title="Plan modu: AI yanıtlamadan önce plan sunar" style="padding:4px 8px; font-size:0.8rem; background:transparent; border:1px solid var(--border); border-radius:6px;">
-							<span class="material-symbols-rounded" style="font-size:15px; color:var(--muted);">account_tree</span>
-						</button>
+
 						<button onclick="openModal('modelModal')" class="badge-btn" style="font-size:0.8rem;">
 							<span id="input-model-badge" style="font-family:'JetBrains Mono',monospace;">—</span>
 							<span class="material-symbols-rounded" style="font-size:11px;">keyboard_arrow_down</span>
