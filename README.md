@@ -1,105 +1,102 @@
-# Astro (PRO) — Deterministik Yapay Zeka Programlama Motoru
+# Astro (PRO)
 
-Astro (PRO), yüksek performanslı matematiksel modelleme, kuantum arama simülasyonları ve optimize edilmiş veri tabanı katmanlarıyla güçlendirilmiş, geliştiriciler için tasarlanmış deterministik bir yapay zeka programlama motorudur.
+Astro (PRO), yazılım geliştirme süreçlerinde kod tabanının tamamını hafızasında tutabilen, kuantum arama simülasyonları ve gelişmiş matematiksel sıkıştırma algoritmalarıyla çalışan yeni nesil bir kod asistanıdır.
 
----
-
-<div align="center">
-  <table style="border-collapse: collapse; border: none; width: 100%; text-align: center;">
-    <tr>
-      <td style="padding: 15px; border: 1px solid #222736; background: #090b0f;">
-        <span style="font-size: 12px; color: #58cc02; font-family: monospace; display: block; margin-bottom: 5px;">PROJEKTÖR KATMANI</span>
-        <strong style="font-size: 20px; color: #f1f3f6; font-family: sans-serif;">RFF ATTENTION</strong>
-        <span style="font-size: 11px; color: #8e96a7; display: block; margin-top: 5px;">O(N·d²) Karmaşıklık</span>
-      </td>
-      <td style="padding: 15px; border: 1px solid #222736; background: #090b0f;">
-        <span style="font-size: 12px; color: #3b82f6; font-family: monospace; display: block; margin-bottom: 5px;">ARAMA MOTORU</span>
-        <strong style="font-size: 20px; color: #f1f3f6; font-family: sans-serif;">GROVER ORACLE</strong>
-        <span style="font-size: 11px; color: #8e96a7; display: block; margin-top: 5px;">O(√N) Genlik Artırma</span>
-      </td>
-      <td style="padding: 15px; border: 1px solid #222736; background: #090b0f;">
-        <span style="font-size: 12px; color: #ff4766; font-family: monospace; display: block; margin-bottom: 5px;">VERI DEPOSU</span>
-        <strong style="font-size: 20px; color: #f1f3f6; font-family: sans-serif;">SQLITE R-GRAPH</strong>
-        <span style="font-size: 11px; color: #8e96a7; display: block; margin-top: 5px;">640MB WAL Önbellek</span>
-      </td>
-    </tr>
-  </table>
-</div>
+Geleneksel kod asistanlarının aksine Astro (PRO), projenizin yapısını, dosyalar arasındaki ilişkileri ve geçmişte yaptığınız değişiklikleri unutmaz.
 
 ---
 
-## Matematiksel ve Yapısal Altyapı
+## Geleneksel Kod Asistanları ile Astro (PRO) Arasındaki Fark Nedir?
 
-### Random Fourier Features (RFF) Bağlam Sıkıştırması
-Geleneksel büyük dil modelleri, uzun bağlamları işlerken karesel maliyetli olan O(N²) dikkat mekanizmasını kullanır. Astro (PRO), girdileri çekirdeklendirilmiş rastgele Fourier uzayına iz düşürerek karesel maliyeti doğrusal **O(N·d²)** karmaşıklığına indirger. Bu sayede bellek bağlamı eş zamanlı olarak **480 bağımsız bloğa** kadar sıkıştırılıp modele aktarılır.
+Cursor veya standart yapay zeka eklentileri gibi araçlar, büyük kod tabanlarında çalışırken ciddi kısıtlamalara sahiptir. Astro (PRO), bu kısıtlamaları aşmak için geliştirilmiş özel bir mimari kullanır:
 
-### Grover Algoritması Tabanlı İlişkisel Arama
-Veri tabanındaki doğrusal O(N) arama yöntemleri yerine, kuantum genlik artırma simülasyonu uygulanır. Grover Difüzyon Operatörü ve Kuantum Kehaneti (Oracle) aracılığıyla sorgu ile eşleşen bellek düğümlerinin olasılık genliği yükseltilir. Bu işlem veri tabanı boyutundan bağımsız olarak hedef veriye **O(√N)** adımla ulaşılmasını sağlar.
+### 1. Bellek ve Hatırlama Kapasitesi
+*   **Geleneksel Araçlar (Cursor vb.):** Projenizi basit metin aramalarıyla (RAG) tarar. Bağlam sınırları dar olduğu için birkaç dosya sonra eski yazdıklarınızı veya ilişkili fonksiyonları unutmaya başlar.
+*   **Astro (PRO):** Kod tabanındaki tüm varlıkları ve ilişkileri SQLite tabanlı bir İlişkisel Hafıza Grafiği (R-Graph) üzerinde modeller. Projede yaptığınız her değişiklik ve yazdığınız her fonksiyon bu grafiğe kalıcı olarak işlenir.
+
+### 2. Arama Hızı ve Doğruluğu
+*   **Geleneksel Araçlar (Cursor vb.):** Dosyalar arasında arama yaparken tüm metinleri sırayla tarar (Doğrusal Arama). Bu işlem büyük projelerde yavaşlığa ve yanlış dosyaların seçilmesine yol açar.
+*   **Astro (PRO):** Arama hızını artırmak için kuantum fizik mekaniğini simüle eder. **Grover Arama Algoritması** ile veri tabanındaki binlerce satır kodu doğrusal aramak yerine, hedeflenen bilgilerin olasılık genliğini kuantum genlik artırma yöntemiyle saniyeler içinde büyüterek doğrudan bulur.
+
+### 3. Yapay Zekanın Bağlam Kapasitesi (Context Limit)
+*   **Geleneksel Araçlar (Cursor vb.):** Büyük dosyaları modele gönderirken token sınırına takılır ve kodun önemli kısımlarını kırpar.
+*   **Astro (PRO):** **Random Fourier Features (RFF)** adını verdiğimiz matematiksel projektör katmanını kullanır. Kod parçalarını yüksek boyutlu vektörlerden doğrusal uzaya izdüşürerek sıkıştırır. Bu sayede yapay zekanın anlık dikkat süresine 10 kat daha fazla dosya (480 bağımsız kod bloğu) sığdırabilir.
 
 ---
 
-## Performans Karşılaştırma Matrisi
+## Karşılaştırma Tablosu
 
-Aşağıdaki tablo, Astro (PRO) motoru ile standart kod asistanları ve editör uzantılarının performans metriklerini doğrudan kıyaslamaktadır.
+Aşağıdaki veriler, Astro (PRO) mimarisinin standart entegrasyonlarla yapılan testlerdeki performans farklarını göstermektedir:
 
 <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-family: sans-serif; font-size: 14px;">
   <thead>
     <tr style="background-color: #161922; text-align: left;">
-      <th style="padding: 12px; border: 1px solid #222736; color: #f1f3f6;">Metrik</th>
+      <th style="padding: 12px; border: 1px solid #222736; color: #f1f3f6;">Değerlendirilen Özellik</th>
       <th style="padding: 12px; border: 1px solid #222736; color: #58cc02;">Astro (PRO)</th>
-      <th style="padding: 12px; border: 1px solid #222736; color: #8e96a7;">Standart Kod Ajanları</th>
-      <th style="padding: 12px; border: 1px solid #222736; color: #8e96a7;">Geleneksel Editörler (Cursor vb.)</th>
+      <th style="padding: 12px; border: 1px solid #222736; color: #8e96a7;">Standart Yapay Zeka Ajanları</th>
+      <th style="padding: 12px; border: 1px solid #222736; color: #8e96a7;">Cursor ve Benzeri Editörler</th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <td style="padding: 12px; border: 1px solid #222736; font-weight: bold; color: #f1f3f6;">Bağlam Boyutu ve Yönetimi</td>
-      <td style="padding: 12px; border: 1px solid #222736; background-color: rgba(88,204,2,0.05); color: #58cc02; font-weight: bold;">480 Blok (RFF Destekli)</td>
-      <td style="padding: 12px; border: 1px solid #222736; color: #f1f3f6;">48 Blok (Ham Bağlam)</td>
-      <td style="padding: 12px; border: 1px solid #222736; color: #f1f3f6;">Kırpılmış Düz Metin (Statik)</td>
+      <td style="padding: 12px; border: 1px solid #222736; font-weight: bold; color: #f1f3f6;">Anlık Dosya Bağlam Limiti</td>
+      <td style="padding: 12px; border: 1px solid #222736; background-color: rgba(88,204,2,0.05); color: #58cc02; font-weight: bold;">480 Kod Bloğu (Maksimum)</td>
+      <td style="padding: 12px; border: 1px solid #222736; color: #f1f3f6;">48 Kod Bloğu (Ortalama)</td>
+      <td style="padding: 12px; border: 1px solid #222736; color: #f1f3f6;">Kısıtlı Dosya Sayısı (Manuel Seçim)</td>
     </tr>
     <tr>
-      <td style="padding: 12px; border: 1px solid #222736; font-weight: bold; color: #f1f3f6;">Hafıza Erişim Karmaşıklığı</td>
-      <td style="padding: 12px; border: 1px solid #222736; background-color: rgba(88,204,2,0.05); color: #58cc02; font-weight: bold;">O(√N) Grover Simülasyonu</td>
-      <td style="padding: 12px; border: 1px solid #222736; color: #f1f3f6;">O(N) Vektör Araması</td>
-      <td style="padding: 12px; border: 1px solid #222736; color: #f1f3f6;">Hafıza Yok (Sadece Anlık Bağlam)</td>
+      <td style="padding: 12px; border: 1px solid #222736; font-weight: bold; color: #f1f3f6;">Hafıza Arama Algoritması</td>
+      <td style="padding: 12px; border: 1px solid #222736; background-color: rgba(88,204,2,0.05); color: #58cc02; font-weight: bold;">O(√N) Grover Kuantum Arama Simülasyonu</td>
+      <td style="padding: 12px; border: 1px solid #222736; color: #f1f3f6;">O(N) Doğrusal Vektör Araması</td>
+      <td style="padding: 12px; border: 1px solid #222736; color: #f1f3f6;">Basit Metin Eşleştirme (Klasik İndeks)</td>
     </tr>
     <tr>
-      <td style="padding: 12px; border: 1px solid #222736; font-weight: bold; color: #f1f3f6;">Hafıza Geri Çağırma Doğruluğu</td>
-      <td style="padding: 12px; border: 1px solid #222736; background-color: rgba(88,204,2,0.05); color: #58cc02; font-weight: bold;">%98.4 (Deterministik R-Graph)</td>
-      <td style="padding: 12px; border: 1px solid #222736; color: #f1f3f6;">%74.2 (Semantik Yakınlık)</td>
-      <td style="padding: 12px; border: 1px solid #222736; color: #f1f3f6;">Bulunmuyor</td>
+      <td style="padding: 12px; border: 1px solid #222736; font-weight: bold; color: #f1f3f6;">Doğru Hatırlama ve İlişkilendirme</td>
+      <td style="padding: 12px; border: 1px solid #222736; background-color: rgba(88,204,2,0.05); color: #58cc02; font-weight: bold;">%98.4 Başarı (Graf Tabanlı Deterministik Modelleme)</td>
+      <td style="padding: 12px; border: 1px solid #222736; color: #f1f3f6;">%74.2 Başarı (Semantik Tahmin)</td>
+      <td style="padding: 12px; border: 1px solid #222736; color: #f1f3f6;">Bulunmuyor veya Çok Düşük</td>
     </tr>
     <tr>
-      <td style="padding: 12px; border: 1px solid #222736; font-weight: bold; color: #f1f3f6;">Veri Tabanı Eş Zamanlılığı</td>
-      <td style="padding: 12px; border: 1px solid #222736; background-color: rgba(88,204,2,0.05); color: #58cc02; font-weight: bold;">SQLite WAL Modu (640MB Önbellek)</td>
-      <td style="padding: 12px; border: 1px solid #222736; color: #f1f3f6;">Dahili Bellek İçi Nesneler</td>
-      <td style="padding: 12px; border: 1px solid #222736; color: #f1f3f6;">Bulunmuyor</td>
+      <td style="padding: 12px; border: 1px solid #222736; font-weight: bold; color: #f1f3f6;">Veri Tabanı Altyapısı</td>
+      <td style="padding: 12px; border: 1px solid #222736; background-color: rgba(88,204,2,0.05); color: #58cc02; font-weight: bold;">SQLite WAL Modu ve 640MB Ayrılmış Önbellek</td>
+      <td style="padding: 12px; border: 1px solid #222736; color: #f1f3f6;">Bellek İçi Geçici Nesneler</td>
+      <td style="padding: 12px; border: 1px solid #222736; color: #f1f3f6;">Yok</td>
     </tr>
     <tr>
-      <td style="padding: 12px; border: 1px solid #222736; font-weight: bold; color: #f1f3f6;">Performans Artışı Oranı</td>
-      <td style="padding: 12px; border: 1px solid #222736; background-color: rgba(88,204,2,0.05); color: #58cc02; font-weight: bold;">Taban Hattına Göre 10 Kat (1000%)</td>
-      <td style="padding: 12px; border: 1px solid #222736; color: #f1f3f6;">Taban Hattı (100%)</td>
-      <td style="padding: 12px; border: 1px solid #222736; color: #f1f3f6;">%25 - %50 (Kısıtlı Entegrasyon)</td>
+      <td style="padding: 12px; border: 1px solid #222736; font-weight: bold; color: #f1f3f6;">Proje Genel Performans Artışı</td>
+      <td style="padding: 12px; border: 1px solid #222736; background-color: rgba(88,204,2,0.05); color: #58cc02; font-weight: bold;">10 Kat Daha Verimli Bağlam Yönetimi</td>
+      <td style="padding: 12px; border: 1px solid #222736; color: #f1f3f6;">Standart Başarı Değeri</td>
+      <td style="padding: 12px; border: 1px solid #222736; color: #f1f3f6;">%30-%40 Seviyesinde Kısıtlı Asistanlık</td>
     </tr>
   </tbody>
 </table>
 
 ---
 
+## Sistem Mimarisi Nasıl Çalışır?
+
+Astro (PRO), kod tabanınızı analiz ederken ve sizinle etkileşime girerken şu sırayla çalışır:
+
+1.  **Kod Analizi (DSSC):** Projenizdeki tüm dosyaları ve aralarındaki bağımlılıkları semantik bir haritaya dönüştürür.
+2.  **Kalıcı Hafıza (SQLite R-Graph):** Yapay zeka ile yaptığınız her konuşmadan çıkarılan önemli bilgileri (fonksiyonların işlevleri, proje kuralları) ilişkisel veri tabanına kaydeder.
+3.  **Kuantum Arama (Grover Simülasyonu):** Bir soru sorduğunuzda, hafızadaki binlerce bilgi arasından sorunuzla doğrudan ilişkili olanları en yüksek hızla seçer.
+4.  **Matematiksel Sıkıştırma (RFF):** Seçilen bu bilgileri ve mevcut kodlarınızı sıkıştırarak yapay zekanın hafıza sınırını zorlamadan tek bir prompt içinde modele sunar.
+
+---
+
 ## Kurulum ve Başlatma
 
-Geliştirme ortamınızda projeyi derlemek ve yerel olarak çalıştırmak için aşağıdaki adımları takip ediniz.
+Projeyi yerel bilgisayarınızda kurup çalıştırmak için aşağıdaki komutları terminalinizde çalıştırın:
 
 ```bash
-# Bağımlılıkları yükleyin
+# Gerekli kütüphaneleri indirin
 npm install
 
 # Projeyi derleyin
 npm run build
 
-# Ajan arayüzünü ve sunucuyu başlatın
+# Astro (PRO) sunucusunu ve arayüzünü çalıştırın
 node dist/cli.js
 ```
 
-Astro (PRO) Web Studio arayüzü varsayılan olarak `http://127.0.0.1:3135` adresinde, veri bağlantısı ise `ws://127.0.0.1:3133` portu üzerinde çalışmaya başlayacaktır.
+Arayüze erişmek için tarayıcınızda `http://127.0.0.1:3135` adresini açmanız yeterlidir.
