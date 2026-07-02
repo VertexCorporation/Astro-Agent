@@ -16,15 +16,15 @@
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, dirname, join, resolve } from "node:path";
-import type { AssistantMessage, ImageContent, Message, Model, TextContent } from "moon-core";
+import type { AssistantMessage, ImageContent, Message, Model, TextContent } from "astro-core";
 import {
 	clampThinkingLevel,
 	getSupportedThinkingLevels,
 	isContextOverflow,
 	modelsAreEqual,
 	resetApiProviders,
-} from "moon-core";
-import type { Engine, EngineEvent, EngineMessage, EngineState, EngineTool, ThinkingLevel } from "moon-engine";
+} from "astro-core";
+import type { Engine, EngineEvent, EngineMessage, EngineState, EngineTool, ThinkingLevel } from "astro-engine";
 import { theme } from "../modes/interactive/theme/theme.js";
 import { stripFrontmatter } from "../utils/frontmatter.js";
 import { sleep } from "../utils/sleep.js";
@@ -224,7 +224,7 @@ export interface EngineSessionConfig {
 	/** Session start event metadata emitted when extensions bind to this runtime. */
 	sessionStartEvent?: SessionStartEvent;
 	/** Optional MCP manager for this session. */
-	mcpManager?: import("moon-engine").McpManager;
+	mcpManager?: import("astro-engine").McpManager;
 	/** Disable memory signals and developer profile injection/persistence. */
 	noMemory?: boolean;
 }
@@ -377,7 +377,7 @@ export class EngineSession {
 	private _extensionErrorListener?: ExtensionErrorListener;
 	private _extensionErrorUnsubscriber?: () => void;
 
-	private _mcpManager?: import("moon-engine").McpManager;
+	private _mcpManager?: import("astro-engine").McpManager;
 	public get mcpManager() {
 		return this._mcpManager;
 	}
@@ -746,7 +746,12 @@ export class EngineSession {
 
 				this.sessionManager.appendCustomMessageEntry(
 					"system_announcement",
-					[{ type: "text", text: `✦ MoonCode dynamic router restored original model: **${targetModel.name}**.` }],
+					[
+						{
+							type: "text",
+							text: `✦ Astro-Agent dynamic router restored original model: **${targetModel.name}**.`,
+						},
+					],
 					true,
 				);
 			}
@@ -953,7 +958,7 @@ export class EngineSession {
 	 */
 	dispose(): void {
 		this._extensionRunner.invalidate(
-			"This extension ctx is stale after session replacement or reload. Do not use a captured MoonCode or command ctx after ctx.newSession(), ctx.fork(), ctx.switchSession(), or ctx.reload(). For newSession, fork, and switchSession, move post-replacement work into withSession and use the ctx passed to withSession. For reload, do not use the old ctx after await ctx.reload().",
+			"This extension ctx is stale after session replacement or reload. Do not use a captured Astro-Agent or command ctx after ctx.newSession(), ctx.fork(), ctx.switchSession(), or ctx.reload(). For newSession, fork, and switchSession, move post-replacement work into withSession and use the ctx passed to withSession. For reload, do not use the old ctx after await ctx.reload().",
 		);
 		this._disconnectFromEngine();
 		this._mcpManager?.dispose();
@@ -1093,7 +1098,7 @@ export class EngineSession {
 			return [];
 		}
 
-		const { McpManager } = await import("moon-engine");
+		const { McpManager } = await import("astro-engine");
 		this._mcpManager = new McpManager(mcpServerConfigs);
 		await this._mcpManager.initialize();
 
@@ -1277,8 +1282,8 @@ export class EngineSession {
 		}
 
 		// Default to the compact prompt for speed and token efficiency.
-		// Set MOON_FULL_PROMPT=true only when debugging the long prompt itself.
-		const compactPrompt = process.env.MOON_FULL_PROMPT !== "true";
+		// Set ASTRO_FULL_PROMPT=true only when debugging the long prompt itself.
+		const compactPrompt = process.env.ASTRO_FULL_PROMPT !== "true";
 
 		// Design mode: auto-detect based on project context
 		// Checks for design-systems/ dir or DESIGN.md in project
@@ -1512,7 +1517,7 @@ export class EngineSession {
 
 	/**
 	 * Send a prompt to the engine.
-	 * - Handles extension commands (registered via MoonCode.registerCommand) immediately, even during streaming
+	 * - Handles extension commands (registered via Astro-Agent.registerCommand) immediately, even during streaming
 	 * - Expands file-based prompt templates by default
 	 * - During streaming, queues via steer() or followUp() based on streamingBehavior option
 	 * - Validates model and API key before sending (when not streaming)
@@ -1561,7 +1566,7 @@ export class EngineSession {
 							content: [
 								{
 									type: "text",
-									text: `MoonCode switched to ${smartModel.name} for this task.`,
+									text: `Astro-Agent switched to ${smartModel.name} for this task.`,
 								},
 							],
 							display: true,
@@ -1585,7 +1590,7 @@ export class EngineSession {
 
 		try {
 			// Handle extension commands first (execute immediately, even during streaming)
-			// Extension commands manage their own Provider interaction via MoonCode.sendMessage()
+			// Extension commands manage their own Provider interaction via Astro-Agent.sendMessage()
 			if (expandPromptTemplates && text.startsWith("/")) {
 				const handled = await this._tryExecuteExtensionCommand(text);
 				if (handled) {
@@ -1712,7 +1717,6 @@ export class EngineSession {
 					} else {
 						// Interpolate: low curiosity → 0.1, high curiosity → 0.6
 						dynamicTemp = 0.1 + creativityLevel * 0.5;
-						console.log(`[Astro Neural Resonance] 🎯 Dengeli mod. Temperature → ${dynamicTemp.toFixed(2)}`);
 					}
 					this.engine.state.temperature = dynamicTemp;
 				}

@@ -19,7 +19,6 @@ class KeyLogger implements Component {
 		// Handle Ctrl+C (raw or Kitty protocol) for exit
 		if (matchesKey(data, "ctrl+c")) {
 			this.tui.stop();
-			console.log("\nExiting...");
 			process.exit(0);
 		}
 
@@ -97,7 +96,6 @@ tui.setFocus(logger);
 // Handle Ctrl+C for clean exit (SIGINT still works for raw mode)
 process.on("SIGINT", () => {
 	tui.stop();
-	console.log("\nExiting...");
 	process.exit(0);
 });
 

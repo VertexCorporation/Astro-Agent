@@ -1,8 +1,8 @@
-# MoonAgent UI Design Skill
+# AstroAgent UI Design Skill
 
-Bu dosya MoonAgent için UI/TUI üreten ajanlar tarafından okunmalıdır. Amaç: generic AI arayüzü değil, kimliği olan profesyonel tasarım.
+Bu dosya AstroAgent için UI/TUI üreten ajanlar tarafından okunmalıdır. Amaç: generic AI arayüzü değil, kimliği olan profesyonel tasarım.
 
-## MoonAgent terminal paleti
+## AstroAgent terminal paleti
 
 - Background: `#1b1517`
 - Surface: `#241a1d`

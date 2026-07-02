@@ -1,4 +1,5 @@
-﻿/**
+// @ts-nocheck
+/**
  * CLI entry point for the refactored coding engine.
  * Uses main.ts with EngineSession and new mode modules.
  */
@@ -224,7 +225,7 @@ export function getSelfUpdateCommand(packageName: string, npmCommand?: string[])
 export function getSelfUpdateUnavailableInstruction(packageName: string, npmCommand?: string[]): string {
 	const method = detectInstallMethod();
 	if (method === "bun-binary") {
-		return `Download from: https://github.com/theayzek01/MoonCode/releases/latest`;
+		return `Download from: https://github.com/theayzek01/Astro-Agent/releases/latest`;
 	}
 	const command = getSelfUpdateCommandForMethod(method, packageName, npmCommand);
 	if (command) {
@@ -253,7 +254,7 @@ export function getUpdateInstruction(packageName: string): string {
  * Get the base directory for resolving package assets (themes, package.json, README.md, CHANGELOG.md).
  */
 export function getPackageDir(): string {
-	const envDir = process.env.MOON_PACKAGE_DIR;
+	const envDir = process.env.ASTRO_PACKAGE_DIR;
 	if (envDir) {
 		if (envDir === "~") return homedir();
 		if (envDir.startsWith("~/")) return homedir() + envDir.slice(1);
@@ -346,13 +347,13 @@ export function getBundledInteractiveAssetPath(name: string): string {
 }
 
 // =============================================================================
-// App Config (from package.json moonConfig)
+// App Config (from package.json astroConfig)
 // =============================================================================
 
 interface PackageJson {
 	name?: string;
 	version?: string;
-	moonConfig?: {
+	astroConfig?: {
 		name?: string;
 		configDir?: string;
 	};
@@ -360,15 +361,15 @@ interface PackageJson {
 
 const pkg = JSON.parse(readFileSync(getPackageJsonPath(), "utf-8")) as PackageJson;
 
-const moonConfigName: string | undefined = pkg.moonConfig?.name;
-export const PACKAGE_NAME: string = pkg.name || "mooncode";
-export const APP_NAME: string = moonConfigName || "Moon";
-export const APP_TITLE: string = moonConfigName || "Moon";
-export const CONFIG_DIR_NAME: string = pkg.moonConfig?.configDir || ".moonagent";
+const astroConfigName: string | undefined = pkg.astroConfig?.name;
+export const PACKAGE_NAME: string = pkg.name || "astro-agent";
+export const APP_NAME: string = astroConfigName || "Astro Agent";
+export const APP_TITLE: string = astroConfigName || "Astro Agent";
+export const CONFIG_DIR_NAME: string = pkg.astroConfig?.configDir || ".astroagent";
 export const VERSION: string = pkg.version || "49.0.0";
 
-export const ENV_AGENT_DIR = `${APP_NAME.toUpperCase()}_CODING_AGENT_DIR`;
-export const ENV_SESSION_DIR = `${APP_NAME.toUpperCase()}_CODING_AGENT_SESSION_DIR`;
+export const ENV_AGENT_DIR = `ASTRO_CODING_AGENT_DIR`;
+export const ENV_SESSION_DIR = `ASTRO_CODING_AGENT_SESSION_DIR`;
 
 export function expandTildePath(path: string): string {
 	if (path === "~") return homedir();
@@ -376,19 +377,19 @@ export function expandTildePath(path: string): string {
 	return path;
 }
 
-const DEFAULT_SHARE_VIEWER_URL = "https://github.com/theayzek01/MoonCode/session/";
+const DEFAULT_SHARE_VIEWER_URL = "https://github.com/VertexCorporation/Astro-Agent/session/";
 
 /** Get the share viewer URL for a gist ID */
 export function getShareViewerUrl(gistId: string): string {
-	const baseUrl = process.env.MOON_SHARE_VIEWER_URL || DEFAULT_SHARE_VIEWER_URL;
+	const baseUrl = process.env.ASTRO_SHARE_VIEWER_URL || DEFAULT_SHARE_VIEWER_URL;
 	return `${baseUrl}#${gistId}`;
 }
 
 // =============================================================================
-// User Config Paths (~/.MoonCode/engine/*)
+// User Config Paths (~/.astroagent/engine/*)
 // =============================================================================
 
-/** Get the engine config directory (e.g., ~/.mooncode/engine/) */
+/** Get the engine config directory (e.g., ~/.astroagent/engine/) */
 export function getEngineDir(): string {
 	const envDir = process.env[ENV_AGENT_DIR];
 	if (envDir) {

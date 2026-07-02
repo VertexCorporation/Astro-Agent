@@ -38,9 +38,7 @@ async function login(providerId: OAuthProviderId): Promise<void> {
 	try {
 		const credentials = await provider.login({
 			onAuth: (info) => {
-				console.log(`\nOpen this URL in your browser:\n${info.url}`);
 				if (info.instructions) console.log(info.instructions);
-				console.log();
 			},
 			onPrompt: async (p) => {
 				return await promptFn(`${p.message}${p.placeholder ? ` (${p.placeholder})` : ""}:`);
@@ -51,8 +49,6 @@ async function login(providerId: OAuthProviderId): Promise<void> {
 		const auth = loadAuth();
 		auth[providerId] = { type: "oauth", ...credentials };
 		saveAuth(auth);
-
-		console.log(`\nCredentials saved to ${AUTH_FILE}`);
 	} finally {
 		rl.close();
 	}
@@ -64,7 +60,7 @@ async function main(): Promise<void> {
 
 	if (!command || command === "help" || command === "--help" || command === "-h") {
 		const providerList = PROVIDERS.map((p) => `  ${p.id.padEnd(20)} ${p.name}`).join("\n");
-		console.log(`Usage: npx moon-core <command> [provider]
+		console.log(`Usage: npx astro-core <command> [provider]
 
 Commands:
   login [provider]  Login to an OAuth provider
@@ -74,17 +70,15 @@ Providers:
 ${providerList}
 
 Examples:
-  npx moon-core login              # interactive provider selection
-  npx moon-core login anthropic    # login to specific provider
-  npx moon-core list               # list providers
+  npx astro-core login              # interactive provider selection
+  npx astro-core login anthropic    # login to specific provider
+  npx astro-core list               # list providers
 `);
 		return;
 	}
 
 	if (command === "list") {
-		console.log("Available OAuth providers:\n");
-		for (const p of PROVIDERS) {
-			console.log(`  ${p.id.padEnd(20)} ${p.name}`);
+		for (const _p of PROVIDERS) {
 		}
 		return;
 	}
@@ -94,11 +88,7 @@ Examples:
 
 		if (!provider) {
 			const rl = createInterface({ input: process.stdin, output: process.stdout });
-			console.log("Select a provider:\n");
-			for (let i = 0; i < PROVIDERS.length; i++) {
-				console.log(`  ${i + 1}. ${PROVIDERS[i].name}`);
-			}
-			console.log();
+			for (let i = 0; i < PROVIDERS.length; i++) {}
 
 			const choice = await prompt(rl, `Enter number (1-${PROVIDERS.length}): `);
 			rl.close();
@@ -113,17 +103,16 @@ Examples:
 
 		if (!PROVIDERS.some((p) => p.id === provider)) {
 			console.error(`Unknown provider: ${provider}`);
-			console.error(`Use 'npx moon-core list' to see available providers`);
+			console.error(`Use 'npx astro-core list' to see available providers`);
 			process.exit(1);
 		}
 
-		console.log(`Logging in to ${provider}...`);
 		await login(provider);
 		return;
 	}
 
 	console.error(`Unknown command: ${command}`);
-	console.error(`Use 'npx moon-core --help' for usage`);
+	console.error(`Use 'npx astro-core --help' for usage`);
 	process.exit(1);
 }
 

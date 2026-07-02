@@ -1,4 +1,5 @@
-﻿import { exec } from "node:child_process";
+// @ts-nocheck
+import { exec } from "node:child_process";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import os from "node:os";
 import { promisify } from "node:util";
@@ -197,7 +198,7 @@ export class StudioMode {
 
 	private getScratchMcpConfig() {
 		const candidateRoots = [
-			process.env.MOON_SCRATCH_MCP_ROOT,
+			process.env.ASTRO_SCRATCH_MCP_ROOT,
 			path.join(process.cwd(), "scmcp"),
 			path.join(os.homedir(), "scmcp"),
 			path.join(getPackageDir(), "..", "..", "scmcp"),
@@ -257,7 +258,7 @@ export class StudioMode {
 					const config = this.getScratchMcpConfig();
 					if (!config) {
 						throw new Error(
-							"Scratch MCP not configured. Set MOON_SCRATCH_MCP_ROOT or place a scmcp folder next to the repo.",
+							"Scratch MCP not configured. Set ASTRO_SCRATCH_MCP_ROOT or place a scmcp folder next to the repo.",
 						);
 					}
 					config.autoStart = true;
@@ -453,7 +454,7 @@ export class StudioMode {
 
 		try {
 			const serverModule = await import("../../core/web-ui-server.js");
-			const { getProviders } = await import("moon-core");
+			const { getProviders } = await import("astro-core");
 			serverModule.setAuthPanelStateProvider(() => {
 				const authStorage = this.runtime.session.modelRegistry.authStorage;
 				const providerMap = new Map();
@@ -548,6 +549,9 @@ export class StudioMode {
 		} catch (e) {
 			console.error("Failed to start Web UI Auth Server:", e);
 		}
+
+		// Keep the process alive indefinitely so it doesn't exit after setup
+		await new Promise(() => {});
 	}
 
 	private _subagentState = new Map<
@@ -1402,8 +1406,8 @@ export class StudioMode {
 		if (method === "GET" && url.pathname === "/api/models") {
 			res.setHeader("Content-Type", "application/json");
 			try {
-				// Refresh local models (LM Studio, Ollama) in case they started after MoonCode
-				const { refreshLocalModels } = await import("moon-core");
+				// Refresh local models (LM Studio, Ollama) in case they started after Astro-Agent
+				const { refreshLocalModels } = await import("astro-core");
 				await refreshLocalModels();
 
 				const registry = this.runtime.session.modelRegistry;
@@ -1811,7 +1815,7 @@ export class StudioMode {
 				const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
 				const headers: Record<string, string> = {
 					"Content-Type": "application/json",
-					"User-Agent": "MoonCode",
+					"User-Agent": "Astro-Agent",
 				};
 				if (token) {
 					headers.Authorization = `token ${token}`;
@@ -1821,7 +1825,7 @@ export class StudioMode {
 					method: "POST",
 					headers,
 					body: JSON.stringify({
-						description: "MoonCode Session Export",
+						description: "Astro-Agent Session Export",
 						public: false,
 						files: {
 							"session.html": {
@@ -1863,7 +1867,7 @@ export class StudioMode {
 				}
 
 				const children = childrenPaths
-					.filter((f) => !["node_modules", ".git", "dist", ".mooncode"].includes(f))
+					.filter((f) => !["node_modules", ".git", "dist", ".astroagent"].includes(f))
 					.map((f) => {
 						const childPath = path.join(dir, f);
 						try {

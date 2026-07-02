@@ -89,6 +89,7 @@ export interface RffOptions {
 
 export interface RffResult {
 	compressed: string[];
+	indices: number[];
 	scores: number[];
 	durationMs: number;
 }
@@ -98,7 +99,7 @@ export function rffCompress(query: string, segments: string[], options: RffOptio
 	const topK = options.topK ?? TOP_K;
 
 	if (!segments || segments.length === 0) {
-		return { compressed: [], scores: [], durationMs: 0 };
+		return { compressed: [], indices: [], scores: [], durationMs: 0 };
 	}
 
 	const limited = segments.slice(-MAX_CHUNKS);
@@ -121,6 +122,7 @@ export function rffCompress(query: string, segments: string[], options: RffOptio
 
 	return {
 		compressed: topK_.map((r) => r.seg),
+		indices: topK_.map((r) => r.idx),
 		scores: topK_.map((r) => r.sim),
 		durationMs,
 	};
@@ -167,22 +169,10 @@ export function compressMessages<T extends Message>(messages: T[], query: string
 		return `[${m.role.toUpperCase()}]: <content>`;
 	});
 
-	const { compressed, scores, durationMs } = rffCompress(query, segments, { debug: false });
+	const { indices, scores, durationMs } = rffCompress(query, segments, { debug: false });
 
-	// Deserialize compressed segments back
-	const compressedMsgs: T[] = compressed.map((seg, _idx) => {
-		const roleMatch = seg.match(/^\[(USER|ASSISTANT|SYSTEM|TOOLRESULT)\]:\s*/i);
-		const role = roleMatch
-			? roleMatch[1].toLowerCase() === "toolresult"
-				? "toolResult"
-				: roleMatch[1].toLowerCase()
-			: "user";
-		const content = seg.replace(/^\[(USER|ASSISTANT|SYSTEM|TOOLRESULT)\]:\s*/i, "");
-
-		// We recreate it as a simple text message.
-		// If it was a tool call originally, this simplifies it to plain text.
-		return { role, content } as unknown as T;
-	});
+	const offset = Math.max(0, prior.length - MAX_CHUNKS);
+	const compressedMsgs: T[] = indices.map((idx) => prior[offset + idx]);
 
 	const result = [...system, ...compressedMsgs, lastUser];
 

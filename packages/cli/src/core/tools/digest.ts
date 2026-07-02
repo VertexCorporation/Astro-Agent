@@ -8,7 +8,7 @@
  */
 import { readFileSync, statSync } from "node:fs";
 import { basename, extname } from "node:path";
-import type { EngineTool } from "moon-engine";
+import type { EngineTool } from "astro-engine";
 import { type Static, Type } from "typebox";
 import type { ToolDefinition } from "../extensions/types.js";
 import { resolveToCwd } from "./path-utils.js";

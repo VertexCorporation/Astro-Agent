@@ -8,7 +8,7 @@
  */
 import * as fs from "node:fs";
 import * as path from "node:path";
-import type { EngineTool } from "moon-engine";
+import type { EngineTool } from "astro-engine";
 import { type Static, Type } from "typebox";
 import type { ToolDefinition } from "../extensions/types.js";
 import { getTextOutput } from "./render-utils.js";
@@ -22,7 +22,7 @@ export interface TodoItem {
 }
 
 // ── Persistent store ──
-const MEMORY_FILE = path.join(process.cwd(), ".mooncode-memory.json");
+const MEMORY_FILE = path.join(process.cwd(), ".astroagent-memory.json");
 const todoStore: Map<number, TodoItem> = new Map();
 let nextId = 1;
 

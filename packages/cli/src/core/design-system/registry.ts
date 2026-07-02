@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Design system registry.
  *

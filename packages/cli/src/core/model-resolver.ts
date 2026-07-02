@@ -3,10 +3,10 @@
  * Model resolution, scoping, and initial selection
  */
 
+import { type Api, type KnownProvider, type Model, modelsAreEqual } from "astro-core";
+import type { ThinkingLevel } from "astro-engine";
 import chalk from "chalk";
 import { minimatch } from "minimatch";
-import { type Api, type KnownProvider, type Model, modelsAreEqual } from "moon-core";
-import type { ThinkingLevel } from "moon-engine";
 import { isValidThinkingLevel } from "../cli/args.js";
 import { DEFAULT_THINKING_LEVEL } from "./defaults.js";
 import type { ModelRegistry } from "./model-registry.js";
@@ -629,7 +629,6 @@ export async function restoreModelFromSession(
 
 	if (restoredModel && hasConfiguredAuth) {
 		if (shouldPrintMessages) {
-			console.log(chalk.dim(`Restored model: ${savedProvider}/${savedModelId}`));
 		}
 		return { model: restoredModel, fallbackMessage: undefined };
 	}
@@ -644,7 +643,6 @@ export async function restoreModelFromSession(
 	// If we already have a model, use it as fallback
 	if (currentModel) {
 		if (shouldPrintMessages) {
-			console.log(chalk.dim(`Falling back to: ${currentModel.provider}/${currentModel.id}`));
 		}
 		return {
 			model: currentModel,
@@ -656,7 +654,6 @@ export async function restoreModelFromSession(
 	const fallbackModel = selectBestAvailableModel(await modelRegistry.getAvailable());
 	if (fallbackModel) {
 		if (shouldPrintMessages) {
-			console.log(chalk.dim(`Falling back to: ${fallbackModel.provider}/${fallbackModel.id}`));
 		}
 
 		return {

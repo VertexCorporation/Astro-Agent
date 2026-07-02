@@ -1,108 +1,77 @@
-<div align="center">
-  <img src="assets/banner.png" alt="Astro PRO Banner" width="100%" />
-</div>
+# Astro Agent
 
-# Astro (PRO)
-
-Astro (PRO), yazılım projelerinizin geçmişini, dosyalarını ve kod bağımlılıklarını tek bir an bile unutmayan, son derece güçlü bir hafıza motoruyla donatılmış yeni nesil akıllı kod geliştirme asistanıdır.
-
----
-
-## Astro (PRO) Neden Benzersiz?
-
-Sıradan kod asistanları birkaç dosya sonra önceki yazdıklarınızı unutmaya başlar. Astro (PRO), projenizdeki her satırı ve dosyalar arasındaki bağlantıyı özel bir mimariyle sürekli aklında tutar.
-
-<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0;">
-  <div style="padding: 16px; border-radius: 8px; border: 1px solid #222736; background: #0c0f16;">
-    <h3 style="color: #3b82f6; margin-top: 0;">Sınırsız Hafıza Grafiği (SQLite R-Graph)</h3>
-    <p style="color: #8e96a7; font-size: 13px; line-height: 1.5;">Projenizde yazdığınız her fonksiyon ve oluşturduğunuz her dosya ilişkisel bir harita gibi hafıza tabanına kaydedilir. Konuşma ilerlese bile eski kararlar asla kaybolmaz.</p>
-  </div>
-  <div style="padding: 16px; border-radius: 8px; border: 1px solid #222736; background: #0c0f16;">
-    <h3 style="color: #58cc02; margin-top: 0;">10 Kat Daha Büyük Hafıza Alanı (RFF)</h3>
-    <p style="color: #8e96a7; font-size: 13px; line-height: 1.5;">Akıllı matematiksel sıkıştırma modülümüz sayesinde, normal bir yapay zekanın hafıza sınırına sığabilecek kod miktarını 10 katına çıkarıyoruz. Tam 480 kod bloğu tek bir anda işlenebilir.</p>
-  </div>
-</div>
-
-<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0;">
-  <div style="padding: 16px; border-radius: 8px; border: 1px solid #222736; background: #0c0f16; grid-column: span 2;">
-    <h3 style="color: #ff4766; margin-top: 0;">Milisaniyeler İçinde Doğru Bilgi (Kuantum Grover Metodu)</h3>
-    <p style="color: #8e96a7; font-size: 13px; line-height: 1.5;">Veri tabanındaki binlerce satır kodu tek tek arayıp sizi bekletmek yerine, kuantum fizik simülasyonunu kullanarak aradığınız doğru dosyayı veya kodu milisaniyeler içinde bulup yapay zekanın önüne koyar.</p>
-  </div>
-</div>
-
----
-
-## Güç ve Performans Karşılaştırması
-
-Astro (PRO) ile geleneksel araçların (Cursor vb.) gerçek kod tabanı testlerindeki performans farkları şu şekildedir:
-
-<table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-family: sans-serif; font-size: 14px;">
-  <thead>
-    <tr style="background-color: #161922; text-align: left;">
-      <th style="padding: 12px; border: 1px solid #222736; color: #f1f3f6;">Özellik</th>
-      <th style="padding: 12px; border: 1px solid #222736; color: #58cc02; background-color: rgba(88,204,2,0.05);">Astro (PRO)</th>
-      <th style="padding: 12px; border: 1px solid #222736; color: #8e96a7;">Standart Kod Ajanları</th>
-      <th style="padding: 12px; border: 1px solid #222736; color: #8e96a7;">Cursor ve Diğer Editörler</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td style="padding: 12px; border: 1px solid #222736; font-weight: bold; color: #f1f3f6;">Anlık Kod Okuma Kapasitesi</td>
-      <td style="padding: 12px; border: 1px solid #222736; background-color: rgba(88,204,2,0.05); color: #58cc02; font-weight: bold;">480 Kod Bloğu (10 Kat Artış)</td>
-      <td style="padding: 12px; border: 1px solid #222736; color: #f1f3f6;">48 Kod Bloğu</td>
-      <td style="padding: 12px; border: 1px solid #222736; color: #f1f3f6;">Kısıtlı / Manuel Dosya Ekleme</td>
-    </tr>
-    <tr>
-      <td style="padding: 12px; border: 1px solid #222736; font-weight: bold; color: #f1f3f6;">Bilgi Arama Hızı ve Algoritması</td>
-      <td style="padding: 12px; border: 1px solid #222736; background-color: rgba(88,204,2,0.05); color: #58cc02; font-weight: bold;">Kuantum Hızında O(√N) Simülasyonu</td>
-      <td style="padding: 12px; border: 1px solid #222736; color: #f1f3f6;">Sıralı Arama O(N)</td>
-      <td style="padding: 12px; border: 1px solid #222736; color: #f1f3f6;">Klasik Kelime Eşleştirme</td>
-    </tr>
-    <tr>
-      <td style="padding: 12px; border: 1px solid #222736; font-weight: bold; color: #f1f3f6;">Doğru Hatırlama Oranı</td>
-      <td style="padding: 12px; border: 1px solid #222736; background-color: rgba(88,204,2,0.05); color: #58cc02; font-weight: bold;">%98.4 Doğruluk (İlişkisel Grafik)</td>
-      <td style="padding: 12px; border: 1px solid #222736; color: #f1f3f6;">%74.2 Doğruluk (Tahmini Arama)</td>
-      <td style="padding: 12px; border: 1px solid #222736; color: #f1f3f6;">Hafıza Yok (İlk Dosyada Unutma)</td>
-    </tr>
-    <tr>
-      <td style="padding: 12px; border: 1px solid #222736; font-weight: bold; color: #f1f3f6;">Veri Depolama ve Hız önbelleği</td>
-      <td style="padding: 12px; border: 1px solid #222736; background-color: rgba(88,204,2,0.05); color: #58cc02; font-weight: bold;">SQLite WAL Modu + 640MB Önbellek</td>
-      <td style="padding: 12px; border: 1px solid #222736; color: #f1f3f6;">Geçici Hafıza Kartları</td>
-      <td style="padding: 12px; border: 1px solid #222736; color: #f1f3f6;">Yok</td>
-    </tr>
-  </tbody>
-</table>
-
-<div align="center">
-  <img src="assets/banner.png" alt="Astro PRO Karşılaştırma Görseli" width="100%" />
-</div>
-
----
-
-## Nasıl Çalışır?
-
-Astro (PRO), siz projenizde kod yazarken arka planda otonom olarak çalışır:
-
-1.  **Kod Haritalama:** Projenizin tüm kod yapısını ve fonksiyon haritasını çıkarır.
-2.  **Bellek Hafızası:** Yazdığınız kodları ve aldığınız kararları ilişkisel bir veri yapısına kaydeder.
-3.  **Kuantum Arama:** Sorduğunuz soruya en uygun referans kodları anında bulur.
-4.  **Bağlam Sıkıştırma:** Kodları yapay zekanın bellek sınırını zorlamadan kompakt bir şekilde bir araya getirerek cevap üretir.
-
----
-
-## Hızlı Başlangıç
-
-Astro (PRO)'yu bilgisayarınızda hemen çalıştırmak için terminalinizde şu komutları uygulayın:
+Enterprise AI coding agent for terminal and web.
 
 ```bash
-# Kütüphaneleri kurun
-npm install
-
-# Derleyin
-npm run build
-
-# Başlatın
-node dist/cli.js
+npm install -g astro-agent-cli
+astro
 ```
 
-Derleme bittikten sonra tarayıcınızda `http://127.0.0.1:3135` adresinden Web Studio paneline erişebilirsiniz.
+Opens Web Studio at `http://127.0.0.1:3135`
+
+## Features
+
+- **Autonomous coding**: Reads, searches, edits, runs code — end-to-end task execution
+- **Web Studio UI** (port 3135): Chat interface with session management, MCP server integration, todo tracking
+- **Multi-model**: Claude, OpenAI, Gemini, Ollama, OpenRouter — switch mid-session
+- **MCP support**: Connect any MCP server for extended tool capabilities
+- **Browser automation**: Chrome extension + WebSocket bridge for browser control
+- **Session management**: Branching, compaction, searchable history
+- **Affective engine**: Adaptive temperature based on task complexity
+- **Compression engine**: 10x context efficiency via RFF (Recursive Fractal Formatting)
+- **Agent workspace**: Parallel sub-agents for explore → build → verify pipelines
+- **Memory system**: Cross-session learning from errors and patterns
+
+## Quick Start
+
+```bash
+# Install
+npm install -g astro-agent-cli
+
+# Set API key (copy .env.example → .env)
+copy .env.example .env
+
+# Start
+astro
+```
+
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `astro` | Start interactive/web mode |
+| `astro --print "prompt"` | One-shot request (non-interactive) |
+| `astro --model claude-sonnet-4-6` | Start with specific model |
+| `astro --headless` | Start without TUI (API server only) |
+
+## Architecture
+
+```
+astro-agent/
+├── packages/cli/         # Main CLI
+│   ├── src/core/         # Engine, tools, sessions, MCP
+│   ├── src/modes/        # Web UI (studio), terminal (interactive)
+│   └── src/cli/          # CLI args, help
+├── packages/core/        # Model providers, messages
+├── packages/engine/      # Engine loop, tool execution
+└── packages/tui/         # Terminal UI components
+```
+
+**Ports:**
+- `3131` — Auth/MCP/Brain API
+- `3133` — Browser Bridge WebSocket
+- `3135` — Web Studio UI
+
+## Configuration
+
+Settings stored at `~/.astroagent/engine/settings.json`
+
+Key environment variables:
+- `ASTRO_API_KEY` — Default API key
+- `ASTRO_MODEL` — Default model ID
+- `ASTRO_FULL_PROMPT=true` — Use full (non-compact) system prompt
+
+## Links
+
+- [GitHub](https://github.com/VertexCorporation/Astro-Agent)
+- [Issues](https://github.com/VertexCorporation/Astro-Agent/issues)

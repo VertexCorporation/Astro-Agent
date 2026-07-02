@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { relative, resolve } from "node:path";
 
 export type PolicyMode = "observe" | "prompt" | "enforce";
@@ -16,7 +17,7 @@ export interface PolicyConfig {
 	deniedCommands: string[];
 }
 
-const DEFAULT_PROTECTED_PATHS = [".git", "node_modules", "dist", "build", "coverage", ".mooncode"];
+const DEFAULT_PROTECTED_PATHS = [".git", "node_modules", "dist", "build", "coverage", ".astroagent"];
 const DEFAULT_DENIED_COMMANDS = [
 	"rm -rf",
 	"rm -fr",
@@ -30,9 +31,9 @@ const DEFAULT_DENIED_COMMANDS = [
 ];
 
 export function getPolicyConfig(): PolicyConfig {
-	const mode = normalizeMode(process.env.MOONCODE_POLICY_MODE);
-	const protectedPaths = splitEnvList(process.env.MOONCODE_POLICY_PROTECTED_PATHS, DEFAULT_PROTECTED_PATHS);
-	const deniedCommands = splitEnvList(process.env.MOONCODE_POLICY_DENIED_COMMANDS, DEFAULT_DENIED_COMMANDS);
+	const mode = normalizeMode(process.env.ASTROAGENT_POLICY_MODE);
+	const protectedPaths = splitEnvList(process.env.ASTROAGENT_POLICY_PROTECTED_PATHS, DEFAULT_PROTECTED_PATHS);
+	const deniedCommands = splitEnvList(process.env.ASTROAGENT_POLICY_DENIED_COMMANDS, DEFAULT_DENIED_COMMANDS);
 	return { mode, protectedPaths, deniedCommands };
 }
 

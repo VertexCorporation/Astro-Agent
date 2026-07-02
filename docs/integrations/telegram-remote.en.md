@@ -1,6 +1,6 @@
-# MoonAgent Telegram Remote
+# AstroAgent Telegram Remote
 
-A lightweight remote service to securely control your MoonAgent machine from your phone using Telegram.
+A lightweight remote service to securely control your AstroAgent machine from your phone using Telegram.
 
 ## Setup
 
@@ -15,7 +15,7 @@ PowerShell example:
 ```powershell
 $env:TELEGRAM_BOT_TOKEN="BOT_TOKEN"
 $env:TELEGRAM_ALLOWED_CHAT_IDS="CHAT_ID"
-$env:MOON_REMOTE_ROOT="C:\Users\ozenc\OneDrive\Desktop"
+$env:ASTRO_REMOTE_ROOT="C:\Users\ozenc\OneDrive\Desktop"
 npm run remote:telegram
 ```
 
@@ -29,7 +29,7 @@ npm run remote:telegram
 /pwd              print active folder
 /git              git status
 /run <command>    execute allowed command
-/task <work>      record a task into .moon-remote/tasks.jsonl
+/task <work>      record a task into .astroagent-remote/tasks.jsonl
 /logs             get recent remote logs
 ```
 

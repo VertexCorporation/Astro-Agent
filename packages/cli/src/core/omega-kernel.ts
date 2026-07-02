@@ -1,6 +1,6 @@
 // @ts-nocheck
 /**
- * MoonCode Ω Kernel (Omega Kernel)
+ * Astro-Agent Ω Kernel (Omega Kernel)
  * Core mathematical engine for verified repo transformations.
  */
 
@@ -420,7 +420,7 @@ export class OmegaKernel {
 			verificationResults: verification ? [verification] : [],
 			riskLevel: contract?.riskLevel || "low",
 			rollbackPlan: "git checkout -- <files>",
-			modelContributors: ["MoonCode Ω Kernel"],
+			modelContributors: ["Astro-Agent Ω Kernel"],
 			timestamp: Date.now(),
 			verificationStatus: verification ? (verification.status === "passed" ? "verified" : "failed") : "not_run",
 		};
@@ -502,7 +502,7 @@ export class OmegaKernel {
 	 * Local JSON persistence for Patch Memory
 	 */
 	private loadPatchMemory(): void {
-		const memPath = path.join(os.homedir(), ".mooncode", "omega-memory.json");
+		const memPath = path.join(os.homedir(), ".astroagent", "omega-memory.json");
 		if (fs.existsSync(memPath)) {
 			try {
 				this.patchMemory = JSON.parse(fs.readFileSync(memPath, "utf8"));
@@ -511,7 +511,7 @@ export class OmegaKernel {
 	}
 
 	private saveTaskToMemory(contract: IntentContract, cert: PatchCertificate): void {
-		const memPath = path.join(os.homedir(), ".mooncode", "omega-memory.json");
+		const memPath = path.join(os.homedir(), ".astroagent", "omega-memory.json");
 		const dir = path.dirname(memPath);
 
 		try {
@@ -575,7 +575,6 @@ export class OmegaKernel {
 						const result = await this.verifyTask(cwd);
 						if (result.status === "failed" && result.errorHighlights && result.errorHighlights.length > 0) {
 							this.sentinelIssues = [{ file: filename, errors: result.errorHighlights }];
-							console.log(`[Astro Sentinel] ⚠️ Error detected: ${filename} — ${result.errorHighlights[0]}`);
 						} else {
 							this.sentinelIssues = [];
 						}
@@ -613,7 +612,6 @@ export class OmegaKernel {
 	public async verifyTaskSpeculative(
 		branches: Array<{ strategy: string; cwd: string; score: number }>,
 	): Promise<Array<{ strategy: string; cwd: string; score: number; result: VerificationResult }>> {
-		console.log(`[Astro Verification Oracle] Compiling ${branches.length} speculative branches concurrently...`);
 		const verificationPromises = branches.map(async (branch) => {
 			const result = await this.verifyTask(branch.cwd);
 			return {
@@ -628,7 +626,6 @@ export class OmegaKernel {
 	 * Spawns speculative execution sandboxes and returns the path to the best verified workspace.
 	 */
 	public async runSpeculativeExecution(_userRequest: string, cwd: string): Promise<string | null> {
-		console.log("[Astro Speculative Execution] Initializing parallel universe simulations...");
 		const strategies = [
 			{ name: "aggressive_refactor", score: 85 },
 			{ name: "minimal_patch", score: 95 },
@@ -639,14 +636,19 @@ export class OmegaKernel {
 
 		for (const strat of strategies) {
 			try {
-				const sandboxCwd = path.join(os.tmpdir(), `mooncode-spec-${strat.name}-${Date.now()}`);
+				const sandboxCwd = path.join(os.tmpdir(), `Astro-Agent-spec-${strat.name}-${Date.now()}`);
 				fs.mkdirSync(sandboxCwd, { recursive: true });
 
 				// Recursive copy function
 				const copyDir = (srcDir: string, destDir: string) => {
 					const items = fs.readdirSync(srcDir);
 					for (const item of items) {
-						if (item === "node_modules" || item === ".git" || item === "dist" || item.includes("mooncode-spec"))
+						if (
+							item === "node_modules" ||
+							item === ".git" ||
+							item === "dist" ||
+							item.includes("Astro-Agent-spec")
+						)
 							continue;
 						const srcPath = path.join(srcDir, item);
 						const destPath = path.join(destDir, item);

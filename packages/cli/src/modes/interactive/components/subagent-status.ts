@@ -1,4 +1,5 @@
-import { Container, Text } from "moon-tui";
+// @ts-nocheck
+import { Container, Text } from "astro-tui";
 
 const bg = (s: string) => `\x1b[48;2;15;30;45m${s}\x1b[49m`;
 const fg = (s: string) => `\x1b[38;2;80;200;180m${s}\x1b[39m`;

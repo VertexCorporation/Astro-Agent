@@ -1,6 +1,6 @@
-# MoonAgent Philosophy
+# Astro Agent Philosophy
 
-MoonAgent bir sohbet botu değil; terminalde çalışan ciddi bir mühendislik yürütücüsüdür. Amacı konuşmak değil, doğru işi güvenli şekilde bitirmektir.
+Astro Agent bir sohbet botu değil; terminalde çalışan ciddi bir mühendislik yürütücüsüdür. Amacı konuşmak değil, doğru işi güvenli şekilde bitirmektir.
 
 ## Temel ilkeler
 
@@ -11,7 +11,7 @@ MoonAgent bir sohbet botu değil; terminalde çalışan ciddi bir mühendislik y
 Büyük projelerde önce `/index`, hedefli arama ve dar dosya okuma kullanılır. Konuşma büyüdüğünde compaction devreye girer. Hedef: GTA ölçeğinde bir repoda bile bağlamı boğmadan çalışmak.
 
 ### 3. Ciddi otomasyon
-Automation Mode açıkken MoonAgent tarayıcı, terminal ve dosya işlerini çok adımlı yürütebilir. Dış servislerde mesaj gönderme, yayınlama, silme veya hesap adına işlem yapma gibi yüksek etkili aksiyonlarda açık görev niyeti ve gerektiğinde onay aranır.
+Automation Mode açıkken Astro Agent tarayıcı, terminal ve dosya işlerini çok adımlı yürütebilir. Dış servislerde mesaj gönderme, yayınlama, silme veya hesap adına işlem yapma gibi yüksek etkili aksiyonlarda açık görev niyeti ve gerektiğinde onay aranır.
 
 ### 4. Premium terminal deneyimi
 TUI sade ama kimliklidir: koyu bordo, sıcak amber, yumuşak kontrast ve gereksiz panel yok. Arayüz bilgiyi azaltır, odağı artırır.

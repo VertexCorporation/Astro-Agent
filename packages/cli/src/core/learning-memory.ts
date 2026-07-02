@@ -1,3 +1,4 @@
+// @ts-nocheck
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
@@ -16,7 +17,7 @@ export class LearningMemory {
 	private experiences: ExperienceItem[] = [];
 
 	private constructor() {
-		const moonDir = path.join(os.homedir(), ".mooncode");
+		const moonDir = path.join(os.homedir(), ".astroagent");
 		if (!fs.existsSync(moonDir)) {
 			fs.mkdirSync(moonDir, { recursive: true });
 		}

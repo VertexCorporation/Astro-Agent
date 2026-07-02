@@ -1,6 +1,5 @@
 // @ts-nocheck
 
-import { existsSync, readFileSync } from "fs";
 import {
 	type Keybinding,
 	type KeybindingDefinitions,
@@ -8,7 +7,8 @@ import {
 	type KeyId,
 	TUI_KEYBINDINGS,
 	KeybindingsManager as TuiKeybindingsManager,
-} from "moon-tui";
+} from "astro-tui";
+import { existsSync, readFileSync } from "fs";
 import { join } from "path";
 import { getEngineDir } from "../config.js";
 
@@ -59,7 +59,7 @@ export interface AppKeybindings {
 
 export type AppKeybinding = keyof AppKeybindings;
 
-declare module "moon-tui" {
+declare module "astro-tui" {
 	interface Keybindings extends AppKeybindings {}
 }
 

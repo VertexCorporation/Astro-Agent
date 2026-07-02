@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { exec, execFile } from "child_process";
 import { promisify } from "util";
 
@@ -29,7 +30,7 @@ export class GhostEnvironment {
 			// Check if docker is available
 			await execFileAsync("docker", ["--version"]);
 
-			const containerName = `mooncode-ghost-${imageName.replace(/[^a-zA-Z0-9-]/g, "")}-${Date.now()}`;
+			const containerName = `astroagent-ghost-${imageName.replace(/[^a-zA-Z0-9-]/g, "")}-${Date.now()}`;
 			const args = ["run", "-d", "--rm", "--name", containerName, "--memory=512m", "--cpus=1"];
 			for (const port of ports) {
 				args.push("-p", port);

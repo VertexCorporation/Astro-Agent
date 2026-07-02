@@ -1,6 +1,6 @@
 // @ts-nocheck
 /**
- * Görüntü yakalama - dosya, URL, veya webcam'den.
+ * Image capture utility - supports file paths, URLs, and webcams.
  */
 
 import { execSync } from "node:child_process";
@@ -11,39 +11,39 @@ const SUPPORTED_FORMATS = new Set([".jpg", ".jpeg", ".png", ".webp", ".bmp", ".g
 
 export class ImageCapture {
 	/**
-	 * Dosyadan oku, base64 olarak döndür.
+	 * Read from a local file, returning the Buffer.
 	 */
 	fromFile(filePath: string): Buffer {
 		const resolved = resolve(filePath);
 		if (!existsSync(resolved)) {
-			throw new Error(`Dosya bulunamadi: ${resolved}`);
+			throw new Error(`File not found: ${resolved}`);
 		}
 		const ext = extname(resolved).toLowerCase();
 		if (!SUPPORTED_FORMATS.has(ext)) {
-			throw new Error(`Desteklenmeyen format: ${ext}. Desteklenen: ${[...SUPPORTED_FORMATS].join(", ")}`);
+			throw new Error(`Unsupported format: ${ext}. Supported: ${[...SUPPORTED_FORMATS].join(", ")}`);
 		}
 		return readFileSync(resolved);
 	}
 
 	/**
-	 * URL'den indir.
+	 * Download from a remote URL.
 	 */
 	async fromUrl(url: string): Promise<Buffer> {
 		const res = await fetch(url);
 		if (!res.ok) {
-			throw new Error(`Goruntu indirilemedi (${res.status}): ${url}`);
+			throw new Error(`Failed to download image (${res.status}): ${url}`);
 		}
 		const arrayBuffer = await res.arrayBuffer();
 		return Buffer.from(arrayBuffer);
 	}
 
 	/**
-	 * Webcam'den tek kare yakala (ffmpeg gerekli).
+	 * Capture a single frame from the webcam (requires ffmpeg).
 	 * Windows: dshow, Linux: v4l2, Mac: avfoundation
 	 */
 	fromWebcam(device?: string): Buffer {
 		const platform = process.platform;
-		const tmpPath = resolve(process.cwd(), ".MoonCode-capture-tmp.jpg");
+		const tmpPath = resolve(process.cwd(), ".Astro-Agent-capture-tmp.jpg");
 
 		let cmd: string;
 		if (platform === "win32") {
@@ -60,33 +60,35 @@ export class ImageCapture {
 		try {
 			execSync(cmd, { timeout: 10000 });
 		} catch {
-			throw new Error("Webcam'den goruntu alinamadi. ffmpeg yuklu mu? Cihaz adi dogru mu?");
+			throw new Error(
+				"Failed to capture image from webcam. Ensure ffmpeg is installed and the device name is correct.",
+			);
 		}
 
 		if (!existsSync(tmpPath)) {
-			throw new Error("Webcam capture basarisiz: dosya olusturulamadi");
+			throw new Error("Webcam capture failed: file was not created");
 		}
 
 		const buf = readFileSync(tmpPath);
-		// temp dosyayı sil
+		// Delete temp file
 		try {
 			const { unlinkSync } = require("node:fs");
 			unlinkSync(tmpPath);
 		} catch {
-			// olsun
+			// Ignore errors during cleanup
 		}
 		return buf;
 	}
 
 	/**
-	 * Buffer'ı base64'e çevir (Ollama'ya göndermek için).
+	 * Convert Buffer to base64 (for passing to vision models).
 	 */
 	toBase64(imageBytes: Buffer): string {
 		return imageBytes.toString("base64");
 	}
 
 	/**
-	 * MIME type tahmin et.
+	 * Guess MIME type based on file extension.
 	 */
 	getMimeType(filePath: string): string {
 		const ext = extname(filePath).toLowerCase();

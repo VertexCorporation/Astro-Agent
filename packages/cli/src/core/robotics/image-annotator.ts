@@ -1,12 +1,12 @@
 // @ts-nocheck
 /**
- * Görüntü üzerine overlay çizim (bounding box, nokta, yörünge).
- * sharp kullanıyor, yoksa SVG overlay ile fallback.
+ * Image annotation overlay generator (bounding boxes, points, trajectories).
+ * Uses sharp if available, otherwise falls back to SVG overlay.
  */
 
 import type { DetectedObject, TrajectoryPoint } from "./vision-pipeline.js";
 
-// renkler - her obje farklı renk alsın
+// Define distinct colors for object annotations
 const COLORS = [
 	"#FF6B6B",
 	"#4ECDC4",
@@ -32,8 +32,8 @@ interface AnnotationOverlay {
 }
 
 /**
- * Sharp olmadan da çalışabilecek annotator.
- * Sharp varsa kullanır, yoksa SVG string üretir.
+ * Fallback annotator for when sharp is unavailable.
+ * If sharp is present, it composites the image; otherwise, it returns the raw image.
  */
 export class ImageAnnotator {
 	private sharpModule: any = null;
@@ -42,12 +42,12 @@ export class ImageAnnotator {
 		try {
 			this.sharpModule = require("sharp");
 		} catch {
-			// sharp yok, SVG-only modda çalışacağız
+			// sharp unavailable, will operate in SVG-only or fallback mode
 		}
 	}
 
 	/**
-	 * Bounding box'ları görüntü üzerine çiz.
+	 * Draw bounding boxes onto the image.
 	 */
 	async drawBoundingBoxes(imageBytes: Buffer, objects: DetectedObject[]): Promise<Buffer> {
 		const metadata = await this.getImageMetadata(imageBytes);
@@ -78,7 +78,7 @@ export class ImageAnnotator {
 	}
 
 	/**
-	 * Noktaları görüntü üzerine çiz.
+	 * Draw points onto the image.
 	 */
 	async drawPoints(imageBytes: Buffer, objects: DetectedObject[]): Promise<Buffer> {
 		const metadata = await this.getImageMetadata(imageBytes);
@@ -106,7 +106,7 @@ export class ImageAnnotator {
 	}
 
 	/**
-	 * Yörüngeyi çiz (çizgi + numaralı noktalar).
+	 * Draw trajectory (lines + numbered points).
 	 */
 	async drawTrajectory(imageBytes: Buffer, trajectory: TrajectoryPoint[]): Promise<Buffer> {
 		const metadata = await this.getImageMetadata(imageBytes);
@@ -117,7 +117,7 @@ export class ImageAnnotator {
 
 		const svgParts: string[] = [];
 
-		// önce çizgiyi çiz
+		// first draw the line
 		if (trajectory.length > 1) {
 			const pathPoints = trajectory.map((t) => {
 				const px = (t.point[1] / 1000) * w;
@@ -127,13 +127,13 @@ export class ImageAnnotator {
 			svgParts.push(
 				`<polyline points="${pathPoints.join(" ")}" fill="none" stroke="#FF6B6B" stroke-width="3" stroke-dasharray="8,4" marker-end="url(#arrowhead)"/>`,
 			);
-			// ok ucu tanımı
+			// arrowhead definition
 			svgParts.unshift(
 				`<defs><marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#FF6B6B"/></marker></defs>`,
 			);
 		}
 
-		// sonra noktaları çiz
+		// then draw the points
 		for (const t of trajectory) {
 			const px = (t.point[1] / 1000) * w;
 			const py = (t.point[0] / 1000) * h;
@@ -153,7 +153,7 @@ export class ImageAnnotator {
 			const meta = await this.sharpModule(imageBytes).metadata();
 			return { width: meta.width || 800, height: meta.height || 600 };
 		}
-		// sharp yoksa PNG header'dan oku veya default
+		// fallback to parsing PNG header or returning default dimensions
 		return this.readDimensionsFromBuffer(imageBytes);
 	}
 
@@ -166,7 +166,7 @@ export class ImageAnnotator {
 				.png()
 				.toBuffer();
 		}
-		// sharp yoksa orijinal resmi döndür, overlay yapamayız
+		// if sharp is unavailable, return original image (cannot composite)
 		return imageBytes;
 	}
 
@@ -174,7 +174,7 @@ export class ImageAnnotator {
 		return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 	}
 
-	// basit PNG/JPEG boyut okuyucu
+	// simple PNG/JPEG dimension parser
 	private readDimensionsFromBuffer(buf: Buffer): { width: number; height: number } {
 		// PNG
 		if (buf[0] === 0x89 && buf[1] === 0x50) {
@@ -182,7 +182,7 @@ export class ImageAnnotator {
 			const h = buf.readUInt32BE(20);
 			return { width: w, height: h };
 		}
-		// JPEG - SOF0 marker ara
+		// JPEG - Search for SOF0 marker
 		if (buf[0] === 0xff && buf[1] === 0xd8) {
 			let offset = 2;
 			while (offset < buf.length - 8) {

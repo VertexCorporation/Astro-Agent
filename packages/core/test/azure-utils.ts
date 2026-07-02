@@ -16,13 +16,13 @@ function parseDeploymentNameMap(value: string | undefined): Map<string, string> 
 }
 
 export function hasAzureOpenAICredentials(): boolean {
-	const hasKey = !!process.env.AZURE_OpenAI_API_KEY;
-	const hasBaseUrl = !!(process.env.AZURE_OpenAI_BASE_URL || process.env.AZURE_OpenAI_RESOURCE_NAME);
+	const hasKey = !!process.env.AZURE_OPENAI_API_KEY;
+	const hasBaseUrl = !!(process.env.AZURE_OPENAI_BASE_URL || process.env.AZURE_OPENAI_RESOURCE_NAME);
 	return hasKey && hasBaseUrl;
 }
 
 export function resolveAzureDeploymentName(modelId: string): string | undefined {
-	const mapValue = process.env.AZURE_OpenAI_DEPLOYMENT_NAME_MAP;
+	const mapValue = process.env.AZURE_OPENAI_DEPLOYMENT_NAME_MAP;
 	if (!mapValue) return undefined;
 	return parseDeploymentNameMap(mapValue).get(modelId);
 }

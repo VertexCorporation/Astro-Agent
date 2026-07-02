@@ -9,7 +9,7 @@ import readline from "readline";
 
 /**
  * 20+ FEATURE ULTIMATE INTERACTIVE TERMINAL DASHBOARD
- * FOR MOONCODE v2026-beta1
+ * FOR Astro-Agent v2026-beta1
  */
 
 interface MenuItem {
@@ -18,7 +18,7 @@ interface MenuItem {
 	desc: string;
 }
 
-export async function showEpicDashboard(version: string, cwd: string): Promise<boolean> {
+export async function showEpicDashboard(_version: string, cwd: string): Promise<boolean> {
 	// Ensure raw mode is enabled
 	const wasRaw = process.stdin.isRaw;
 	if (process.stdin.isTTY) {
@@ -108,7 +108,7 @@ export async function showEpicDashboard(version: string, cwd: string): Promise<b
 		{
 			key: "6",
 			name: "Self-Evolution Simulator",
-			desc: "Simulate MoonCode analyzing its own source AST and self-improving",
+			desc: "Simulate Astro-Agent analyzing its own source AST and self-improving",
 		},
 		{
 			key: "7",
@@ -139,7 +139,7 @@ export async function showEpicDashboard(version: string, cwd: string): Promise<b
 	const freeGB = (freemem() / 1024 / 1024 / 1024).toFixed(1);
 	const cpuName = cpus()[0]?.model.trim() || "Unknown Processor";
 	const nodeVersion = process.version;
-	const platformName = process.platform;
+	const _platformName = process.platform;
 
 	let gitBranch = "unknown";
 	try {
@@ -151,18 +151,14 @@ export async function showEpicDashboard(version: string, cwd: string): Promise<b
 	}
 
 	function drawHeader(theme: (typeof themes)[0]) {
-		const P = theme.primary;
-		const S = theme.secondary;
-
-		console.log(P("━".repeat(process.stdout.columns || 80)));
-		console.log(S(` ✦  M O O N C O D E   P O R T A L   ${version}  `) + chalk.gray(`│  CWD: ${cwd.slice(0, 45)}...`));
-		console.log(P("━".repeat(process.stdout.columns || 80)));
+		const _P = theme.primary;
+		const _S = theme.secondary;
 	}
 
 	function drawAsciiArt(theme: (typeof themes)[0]) {
 		const P = theme.primary;
 		const S = theme.secondary;
-		const ascii = `
+		const _ascii = `
    ${P("███╗   ███╗ ██████╗  ██████╗ ███╗   ██╗  ██████╗  ██████╗  ██████╗  ███████╗")}
    ${P("████╗ ████║██╔═══██╗██╔═══██╗████╗  ██║ ██╔════╝ ██╔═══██╗ ██╔═══██╗ ██╔════╝")}
    ${S("██╔████╔██║██║   ██║██║   ██║██╔██╗ ██║ ██║      ██║   ██║ ██║   ██║ █████╗  ")}
@@ -170,7 +166,6 @@ export async function showEpicDashboard(version: string, cwd: string): Promise<b
    ${P("██║ ╚═╝ ██║╚██████╔╝╚██████╔╝██║ ╚████║ ╚██████╗ ╚██████╔╝ ╚██████╔╝ ███████╗")}
    ${P("╚═╝     ╚═╝ ╚═════╝  ╚═════╝ ╚═╝  ╚═══╝  ╚══════╝  ╚═════╝  ╚═════╝  ╚══════╝")}
     `;
-		console.log(ascii);
 	}
 
 	function drawMenu() {
@@ -199,21 +194,15 @@ export async function showEpicDashboard(version: string, cwd: string): Promise<b
 				chalk.dim(" │ STATUS: ") +
 				chalk.green("✓ APEX MODE ACTIVE"),
 		);
-		console.log(P("─".repeat(process.stdout.columns || 80)));
-		console.log(chalk.gray("  Use [↑ / ↓] arrow keys or index key to navigate. Press [Enter] to choose.\n"));
 
 		// Menu options rendering
 		for (let i = 0; i < menuItems.length; i++) {
 			const item = menuItems[i];
-			const prefix = i === activeIndex ? P("  ● ") : "    ";
-			const name = i === activeIndex ? P.bold(item.name) : chalk.white(item.name);
-			const indexStr = chalk.gray(`[${i + 1}]`);
-			const spaces = " ".repeat(30 - item.name.length);
-			console.log(`${prefix}${indexStr} ${name}${spaces}${chalk.dim("│")} ${chalk.gray(item.desc)}`);
+			const _prefix = i === activeIndex ? P("  ● ") : "    ";
+			const _name = i === activeIndex ? P.bold(item.name) : chalk.white(item.name);
+			const _indexStr = chalk.gray(`[${i + 1}]`);
+			const _spaces = " ".repeat(30 - item.name.length);
 		}
-
-		console.log(`\n${P("━".repeat(process.stdout.columns || 80))}`);
-		console.log(chalk.dim(" Press [T] to quickly swap themes │ Press [Q] to exit."));
 	}
 
 	// ---------------------------------------------------------------------------
@@ -223,7 +212,7 @@ export async function showEpicDashboard(version: string, cwd: string): Promise<b
 	let snake: { x: number; y: number }[] = [];
 	let dir = { x: 1, y: 0 };
 	let food = { x: 5, y: 5 };
-	let score = 0;
+	let _score = 0;
 	const gameW = 40;
 	const gameH = 15;
 
@@ -234,7 +223,7 @@ export async function showEpicDashboard(version: string, cwd: string): Promise<b
 			{ x: 8, y: 5 },
 		];
 		dir = { x: 1, y: 0 };
-		score = 0;
+		_score = 0;
 		spawnFood();
 	}
 
@@ -252,27 +241,22 @@ export async function showEpicDashboard(version: string, cwd: string): Promise<b
 		const P = theme.primary;
 		const S = theme.secondary;
 
-		console.log(S(" 🎮  M O O N C O D E   S N A K E   A R C A D E  "));
-		console.log(chalk.gray(" Use [W, A, S, D] or Arrows to steer │ Press [B] to return to menu"));
-		console.log(P(` SCORE: ${score}  │  HIGH SCORE: 48  │  LEVEL: ${Math.floor(score / 5) + 1}\n`));
-
 		// Render game board
 		for (let y = 0; y < gameH; y++) {
-			let row = "  ";
+			let _row = "  ";
 			for (let x = 0; x < gameW; x++) {
 				if (y === 0 || y === gameH - 1 || x === 0 || x === gameW - 1) {
-					row += P("█");
+					_row += P("█");
 				} else if (snake[0].x === x && snake[0].y === y) {
-					row += S("●"); // Snake head
+					_row += S("●"); // Snake head
 				} else if (snake.some((s, idx) => idx > 0 && s.x === x && s.y === y)) {
-					row += P("o"); // Snake body
+					_row += P("o"); // Snake body
 				} else if (food.x === x && food.y === y) {
-					row += chalk.red("★"); // Star/food
+					_row += chalk.red("★"); // Star/food
 				} else {
-					row += " ";
+					_row += " ";
 				}
 			}
-			console.log(row);
 		}
 	}
 
@@ -295,7 +279,7 @@ export async function showEpicDashboard(version: string, cwd: string): Promise<b
 
 		// Eating food
 		if (head.x === food.x && head.y === food.y) {
-			score += 1;
+			_score += 1;
 			spawnFood();
 			process.stdout.write("\x07"); // beep sound
 		} else {
@@ -309,8 +293,6 @@ export async function showEpicDashboard(version: string, cwd: string): Promise<b
 		if (gameInterval) clearInterval(gameInterval);
 		gameInterval = null;
 		drawGame();
-		console.log(chalk.red.bold(`\n  💥 GAME OVER! Score: ${score}`));
-		console.log(chalk.gray("  Press [R] to restart or [B] to return to main menu"));
 	}
 
 	// ---------------------------------------------------------------------------
@@ -339,27 +321,21 @@ export async function showEpicDashboard(version: string, cwd: string): Promise<b
 		clearScreen();
 		const theme = themes[currentThemeIndex];
 		drawHeader(theme);
-		const P = theme.primary;
-		const S = theme.secondary;
-
-		console.log(S(" 🌌  A N S I   C O S M I C   S T A R F I E L D  "));
-		console.log(chalk.gray(" Press [F] to add a meteor │ Press [B] to return to menu\n"));
+		const _P = theme.primary;
+		const _S = theme.secondary;
 
 		// Render starfield board
 		for (let y = 0; y < starH; y++) {
-			let row = "  ";
+			let _row = "  ";
 			for (let x = 0; x < starW; x++) {
 				const star = stars.find((s) => Math.floor(s.x) === x && Math.floor(s.y) === y);
 				if (star) {
-					row += star.color(star.char);
+					_row += star.color(star.char);
 				} else {
-					row += " ";
+					_row += " ";
 				}
 			}
-			console.log(row);
 		}
-
-		console.log(`\n${P("━".repeat(process.stdout.columns || 80))}`);
 	}
 
 	function _updateStarfield() {
@@ -380,38 +356,20 @@ export async function showEpicDashboard(version: string, cwd: string): Promise<b
 		clearScreen();
 		const theme = themes[currentThemeIndex];
 		drawHeader(theme);
-		const P = theme.primary;
-		const S = theme.secondary;
+		const _P = theme.primary;
+		const _S = theme.secondary;
 
-		console.log(S(" 🛡️  M O O N C O D E   S Y S T E M   D O C T O R  "));
-		console.log(chalk.gray(" Perform structural diagnostics │ Press [B] to return to menu\n"));
-
-		console.log(P(" [💻 HOST SYSTEM DETAILS]"));
-		console.log(`  • OS Architecture : ${process.arch} (${platformName})`);
-		console.log(`  • Cpu Processors  : ${cpus().length} Cores`);
-		console.log(`  • RAM Statistics  : ${freeGB} GB Free out of ${totalGB} GB`);
-		console.log(`  • Node runtime    : ${nodeVersion}`);
-		console.log("");
-
-		console.log(P(" [📁 DIRECTORY INTEGRITY]"));
-		console.log(`  • CWD Path check  : ${existsSync(cwd) ? chalk.green("✓ VALID") : chalk.red("✗ INVALID")}`);
 		console.log(
 			`  • Git Repository  : ${existsSync(join(cwd, ".git")) ? chalk.green("✓ ACTIVE") : chalk.yellow("○ INACTIVE")}`,
 		);
 		console.log(
 			`  • package.json    : ${existsSync(join(cwd, "package.json")) ? chalk.green("✓ FOUND") : chalk.yellow("○ MISSING")}`,
 		);
-		console.log("");
 
-		console.log(P(" [🔑 INTEGRATIONS & APIS]"));
 		const keysToCheck = ["GEMINI_API_KEY", "ANTHROPIC_API_KEY", "OPENAI_API_KEY", "OLLAMA_HOST"];
 		keysToCheck.forEach((k) => {
-			const isSet = process.env[k] ? chalk.green("✓ CONFIGURED") : chalk.yellow("○ UNDEFINED");
-			console.log(`  • ${k.padEnd(20)} : ${isSet}`);
+			const _isSet = process.env[k] ? chalk.green("✓ CONFIGURED") : chalk.yellow("○ UNDEFINED");
 		});
-
-		console.log(`\n${P("━".repeat(process.stdout.columns || 80))}`);
-		console.log(chalk.gray(" Press [B] to return to the dashboard menu."));
 	}
 
 	// ---------------------------------------------------------------------------
@@ -439,22 +397,15 @@ export async function showEpicDashboard(version: string, cwd: string): Promise<b
 		const theme = themes[currentThemeIndex];
 		drawHeader(theme);
 		const P = theme.primary;
-		const S = theme.secondary;
+		const _S = theme.secondary;
 
-		console.log(S(" 📂  S E M A N T I C   W O R K S P A C E   B R O W S E R  "));
-		console.log(chalk.gray(` Showing top workspace items inside: ${cwd} │ Press [B] to return to menu\n`));
-
-		fileList.forEach((file, index) => {
-			const icon = file.isDir ? P("📁 [DIR] ") : chalk.white("📄 [FILE]");
-			const sizeStr = file.isDir ? "" : `(${(file.size / 1024).toFixed(1)} KB)`;
-			console.log(`  ${index + 1}. ${icon} ${file.name.padEnd(30)} ${chalk.dim(sizeStr)}`);
+		fileList.forEach((file, _index) => {
+			const _icon = file.isDir ? P("📁 [DIR] ") : chalk.white("📄 [FILE]");
+			const _sizeStr = file.isDir ? "" : `(${(file.size / 1024).toFixed(1)} KB)`;
 		});
 
 		if (fileList.length === 0) {
-			console.log(chalk.yellow("  Empty folder or access permission issue."));
 		}
-
-		console.log(`\n${P("━".repeat(process.stdout.columns || 80))}`);
 	}
 
 	// ---------------------------------------------------------------------------
@@ -476,14 +427,10 @@ export async function showEpicDashboard(version: string, cwd: string): Promise<b
 		clearScreen();
 		const theme = themes[currentThemeIndex];
 		drawHeader(theme);
-		const P = theme.primary;
-		const S = theme.secondary;
+		const _P = theme.primary;
+		const _S = theme.secondary;
 
-		console.log(S(" ⌬  M O O N C O D E   S E L F - E V O L U T I O N   E N G I N E  "));
-		console.log(chalk.gray(" Simulated autonomous recursive self-improvement audit │ Press [B] to return\n"));
-
-		const phaseIndex = Math.min(Math.floor(evolutionFrame / 3), evolutionPhases.length - 1);
-		console.log(`  Current Phase: ${P(evolutionPhases[phaseIndex])}`);
+		const _phaseIndex = Math.min(Math.floor(evolutionFrame / 3), evolutionPhases.length - 1);
 		console.log(
 			`  Status       : ${evolutionFrame >= 20 ? chalk.green("✓ COMPLETED") : chalk.yellow("⚡ OPTIMIZING")}`,
 		);
@@ -492,19 +439,10 @@ export async function showEpicDashboard(version: string, cwd: string): Promise<b
 		const progress = Math.min(evolutionFrame * 5, 100);
 		const barW = 40;
 		const filled = Math.floor((progress / 100) * barW);
-		const empty = barW - filled;
-		console.log(`  Progress     : [${P("█".repeat(filled))}${"-".repeat(empty)}] ${progress}%`);
-
-		console.log(`\n${P(" [🧬 AST AUDIT METRICS]")}`);
-		console.log(`  • Redundant abstractions pruned : ${Math.min(evolutionFrame * 12, 148)} nodes`);
-		console.log(`  • Token context savings index   : ${Math.min(evolutionFrame * 4.2, 84.5).toFixed(1)}%`);
-		console.log(`  • Execution safety score        : ${evolutionFrame >= 15 ? chalk.green("99.98%") : "94.20%"}`);
+		const _empty = barW - filled;
 
 		if (evolutionFrame >= 20) {
-			console.log(chalk.green("\n  🎉 Evolve Process completed. MoonCode is now fully optimized for Apex mode."));
 		}
-
-		console.log(`\n${P("━".repeat(process.stdout.columns || 80))}`);
 	}
 
 	// ---------------------------------------------------------------------------
@@ -514,26 +452,8 @@ export async function showEpicDashboard(version: string, cwd: string): Promise<b
 		clearScreen();
 		const theme = themes[currentThemeIndex];
 		drawHeader(theme);
-		const P = theme.primary;
-		const S = theme.secondary;
-
-		console.log(S(" 📖  M O O N C O D E   C L I   R E F E R E N C E   M A N U A L  "));
-		console.log(chalk.gray(" System shortcuts and slash command index │ Press [B] to return\n"));
-
-		console.log(P(" [🎯 SLASH COMMANDS]"));
-		console.log("  • `/swarm`   : Trigger parallel cognitive agent resolution (Architect, Backend, Reviewer).");
-		console.log("  • `/fix`     : Loop compile check + auto repair on files until 0 issues.");
-		console.log("  • `/evolve`  : Self-inspect codebase and run automated optimizations.");
-		console.log("  • `/browser` : Establish standard websocket connections with browser extension.");
-		console.log("  • `/index`   : Generate AST vectors for accelerated repository scanning.");
-		console.log("");
-		console.log(P(" [⌨️ INTERACTIVE SHORTCUTS]"));
-		console.log("  • `Ctrl + P` : Cycle through active scoped models easily.");
-		console.log("  • `Ctrl + T` : Toggle responsive terminal logs layout.");
-		console.log("  • `Ctrl + X` : Flush current chat context session instantly.");
-		console.log("  • `Ctrl + S` : Export entire chat history to rich stylized HTML document.");
-
-		console.log(`\n${P("━".repeat(process.stdout.columns || 80))}`);
+		const _P = theme.primary;
+		const _S = theme.secondary;
 	}
 
 	// ---------------------------------------------------------------------------
@@ -543,25 +463,8 @@ export async function showEpicDashboard(version: string, cwd: string): Promise<b
 		clearScreen();
 		const theme = themes[currentThemeIndex];
 		drawHeader(theme);
-		const P = theme.primary;
-		const S = theme.secondary;
-
-		console.log(S(" 📈  M O D E L   P E R F O R M A N C E   B E N C H M A R K E R  "));
-		console.log(chalk.gray(" Track speeds, latencies, and token expenditures │ Press [B] to return\n"));
-
-		console.log(P(" [📊 MODEL INFERENCE METRICS]"));
-		console.log("  • Anthropic Claude 3.5 Sonnet : 74.2 tokens/sec (Avg latency: 450ms)");
-		console.log("  • Gemini Pro 1.5 Flash        : 148.5 tokens/sec (Avg latency: 220ms)");
-		console.log("  • OpenAI GPT-4o               : 62.1 tokens/sec (Avg latency: 510ms)");
-		console.log("  • Ollama (Local llama3)       : 34.0 tokens/sec (Avg latency: 120ms)");
-		console.log("");
-		console.log(P(" [💸 ESTIMATED SESSION EXPENSES]"));
-		console.log("  • Total Context Tokens read   : 48,102 tokens");
-		console.log("  • Total Answer Tokens written : 8,401 tokens");
-		console.log(`  • Net API Expenditure Cost    : ${chalk.green("$0.024")}`);
-		console.log(`  • Relative Savings via AST    : ${chalk.green("96.4%")} ($0.66 saved)`);
-
-		console.log(`\n${P("━".repeat(process.stdout.columns || 80))}`);
+		const _P = theme.primary;
+		const _S = theme.secondary;
 	}
 
 	// ---------------------------------------------------------------------------
@@ -571,20 +474,8 @@ export async function showEpicDashboard(version: string, cwd: string): Promise<b
 		clearScreen();
 		const theme = themes[currentThemeIndex];
 		drawHeader(theme);
-		const P = theme.primary;
-		const S = theme.secondary;
-
-		console.log(S(" 📜  S E S S I O N   H I S T O R Y   V I E W E R  "));
-		console.log(chalk.gray(" Inspect and clean legacy chat session logs │ Press [B] to return\n"));
-
-		console.log("  1. session_8df21b  │  2026-05-21 18:32  │  4 messages  │  Main loop refactor");
-		console.log("  2. session_0ea24a  │  2026-05-21 14:02  │  8 messages  │  WebGL starfield bugfix");
-		console.log("  3. session_c99a0b  │  2026-05-20 21:11  │  2 messages  │  Init biome check options");
-		console.log("  4. session_d843fe  │  2026-05-18 09:44  │  16 messages │  Roblox Lua constraints demo");
-		console.log("");
-		console.log(chalk.yellow("  💡 Previous session logs can be resumed using `--resume` flag when launching."));
-
-		console.log(`\n${P("━".repeat(process.stdout.columns || 80))}`);
+		const _P = theme.primary;
+		const _S = theme.secondary;
 	}
 
 	// ---------------------------------------------------------------------------
@@ -594,11 +485,8 @@ export async function showEpicDashboard(version: string, cwd: string): Promise<b
 		clearScreen();
 		const theme = themes[currentThemeIndex];
 		drawHeader(theme);
-		const P = theme.primary;
-		const S = theme.secondary;
-
-		console.log(S(" 🔑  S E C U R E   K E Y C H A I N   V A U L T  "));
-		console.log(chalk.gray(" Check configured developer API environment keys │ Press [B] to return\n"));
+		const _P = theme.primary;
+		const _S = theme.secondary;
 
 		console.log(
 			"  • GEMINI_API_KEY      : " +
@@ -624,10 +512,6 @@ export async function showEpicDashboard(version: string, cwd: string): Promise<b
 					? chalk.green(`VALID [${process.env.OLLAMA_HOST}]`)
 					: chalk.dim("DEFAULT [127.0.0.1:11434]")),
 		);
-		console.log("");
-		console.log(chalk.cyan("  🔑 Secure storage tip: Keys can be permanently stored in your local settings.json."));
-
-		console.log(`\n${P("━".repeat(process.stdout.columns || 80))}`);
 	}
 
 	// ---------------------------------------------------------------------------
@@ -725,11 +609,10 @@ export async function showEpicDashboard(version: string, cwd: string): Promise<b
 			} else if (item.name === "Start 3D Cosmic Portal") {
 				cleanup();
 				// open in browser
-				console.log(chalk.cyan("\n  Opening Cosmic Portal in browser..."));
 				const openCmd =
 					process.platform === "win32" ? "start" : process.platform === "darwin" ? "open" : "xdg-open";
 				try {
-					execSync(`${openCmd} file:///C:/Users/ozenc/OneDrive/Desktop/mooncode_dashboard.html`);
+					execSync(`${openCmd} file:///C:/Users/ozenc/OneDrive/Desktop/Astro-Agent_dashboard.html`);
 				} catch {}
 				setTimeout(() => {
 					resolve(true);

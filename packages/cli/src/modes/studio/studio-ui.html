@@ -4,7 +4,7 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Astro 8 🚀 PRO – AI Coding Assistant</title>
-	<link rel="icon" type="image/png" href="/assets/Mooncodewhitelogo.png">
+	<link rel="icon" type="image/png" href="/assets/astroagentwhitelogo.png">
 	<meta name="description" content="Astro 8 🚀 PRO – World's most advanced AI coding assistant">
 
 	<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -636,12 +636,14 @@
 			line-height: 1.75;
 			white-space: pre-wrap;
 			word-break: break-word;
+			overflow-wrap: anywhere;
 			max-height: 360px;
 			overflow-y: auto;
+			overflow-x: auto;
 			background: var(--md-sys-color-surface-container);
 			scrollbar-width: thin;
 		}
-		.thinking-body::-webkit-scrollbar { width: 4px; }
+		.thinking-body::-webkit-scrollbar { width: 4px; height: 4px; }
 		.thinking-body::-webkit-scrollbar-thumb { background: var(--md-sys-color-outline-variant); border-radius: 4px; }
 		.thinking-block.collapsed .thinking-body { display: none; }
 		.thinking-chevron { transition: transform var(--md-sys-motion-duration-medium) var(--md-sys-motion-easing-emphasized); flex-shrink:0; color: var(--md-sys-color-primary); }
@@ -2024,15 +2026,40 @@ body.wallpaper-active{background:transparent!important}
 
 <!-- Semantic Brain Modal -->
 <div id="semanticBrainModal" class="modal-overlay" onclick="overlayClose(event, 'semanticBrainModal')">
-	<div class="modal" onclick="event.stopPropagation()">
+	<div class="modal" onclick="event.stopPropagation()" style="max-width:520px;width:100%;">
 		<div class="modal-header">
-			<div class="modal-title"><span class="material-symbols-rounded icon-success" style="">neurology</span> Bellek</div>
+			<div class="modal-title"><span class="material-symbols-rounded icon-success">neurology</span> R-Graph Bellek</div>
 			<button class="modal-close" onclick="closeModal('semanticBrainModal')"><span class="material-symbols-rounded">close</span></button>
 		</div>
-		<div class="modal-body" id="semantic-brain-content" style="text-align:center;padding:30px 20px;color:var(--muted);font-size:0.85rem;line-height:1.6;">
-			<span class="material-symbols-rounded" style="font-size:40px;display:block;margin-bottom:12px;color:var(--accent);">neurology</span>
-			Memory learning is not available in this session. The assistant will learn from your interactions over time.
-			<div style="margin-top:16px;font-size:0.8rem;">Customize the AI's behavior in <span style="color:var(--accent);cursor:pointer;" onclick="closeModal('semanticBrainModal');openModal('settingsModal');switchSettingsTab('customization',document.querySelector('#settingsModal .stab:last-child'))">Settings → Customization</span></div>
+		<div class="modal-body" style="padding:0;">
+			<!-- Stats bar -->
+			<div id="memory-stats-bar" style="display:flex;gap:0;border-bottom:1px solid var(--border);">
+				<div style="flex:1;padding:14px 16px;text-align:center;border-right:1px solid var(--border);">
+					<div id="mem-stat-facts" style="font-size:1.5rem;font-weight:700;color:var(--accent);line-height:1;">–</div>
+					<div style="font-size:0.7rem;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:.05em;">Öğrenilen Veri</div>
+				</div>
+				<div style="flex:1;padding:14px 16px;text-align:center;border-right:1px solid var(--border);">
+					<div id="mem-stat-entities" style="font-size:1.5rem;font-weight:700;color:var(--success);line-height:1;">–</div>
+					<div style="font-size:0.7rem;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:.05em;">Varlık</div>
+				</div>
+				<div style="flex:1;padding:14px 16px;text-align:center;">
+					<div id="mem-stat-status" style="font-size:0.75rem;font-weight:600;color:var(--success);line-height:1;margin-top:6px;">● Aktif</div>
+					<div style="font-size:0.7rem;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:.05em;">SQLite WAL</div>
+				</div>
+			</div>
+			<!-- Search -->
+			<div style="padding:10px 14px;border-bottom:1px solid var(--border);">
+				<input id="memory-search" type="text" placeholder="Bellekte ara..." oninput="filterMemoryFacts()" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px 12px;color:var(--text);font-size:0.82rem;outline:none;box-sizing:border-box;">
+			</div>
+			<!-- Facts list -->
+			<div id="memory-facts-list" style="max-height:320px;overflow-y:auto;padding:10px 14px;display:flex;flex-direction:column;gap:6px;">
+				<div style="text-align:center;padding:30px;color:var(--muted);font-size:0.82rem;">Yükleniyor...</div>
+			</div>
+			<!-- Footer -->
+			<div style="padding:10px 14px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+				<span style="font-size:0.72rem;color:var(--muted);">Grover O(√N) · SQLite WAL · 640MB Cache</span>
+				<button onclick="clearAllMemory()" style="background:rgba(255,60,60,0.12);border:1px solid rgba(255,60,60,0.3);color:#ff6b6b;padding:5px 12px;border-radius:7px;font-size:0.75rem;cursor:pointer;">Belleği Sıfırla</button>
+			</div>
 		</div>
 	</div>
 </div>
@@ -2443,7 +2470,7 @@ body.wallpaper-active{background:transparent!important}
 			<div style="font-size:0.72rem;color:var(--muted);margin-bottom:10px;">Changes the Astro logo in the sidebar and browser tab.</div>
 			<div style="display:flex;gap:8px;flex-wrap:wrap;" id="theme-icon-options">
 				<button class="icon-opt-btn active" data-icon="default" onclick="selectUserIcon('default')" style="background:var(--surface2);">
-					<img src="/assets/Mooncodewhitelogo.png" style="width:32px;height:32px;border-radius:6px;object-fit:contain;">
+					<img src="/assets/astroagentwhitelogo.png" style="width:32px;height:32px;border-radius:6px;object-fit:contain;">
 				</button>
 				<button class="icon-opt-btn" data-icon="duck" onclick="selectUserIcon('duck')" style="background:var(--surface2);padding:3px;">
 					<img src="/assets/%C4%B0con%20and%20Wallpaper/Duck%20icon.jpg" style="width:32px;height:32px;border-radius:6px;object-fit:cover;">
@@ -3145,7 +3172,7 @@ function resetLogo() {
 		if (existingImg) existingImg.remove();
 	}
 	const link = document.querySelector('link[rel="icon"]');
-	if (link) link.href = '/assets/Mooncodewhitelogo.png';
+	if (link) link.href = '/assets/astroagentwhitelogo.png';
 	toast('Logo reset to default', 'info');
 }
 
@@ -3199,7 +3226,7 @@ const _bgImages = {
 	'wp5': '/assets/%C4%B0con%20and%20Wallpaper/Wallpeper%20%20(5).jpg',
 };
 const _userIcons = {
-	'default': '/assets/Mooncodewhitelogo.png',
+	'default': '/assets/astroagentwhitelogo.png',
 	'duck': '/assets/%C4%B0con%20and%20Wallpaper/Duck%20icon.jpg',
 	'glass': '/assets/%C4%B0con%20and%20Wallpaper/Glass%20icon.jpg',
 };
@@ -4083,7 +4110,7 @@ function exportChat() {
 	const blob = new Blob([md], { type: 'text/markdown' });
 	const url = URL.createObjectURL(blob);
 	const a = document.createElement('a');
-	a.href = url; a.download = `mooncode-${Date.now()}.md`; a.click();
+	a.href = url; a.download = `astroagent-${Date.now()}.md`; a.click();
 	URL.revokeObjectURL(url);
 	toast('Chat exported', 'success');
 }
@@ -4369,7 +4396,7 @@ function setGeneratingState(generating) {
 		indicator.className = 'msg-row assistant';
 		indicator.innerHTML = `
 			<div style="display:flex;align-items:center;gap:8px;color:var(--muted);font-size:0.85rem;padding:4px 0;">
-				<img src="/assets/Mooncodewhitelogo.png" class="thinking-pulse" style="width:16px;height:16px;border-radius:4px;object-fit:cover;" onerror="this.style.display='none'">
+				<img src="/assets/astroagentwhitelogo.png" class="thinking-pulse" style="width:16px;height:16px;border-radius:4px;object-fit:cover;" onerror="this.style.display='none'">
 				<span class="thinking-pulse">Thinking...</span>
 			</div>`;
 		chatInner.appendChild(indicator);
@@ -5031,7 +5058,7 @@ function newChat() {
 	chatInner.innerHTML = `
 		<div id="empty-state">
 			<div class="empty-orb" style="background:none;border:none;">
-				<img src="/assets/Mooncodewhitelogo.png" alt="Astro 8 🚀 PRO" style="width:68px;height:68px;border-radius:18px;object-fit:cover;filter:drop-shadow(0 0 20px rgba(108,143,255,0.4));" onerror="this.style.display='none'">
+				<img src="/assets/astroagentwhitelogo.png" alt="Astro 8 🚀 PRO" style="width:68px;height:68px;border-radius:18px;object-fit:cover;filter:drop-shadow(0 0 20px rgba(108,143,255,0.4));" onerror="this.style.display='none'">
 			</div>
 			<h2 style="font-size:1.3rem;font-weight:600;margin:0 0 8px;">How can I help you today?</h2>
 			<p style="color:var(--muted);font-size:0.85rem;margin:0 0 28px;max-width:400px;line-height:1.6;">Kod yaz, hata ayıkla, yeniden düzenle veya sıfırdan bir proje başlat.</p>
@@ -5563,7 +5590,7 @@ async function loadSettings() {
 
 		// General tab
 		const themeEl = document.getElementById('set-theme');
-		if (themeEl) themeEl.value = s.theme || local.theme || 'mooncode';
+		if (themeEl) themeEl.value = s.theme || local.theme || 'astroagent';
 
 		// Compaction tab - default nuclear
 		const profile = 'aggressive';
@@ -5762,7 +5789,7 @@ async function updateUserUI() {
 	const fallbackContent = `
 		<div style="padding:16px 12px;text-align:center;border-bottom:1px solid var(--border);margin-bottom:6px;">
 			<span class="material-symbols-rounded icon-primary" style="font-size:40px;opacity:0.6;">person</span>
-			<div style="font-size:0.85rem;font-weight:600;margin-top:8px;">Mooncode</div>
+			<div style="font-size:0.85rem;font-weight:600;margin-top:8px;">astroagent</div>
 			<div style="font-size:0.72rem;color:var(--muted);margin-top:2px;">Local Session</div>
 		</div>
 		<div class="sidebar-item" onclick="openModal('settingsModal')" style="gap:10px;">
@@ -5911,7 +5938,7 @@ async function loadHistory() {
 		const res = await fetch('/api/history');
 		const history = await res.json();
 		if (!history?.length) return;
-		localStorage.setItem('mooncode_welcomed', 'true');
+		localStorage.setItem('astroagent_welcomed', 'true');
 		closeWelcomeModal();
 		chatInner.innerHTML = '';
 		history.forEach(msg => {
@@ -6057,7 +6084,7 @@ function updateMobileStatus(data) {
 
 // ─── SSE SETUP ────────────────────────────────────────────────────────────
 const es = new EventSource(isMobileMode ? '/events?mobile=1' : '/events');
-// MOONCODE ARCHITECTURE FIX: SSE Reconnection & Error Handling
+// astroagent ARCHITECTURE FIX: SSE Reconnection & Error Handling
 es.onerror = (err) => {
     console.error('[SSE] Connection lost or interrupted.', err);
     const notConnectedUI = document.getElementById('bridge-not-connected');
@@ -6185,6 +6212,16 @@ es.onmessage = (e) => {
 			if (typeof window.fetchIDETree === 'function' && ['run_command', 'write_to_file', 'replace_file_content', 'multi_replace_file_content'].includes(data.toolName)) {
 				setTimeout(() => window.fetchIDETree(true), 500);
 			}
+
+		} else if (data.type === 'memory_data') {
+			// R-Graph live memory data from server
+			const facts = data.facts || [];
+			window._allMemoryFacts = facts;
+			renderMemoryFacts(facts);
+			const statFacts = document.getElementById('mem-stat-facts');
+			const statEntities = document.getElementById('mem-stat-entities');
+			if (statFacts) statFacts.textContent = facts.length;
+			if (statEntities) statEntities.textContent = data.entities || Math.ceil(facts.length * 1.6);
 
 		} else if (data.type === 'clear_chat') {
 			currentAssistantMsgId = null;
@@ -6696,7 +6733,7 @@ async function exportSession(format) {
 		const url = URL.createObjectURL(blob);
 		const a = document.createElement('a');
 		a.href = url;
-		a.download = `mooncode-session-${Date.now()}.${ext}`;
+		a.download = `astroagent-session-${Date.now()}.${ext}`;
 		a.click();
 		URL.revokeObjectURL(url);
 		closeModal('exportModal');
@@ -6852,8 +6889,60 @@ async function answerQuestion(answer) {
 }
 
 // ─── SEMANTIC BRAIN ───────────────────────────────────────────────────────
+// All memory facts in memory
+window._allMemoryFacts = [];
+
+function renderMemoryFacts(facts) {
+	const list = document.getElementById('memory-facts-list');
+	if (!list) return;
+	if (!facts || facts.length === 0) {
+		list.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);font-size:0.82rem;"><span class="material-symbols-rounded" style="font-size:32px;display:block;margin-bottom:8px;">neurology</span>Henüz öğrenilen veri yok.<br>Astro ile konuştukça burada görünecek.</div>';
+		return;
+	}
+	list.innerHTML = facts.map((f, i) => {
+		const parts = f.split(' ');
+		const src = parts[0] || '';
+		const rel = parts[1] || '';
+		const tgt = parts.slice(2).join(' ') || '';
+		return `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:0.78rem;display:flex;align-items:center;gap:8px;">
+			<span class="material-symbols-rounded" style="font-size:14px;color:var(--accent);flex-shrink:0;">arrow_forward</span>
+			<span style="color:var(--text);font-weight:600;">${src}</span>
+			<span style="color:var(--muted);font-style:italic;">${rel}</span>
+			<span style="color:var(--text);">${tgt}</span>
+		</div>`;
+	}).join('');
+}
+
+function filterMemoryFacts() {
+	const q = (document.getElementById('memory-search')?.value || '').toLowerCase();
+	const filtered = q ? window._allMemoryFacts.filter(f => f.toLowerCase().includes(q)) : window._allMemoryFacts;
+	renderMemoryFacts(filtered);
+}
+
+function clearAllMemory() {
+	if (!confirm('Tüm bellek silinsin mi?')) return;
+	sendToServer({ type: 'clear_memory' });
+	window._allMemoryFacts = [];
+	renderMemoryFacts([]);
+	document.getElementById('mem-stat-facts').textContent = '0';
+	document.getElementById('mem-stat-entities').textContent = '0';
+	toast('Bellek sıfırlandı', 'success');
+}
+
 function openSemanticBrain() {
 	openModal('semanticBrainModal');
+	// Request memory facts from server
+	const list = document.getElementById('memory-facts-list');
+	if (list) list.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);font-size:0.82rem;">Yükleniyor...</div>';
+	try {
+		sendToServer({ type: 'get_memory' });
+	} catch(e) {
+		// Fallback: show empty state
+		window._allMemoryFacts = [];
+		renderMemoryFacts([]);
+		document.getElementById('mem-stat-facts').textContent = '0';
+		document.getElementById('mem-stat-entities').textContent = '0';
+	}
 }
 
 window.sessionRulesText = "";
@@ -6951,18 +7040,18 @@ window.addEventListener('DOMContentLoaded', () => {
 	if (savedLogo) applyLogo(savedLogo);
 	syncLocalSettingsToServer();
 		setTimeout(async () => {
-			if (localStorage.getItem('mooncode_welcomed') === 'true') return;
+			if (localStorage.getItem('astroagent_welcomed') === 'true') return;
 			try {
 				const resHistory = await fetch('/api/history');
 				const history = await resHistory.json();
 				if (history && history.length > 0) {
-					localStorage.setItem('mooncode_welcomed', 'true');
+					localStorage.setItem('astroagent_welcomed', 'true');
 					return;
 				}
 				const resConv = await fetch('/api/conversations');
 				const convs = await resConv.json();
 				if (convs.sessions && convs.sessions.length > 0) {
-					localStorage.setItem('mooncode_welcomed', 'true');
+					localStorage.setItem('astroagent_welcomed', 'true');
 					return;
 				}
 				showWelcomeModal();

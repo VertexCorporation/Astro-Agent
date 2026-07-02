@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Fuzzy matching utilities.
  * Matches if all query characters appear in order (not necessarily consecutive).

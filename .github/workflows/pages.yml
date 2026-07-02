@@ -1,4 +1,4 @@
-name: Deploy MoonCode site
+name: Deploy AstroAgent site
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     paths:
       - README.md
       - docs/**
-      - tools/sites/moonclisite/**
+      - tools/sites/astrocli/**
       - .github/workflows/pages.yml
   workflow_dispatch:
 

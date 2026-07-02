@@ -12,8 +12,8 @@ import {
 	getModel,
 	type ImageContent,
 	type TextContent,
-} from "moon-core";
-import { Engine } from "moon-engine";
+} from "astro-core";
+import { Engine } from "astro-engine";
 import { Type } from "typebox";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { AuthStorage } from "../src/core/auth-storage.js";
@@ -63,7 +63,7 @@ describe("EngineSession concurrent prompt guard", () => {
 	let tempDir: string;
 
 	beforeEach(() => {
-		tempDir = join(tmpdir(), `Mooncli-concurrent-test-${Date.now()}`);
+		tempDir = join(tmpdir(), `astroagent-concurrent-test-${Date.now()}`);
 		mkdirSync(tempDir, { recursive: true });
 	});
 
@@ -240,11 +240,11 @@ describe("EngineSession concurrent prompt guard", () => {
 		authStorage.setRuntimeApiKey("anthropic", "test-key");
 
 		const extensionsResult = await createTestExtensionsResult([
-			(Mooncli) => {
-				(globalThis as typeof globalThis & { testExtensionApi?: unknown }).testExtensionApi = Mooncli;
+			(AstroAgent) => {
+				(globalThis as typeof globalThis & { testExtensionApi?: unknown }).testExtensionApi = AstroAgent;
 			},
-			(Mooncli) => {
-				Mooncli.on("input", async (event) => {
+			(AstroAgent) => {
+				AstroAgent.on("input", async (event) => {
 					lastInputSource = event.source;
 				});
 			},
@@ -268,16 +268,16 @@ describe("EngineSession concurrent prompt guard", () => {
 		await new Promise((resolve) => setTimeout(resolve, 10));
 		expect(session.isStreaming).toBe(true);
 
-		const Mooncli = (
+		const AstroAgent = (
 			globalThis as typeof globalThis & {
 				testExtensionApi?: {
 					sendUserMessage: (content: string, options?: { deliverAs?: "steer" | "followUp" }) => void;
 				};
 			}
 		).testExtensionApi;
-		expect(Mooncli).toBeDefined();
+		expect(AstroAgent).toBeDefined();
 
-		Mooncli!.sendUserMessage("Steer from extension", { deliverAs: "steer" });
+		AstroAgent!.sendUserMessage("Steer from extension", { deliverAs: "steer" });
 		await new Promise((resolve) => setTimeout(resolve, 25));
 
 		expect(session.pendingMessageCount).toBe(1);

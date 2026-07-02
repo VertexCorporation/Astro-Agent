@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Proxy stream function for apps that route Provider calls through a server.
  * The server manages auth and proxies requests to Provider providers.
@@ -15,7 +14,7 @@ import {
 	type SimpleStreamOptions,
 	type StopReason,
 	type ToolCall,
-} from "moon-core";
+} from "astro-core";
 
 // Create stream class matching ProxyMessageEventStream
 class ProxyMessageEventStream extends EventStream<AssistantMessageEvent, AssistantMessage> {

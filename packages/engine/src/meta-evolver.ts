@@ -1,16 +1,16 @@
-import { auditManager } from "moon-core";
+import { auditManager } from "astro-core";
 import type { Engine } from "./engine.js";
 
 /**
  * Meta-Evolution Engine (Self-Improving AI Loop)
- * "Musk-Grade" feature: Allows MoonCode to read its own source code,
+ * "Musk-Grade" feature: Allows Astro-Agent to read its own source code,
  * find bottlenecks, and propose architectural improvements to itself.
  */
 export class MetaEvolver {
 	constructor(private session: Engine) {}
 
 	/**
-	 * Scans the current workspace (MoonCode's own source or the user's project)
+	 * Scans the current workspace (Astro-Agent's own source or the user's project)
 	 * and attempts to find optimization points.
 	 */
 	public async evolve(): Promise<string> {

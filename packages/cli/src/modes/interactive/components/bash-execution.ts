@@ -3,7 +3,7 @@
  * Component for displaying bash command execution with streaming output.
  */
 
-import { Container, Loader, Text, type TUI } from "moon-tui";
+import { Container, Loader, Text, type TUI } from "astro-tui";
 import stripAnsi from "strip-ansi";
 import {
 	DEFAULT_MAX_BYTES,

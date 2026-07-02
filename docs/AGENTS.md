@@ -1,4 +1,4 @@
-# MoonAgent Agent Rules
+# AstroAgent Agent Rules
 
 ## Çalışma biçimi
 
@@ -19,10 +19,10 @@
 
 ## Hafıza ve bağlam izolasyonu
 
-- MoonAgent kalıcı “beyin” olarak sadece açıkça yüklenen dosyaları, aktif oturum geçmişini ve geçerli repo bağlamını kullanır.
-- Yeni `mooncode` çalıştırması varsayılan olarak yeni session oluşturur; eski hafıza çağırmaz.
-- Eski oturum kalıntısı istenmiyorsa `moonagent --clear-memory` kaydedilmiş session geçmişini siler.
-- Tam temiz çalışma için `moonagent --no-session --no-context-files` kullanılabilir.
+- AstroAgent kalıcı “beyin” olarak sadece açıkça yüklenen dosyaları, aktif oturum geçmişini ve geçerli repo bağlamını kullanır.
+- Yeni `astroagent` çalıştırması varsayılan olarak yeni session oluşturur; eski hafıza çağırmaz.
+- Eski oturum kalıntısı istenmiyorsa `AstroAgent --clear-memory` kaydedilmiş session geçmişini siler.
+- Tam temiz çalışma için `AstroAgent --no-session --no-context-files` kullanılabilir.
 - Auth, model ve settings dosyaları hafıza değildir; güvenlik için `--clear-memory` bunları silmez.
 
 ## Büyük proje / düşük token stratejisi
@@ -45,7 +45,7 @@
 
 ## Automation Mode
 
-Varsayılan kapalıdır. Açıkken MoonAgent çok adımlı terminal/browser/app görevleri yürütebilir. Yüksek etkili dış servis aksiyonlarında açık kullanıcı niyeti ve gerektiğinde onay aranır.
+Varsayılan kapalıdır. Açıkken AstroAgent çok adımlı terminal/browser/app görevleri yürütebilir. Yüksek etkili dış servis aksiyonlarında açık kullanıcı niyeti ve gerektiğinde onay aranır.
 
 ## Final kalite kapısı
 

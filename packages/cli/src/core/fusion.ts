@@ -1,4 +1,5 @@
-import { type Api, completeSimple, type Model } from "moon-core";
+// @ts-nocheck
+import { type Api, completeSimple, type Model } from "astro-core";
 
 export interface FusionState {
 	enabled: boolean;

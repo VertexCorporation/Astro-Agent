@@ -1,5 +1,5 @@
 // @ts-nocheck
-import type { AssistantMessage } from "moon-core";
+import type { AssistantMessage } from "astro-core";
 
 export type AffectiveMode = "subtle" | "active";
 export type AffectiveSignalSource = "user" | "assistant";

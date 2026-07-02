@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { performance } from "node:perf_hooks";
 import type { TUI } from "../tui.js";
 import { Text } from "./text.js";

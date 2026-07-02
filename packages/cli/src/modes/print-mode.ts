@@ -3,11 +3,11 @@
  * Print mode (single-shot): Send prompts, output result, exit.
  *
  * Used for:
- * - `MoonCode -p "prompt"` - text output
- * - `MoonCode --mode json "prompt"` - JSON event stream
+ * - `Astro-Agent -p "prompt"` - text output
+ * - `Astro-Agent --mode json "prompt"` - JSON event stream
  */
 
-import type { AssistantMessage, ImageContent } from "moon-core";
+import type { AssistantMessage, ImageContent } from "astro-core";
 import type { EngineSessionRuntime } from "../core/engine-session-runtime.js";
 import { flushRawStdout, writeRawStdout } from "../core/output-guard.js";
 import { killTrackedDetachedChildren } from "../utils/shell.js";

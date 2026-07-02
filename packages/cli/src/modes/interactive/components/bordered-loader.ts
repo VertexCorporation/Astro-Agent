@@ -1,4 +1,5 @@
-import { Container, Text, type TUI } from "moon-tui";
+// @ts-nocheck
+import { Container, Text, type TUI } from "astro-tui";
 import type { Theme } from "../theme/theme.js";
 
 /** Minimal, static loader replacement (no animations, no borders) */

@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-nocheck -- TODO: Update to match current OpenAI SDK types
 import { AzureOpenAI } from "openai";
 import type { ResponseCreateParamsStreaming } from "openai/resources/responses/responses.js";
 import { getEnvApiKey } from "../env-api-keys.js";
@@ -37,7 +37,7 @@ function resolveDeploymentName(model: Model<"azure-openai-responses">, options?:
 	if (options?.azureDeploymentName) {
 		return options.azureDeploymentName;
 	}
-	const mappedDeployment = parseDeploymentNameMap(process.env.AZURE_OpenAI_DEPLOYMENT_NAME_MAP).get(model.id);
+	const mappedDeployment = parseDeploymentNameMap(process.env.AZURE_OPENAI_DEPLOYMENT_NAME_MAP).get(model.id);
 	return mappedDeployment || model.id;
 }
 
@@ -180,10 +180,10 @@ function resolveAzureConfig(
 	model: Model<"azure-openai-responses">,
 	options?: AzureOpenAIResponsesOptions,
 ): { baseUrl: string; apiVersion: string } {
-	const apiVersion = options?.azureApiVersion || process.env.AZURE_OpenAI_API_VERSION || DEFAULT_AZURE_API_VERSION;
+	const apiVersion = options?.azureApiVersion || process.env.AZURE_OPENAI_API_VERSION || DEFAULT_AZURE_API_VERSION;
 
-	const baseUrl = options?.azureBaseUrl?.trim() || process.env.AZURE_OpenAI_BASE_URL?.trim() || undefined;
-	const resourceName = options?.azureResourceName || process.env.AZURE_OpenAI_RESOURCE_NAME;
+	const baseUrl = options?.azureBaseUrl?.trim() || process.env.AZURE_OPENAI_BASE_URL?.trim() || undefined;
+	const resourceName = options?.azureResourceName || process.env.AZURE_OPENAI_RESOURCE_NAME;
 
 	let resolvedBaseUrl = baseUrl;
 
@@ -197,7 +197,7 @@ function resolveAzureConfig(
 
 	if (!resolvedBaseUrl) {
 		throw new Error(
-			"Azure OpenAI base URL is required. Set AZURE_OpenAI_BASE_URL or AZURE_OpenAI_RESOURCE_NAME, or pass azureBaseUrl, azureResourceName, or model.baseUrl.",
+			"Azure OpenAI base URL is required. Set AZURE_OPENAI_BASE_URL or AZURE_OPENAI_RESOURCE_NAME, or pass azureBaseUrl, azureResourceName, or model.baseUrl.",
 		);
 	}
 
@@ -209,12 +209,12 @@ function resolveAzureConfig(
 
 function createClient(model: Model<"azure-openai-responses">, apiKey: string, options?: AzureOpenAIResponsesOptions) {
 	if (!apiKey) {
-		if (!process.env.AZURE_OpenAI_API_KEY) {
+		if (!process.env.AZURE_OPENAI_API_KEY) {
 			throw new Error(
-				"Azure OpenAI API key is required. Set AZURE_OpenAI_API_KEY environment variable or pass it as an argument.",
+				"Azure OpenAI API key is required. Set AZURE_OPENAI_API_KEY environment variable or pass it as an argument.",
 			);
 		}
-		apiKey = process.env.AZURE_OpenAI_API_KEY;
+		apiKey = process.env.AZURE_OPENAI_API_KEY;
 	}
 
 	const headers = { ...model.headers };

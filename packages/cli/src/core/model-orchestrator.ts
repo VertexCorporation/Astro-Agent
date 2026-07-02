@@ -1,6 +1,6 @@
 // @ts-nocheck
-import type { Model } from "moon-core";
-import { modelsAreEqual } from "moon-core";
+import type { Model } from "astro-core";
+import { modelsAreEqual } from "astro-core";
 import type { ModelRegistry } from "./model-registry.js";
 import { selectBestAvailableModel } from "./model-resolver.js";
 

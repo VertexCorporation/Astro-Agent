@@ -58,8 +58,8 @@ function resolvePromptInput(input: string | undefined, description: string): str
 
 function loadContextFileFromDir(dir: string): { path: string; content: string } | null {
 	const candidates = [
-		"MOONCODE.md",
-		"MOONCODE.MD",
+		"ASTROAGENT.md",
+		"ASTROAGENT.MD",
 		"MOON.md",
 		"MOON.MD",
 		"Moon.md",

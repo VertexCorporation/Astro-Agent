@@ -125,7 +125,7 @@ export async function loginGitLab(callbacks: OAuthLoginCallbacks): Promise<OAuth
 					if (code) {
 						res.writeHead(200, { "Content-Type": "text/html" });
 						res.end(
-							"<html><body><h1 style='font-family:sans-serif'>Authentication successful!</h1><p style='font-family:sans-serif'>You can close this tab and return to MoonCode.</p><script>setTimeout(() => window.close(), 1000)</script></body></html>",
+							"<html><body><h1 style='font-family:sans-serif'>Authentication successful!</h1><p style='font-family:sans-serif'>You can close this tab and return to Astro-Agent.</p><script>setTimeout(() => window.close(), 1000)</script></body></html>",
 						);
 						server.close();
 						resolve(code);

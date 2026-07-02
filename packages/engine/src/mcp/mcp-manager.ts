@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { type ChildProcessWithoutNullStreams, spawn } from "node:child_process";
 import type { EngineTool } from "../types.js";
 
@@ -37,7 +36,7 @@ class HeaderStdioMcpClient {
 		await this.request("initialize", {
 			protocolVersion: "2024-11-05",
 			capabilities: { tools: {} },
-			clientInfo: { name: "MoonCode-MCP-Manager", version: "1.0.0" },
+			clientInfo: { name: "AstroAgent-MCP-Manager", version: "1.0.0" },
 		});
 		this.notify("notifications/initialized", {});
 		this.initialized = true;
@@ -246,7 +245,6 @@ export class McpManager {
 				const client = new HeaderStdioMcpClient(config);
 				await client.connect();
 				this.clients.set(config.name, client);
-				console.log(`[MCP] Connected to ${config.name}`);
 			} catch (error) {
 				console.error(`[MCP] Failed to connect to ${config.name}:`, error);
 			}

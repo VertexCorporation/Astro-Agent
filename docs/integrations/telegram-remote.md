@@ -1,6 +1,6 @@
-# MoonAgent Telegram Remote
+# AstroAgent Telegram Remote
 
-Telefondan Telegram ile MoonAgent bilgisayarını güvenli komutlarla kontrol etmek için küçük remote servis.
+Telefondan Telegram ile AstroAgent bilgisayarını güvenli komutlarla kontrol etmek için küçük remote servis.
 
 ## Kurulum
 
@@ -15,7 +15,7 @@ PowerShell örneği:
 ```powershell
 $env:TELEGRAM_BOT_TOKEN="BOT_TOKEN"
 $env:TELEGRAM_ALLOWED_CHAT_IDS="CHAT_ID"
-$env:MOON_REMOTE_ROOT="C:\Users\ozenc\OneDrive\Desktop"
+$env:ASTRO_REMOTE_ROOT="C:\Users\ozenc\OneDrive\Desktop"
 npm run remote:telegram
 ```
 
@@ -29,7 +29,7 @@ npm run remote:telegram
 /pwd              aktif klasör
 /git              git status
 /run <komut>      izinli komut çalıştır
-/task <iş>        .moon-remote/tasks.jsonl içine görev kaydet
+/task <iş>        .astroagent-remote/tasks.jsonl içine görev kaydet
 /logs             son remote logları
 ```
 

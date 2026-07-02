@@ -1,9 +1,9 @@
-# MoonCode Architecture Guide
+# Astro Agent Architecture Guide
 
 ## Project Structure
 
 ```
-mooncode/
+astro-agent/
 ├── packages/
 │   └── cli/                     # Main CLI package
 │       ├── src/
@@ -16,9 +16,9 @@ mooncode/
 │       │   │   ├── design-system/        # UI theme system
 │       │   │   └── tools/               # Tool implementations (bash, browser, etc.)
 │       │   ├── modes/
-│       │   │   ├── web/                 # Web UI mode
-│       │   │   │   ├── web-mode.ts      # Web UI HTTP server (port 3135)
-│       │   │   │   └── web-ui.html      # ★ MAIN Web UI HTML (chat interface)
+│       │   │   ├── studio/              # Web UI mode
+│       │   │   │   ├── studio-mode.ts   # Web UI HTTP server (port 3135)
+│       │   │   │   └── studio-ui.html   # ★ MAIN Web UI HTML (chat interface)
 │       │   │   └── interactive/         # Terminal-based interactive mode
 │       │   ├── utils/            # Utilities (version check, changelog, etc.)
 │       │   ├── config.ts         # VERSION constant, paths, settings
@@ -38,24 +38,24 @@ mooncode/
 |------|---------|-------------|
 | 3131 | Auth/MCP API Server | `web-ui-server.ts` - API endpoints for auth, MCP, brain |
 | 3133 | Browser Bridge WebSocket | `browser-bridge-server.ts` - Browser control |
-| 3135 | Web UI | `web-mode.ts` - Main chat interface (HTML served from `web-ui.html`) |
+| 3135 | Web UI | `studio-mode.ts` - Main chat interface (HTML served from `studio-ui.html`) |
 | 3133-3142 | Bridge scan range | Browser extension scans these ports for bridge |
 
 ## Web UI System (MAIN)
 
-The main user-facing web interface is served by `web-mode.ts` on **port 3135**.
+The main user-facing web interface is served by `studio-mode.ts` on **port 3135**.
 
 **Key files:**
-- `src/modes/web/web-mode.ts` - HTTP server, API routes, session management
-- `src/modes/web/web-ui.html` - Single-file HTML/CSS/JS UI (chat interface)
+- `src/modes/studio/studio-mode.ts` - HTTP server, API routes, session management
+- `src/modes/studio/studio-ui.html` - Single-file HTML/CSS/JS UI (chat interface)
 - `src/core/web-ui-server.ts` - Separate API server for auth, MCP, brain panels
 
 **How it works:**
-1. `web-mode.ts` starts on port 3135 (was random, now fixed)
+1. `studio-mode.ts` starts on port 3135 (was random, now fixed)
 2. It also starts `web-ui-server.ts` on port 3131 for auth/MCP APIs
-3. The browser loads `web-ui.html` from the web-mode server
-4. `web-ui.html` makes API calls to the same origin (port 3135)
-5. `web-mode.ts` handles MCP routes by forwarding to `web-ui-server.ts`'s shared listeners
+3. The browser loads `studio-ui.html` from the studio-mode server
+4. `studio-ui.html` makes API calls to the same origin (port 3135)
+5. `studio-mode.ts` handles MCP routes by forwarding to `web-ui-server.ts`'s shared listeners
 
 ## MCP (Model Context Protocol)
 
@@ -68,7 +68,7 @@ The main user-facing web interface is served by `web-mode.ts` on **port 3135**.
 **Architecture:**
 - State provider registered by `interactive-mode.ts` via `setMcpPanelStateProvider()`
 - Action listeners registered by engine via `webUiMcpActionListeners` Set
-- Both `web-ui-server.ts` (port 3131) and `web-mode.ts` (port 3135) handle these routes
+- Both `web-ui-server.ts` (port 3131) and `studio-mode.ts` (port 3135) handle these routes
 - UI state is shared via module-level exports from `web-ui-server.ts`
 
 **Custom MCP:** Add via "Custom MCP Server" section - name, command/port, arguments
@@ -83,10 +83,10 @@ The main user-facing web interface is served by `web-mode.ts` on **port 3135**.
 
 | Issue | Fix |
 |-------|-----|
-| Version shows old value | Update `web-ui.html` line 967 + run build |
-| MCP API returns "Not Found" | Ensure `web-mode.ts` has MCP routes (added in handleRequest) |
+| Version shows old value | Update `studio-ui.html` line 967 + run build |
+| MCP API returns "Not Found" | Ensure `studio-mode.ts` has MCP routes (added in handleRequest) |
 | Port conflict | Web UI fixed at 3135, bridge auto-scans range |
-| Browser can't connect | Run `mooncode`, check bridge port, restart extension |
+| Browser can't connect | Run `astro`, check bridge port, restart extension |
 | High token usage | Append `/compact` to session prompt |
 
 ## Roadmap (Priority Order)
@@ -104,5 +104,5 @@ The main user-facing web interface is served by `web-mode.ts` on **port 3135**.
 cd packages/cli
 npm run build          # Compile TypeScript
 npm install -g .       # Update global CLI
-mooncode               # Start (opens web UI at http://127.0.0.1:3135)
+astro                  # Start (opens web UI at http://127.0.0.1:3135)
 ```

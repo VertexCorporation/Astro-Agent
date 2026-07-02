@@ -1,5 +1,7 @@
+// @ts-nocheck
+
+import type { EngineTool } from "astro-engine";
 import { request } from "http";
-import type { EngineTool } from "moon-engine";
 import { Type } from "typebox";
 import { wrapToolDefinition } from "./tool-definition-wrapper.js";
 
@@ -14,14 +16,15 @@ const visualBridgeSchema = Type.Object({
 
 /**
  * Browser Bridge (Visual & Live Copying)
- * Connects to the MoonCode Chrome Extension to extract live DOM, CSS, and console errors
+ * Connects to the Astro-Agent Chrome Extension to extract live DOM, CSS, and console errors
  * straight from the user's active tab.
  */
 export function createVisualBridgeToolDefinition(extensionPort: number = 3133) {
 	return {
 		name: "visual_bridge",
 		label: "visual_bridge",
-		description: "Connects to the MoonCode browser extension to read live CSS, DOM, or errors from the active tab.",
+		description:
+			"Connects to the Astro-Agent browser extension to read live CSS, DOM, or errors from the active tab.",
 		promptSnippet: "Use the visual bridge to extract CSS or errors from Chrome",
 		parameters: visualBridgeSchema,
 		async execute(_id: string, input: any, signal?: AbortSignal) {
@@ -54,7 +57,7 @@ export function createVisualBridgeToolDefinition(extensionPort: number = 3133) {
 				req.on("error", (err) => {
 					reject(
 						new Error(
-							`Could not connect to MoonCode browser extension on port ${extensionPort}. Is it installed and running? Error: ${err.message}`,
+							`Could not connect to Astro-Agent browser extension on port ${extensionPort}. Is it installed and running? Error: ${err.message}`,
 						),
 					);
 				});

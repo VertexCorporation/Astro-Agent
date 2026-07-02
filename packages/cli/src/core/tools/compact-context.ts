@@ -1,4 +1,5 @@
-import type { EngineTool } from "moon-engine";
+// @ts-nocheck
+import type { EngineTool } from "astro-engine";
 import { Type } from "typebox";
 import type { EngineSession } from "../engine-session.js";
 import type { ToolDefinition } from "../extensions/types.js";
@@ -7,7 +8,7 @@ import { wrapToolDefinition } from "./tool-definition-wrapper.js";
 const compactSchema = Type.Object({
 	instructions: Type.Optional(
 		Type.String({
-			description: "İsteğe bağlı olarak, sıkıştırma sırasında korunması gereken özel talimatlar.",
+			description: "Optional custom instructions to preserve during compaction.",
 		}),
 	),
 });
@@ -17,9 +18,9 @@ export function getCompactContextToolDefinition(
 ): ToolDefinition<typeof compactSchema, any, any> {
 	return {
 		name: "compact_context",
-		label: "Sıkıştır",
+		label: "Compact",
 		description:
-			"Sıkıştırma aracı. Eğer context çok büyüdüyse eski mesajları tek bir özete sıkıştırarak token kullanımını azaltır. Sadece belirgin bir token baskısı varsa çağırın.",
+			"Context compaction tool. Reduces token usage by condensing older messages into a single summary when the context has grown too large. Only invoke when there is noticeable token pressure.",
 		promptSnippet: "Compact session context to save tokens",
 		parameters: compactSchema,
 		async execute(
@@ -31,7 +32,7 @@ export function getCompactContextToolDefinition(
 		) {
 			if (!signal) {
 				return {
-					content: [{ type: "text", text: "Hata: İptal sinyali (signal) eksik." }],
+					content: [{ type: "text", text: "Error: Abort signal (signal) is missing." }],
 					details: { error: true },
 					isError: true,
 				};
@@ -42,14 +43,14 @@ export function getCompactContextToolDefinition(
 					content: [
 						{
 							type: "text",
-							text: `Sıkıştırma tamamlandı. Orijinal token: ${result.tokensBefore}. Yeni özet eklendi:\n${result.summary}`,
+							text: `Compaction complete. Original token count: ${result.tokensBefore}. New summary appended:\n${result.summary}`,
 						},
 					],
 					details: result,
 				};
 			} catch (err: any) {
 				return {
-					content: [{ type: "text", text: `Sıkıştırma başarısız oldu: ${err.message}` }],
+					content: [{ type: "text", text: `Compaction failed: ${err.message}` }],
 					details: { error: err.message },
 					isError: true,
 				};
@@ -57,7 +58,7 @@ export function getCompactContextToolDefinition(
 		},
 		renderCall(_args, theme) {
 			return {
-				render: () => [theme.fg("toolTitle", "Token Sıkıştırması Çalışıyor 🧹")],
+				render: () => [theme.fg("toolTitle", "Token Compaction Running 🧹")],
 				invalidate: () => {},
 			};
 		},

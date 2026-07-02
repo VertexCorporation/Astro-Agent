@@ -1,7 +1,7 @@
 // @ts-nocheck
 
+import type { EngineState } from "astro-engine";
 import { existsSync, readFileSync, writeFileSync } from "fs";
-import type { EngineState } from "moon-engine";
 import { basename, join } from "path";
 import { APP_NAME, getExportTemplateDir } from "../../config.js";
 import { getResolvedThemeColors, getThemeExportColors } from "../../modes/interactive/theme/theme.js";

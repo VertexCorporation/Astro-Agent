@@ -3,8 +3,8 @@
  * Shared utilities for compaction and branch summarization.
  */
 
-import type { Message } from "moon-core";
-import type { EngineMessage } from "moon-engine";
+import type { Message } from "astro-core";
+import type { EngineMessage } from "astro-engine";
 
 // ============================================================================
 // File Operation Tracking

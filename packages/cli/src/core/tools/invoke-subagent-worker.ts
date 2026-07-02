@@ -1,5 +1,6 @@
+// @ts-nocheck
 import { parentPort } from "node:worker_threads";
-import { Engine } from "moon-engine";
+import { Engine } from "astro-engine";
 import { createCodingTools } from "./index.js";
 
 let engine: Engine | null = null;

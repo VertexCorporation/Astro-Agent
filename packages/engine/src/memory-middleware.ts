@@ -1,4 +1,4 @@
-import { compressMessages, fetchMemory, saveFact } from "moon-core";
+import { compressMessages, fetchMemory, saveFact } from "astro-core";
 import type { EngineMessage } from "./types.js";
 
 export interface MemStats {
@@ -10,7 +10,7 @@ export interface MemStats {
 }
 
 const OPT_SYSTEM_PROMPT =
-	"You are a high-performance AI assistant with access to a deterministic relational memory graph. When memory context is provided in [MEMORY] blocks, use it to answer accurately. Be concise and precise.";
+	"You are a high-performance AI assistant with access to a deterministic relational memory graph. When memory context is provided in [MEMORY] blocks, use it to answer accurately. Be concise, direct, and DO NOT narrate your thought process (e.g., do not say 'The user is asking...' or 'I will reply with...'). Just give the answer.";
 
 /**
  * Memory Middleware:
@@ -47,10 +47,15 @@ export async function memoryMiddleware(
 	// 3. Inject Facts into System Prompt or Last User Message
 	const finalMessages = [...processedMessages];
 
-	// Enforce the OPT system prompt
+	// Append the OPT system prompt to preserve existing personality
 	const systemIndex = finalMessages.findIndex((m) => (m.role as string) === "system");
 	if (systemIndex !== -1) {
-		finalMessages[systemIndex] = { ...finalMessages[systemIndex], content: OPT_SYSTEM_PROMPT } as any;
+		const existing = finalMessages[systemIndex];
+		const currentText = typeof existing.content === "string" ? existing.content : "";
+		finalMessages[systemIndex] = {
+			...existing,
+			content: `${currentText}\n\n${OPT_SYSTEM_PROMPT}`,
+		} as any;
 	} else {
 		finalMessages.unshift({ role: "system", content: OPT_SYSTEM_PROMPT } as any);
 	}
@@ -95,7 +100,11 @@ export async function memoryMiddleware(
  * Fact extraction: Parses LLM responses and user inputs to save relations to R-Graph.
  */
 export function extractAndSaveFacts(userMsg: string, assistantReply: string): void {
-	const combined = `${userMsg} ${assistantReply}`.toLowerCase();
+	// To prevent regex catastrophic backtracking on huge code blocks, we limit the string length
+	// We only care about conversational facts, which usually appear early in the prompt.
+	const safeUser = userMsg.slice(0, 500);
+	const safeAssistant = assistantReply.slice(0, 500);
+	const combined = `${safeUser} ${safeAssistant}`.toLowerCase();
 
 	try {
 		const nameMatch =

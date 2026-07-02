@@ -1,9 +1,9 @@
 // @ts-nocheck
 import * as fs from "node:fs";
 import * as path from "node:path";
+import type { EditorTheme, MarkdownTheme, SelectListTheme } from "astro-tui";
 import chalk from "chalk";
 import { highlight, supportsLanguage } from "cli-highlight";
-import type { EditorTheme, MarkdownTheme, SelectListTheme } from "moon-tui";
 import { type Static, Type } from "typebox";
 import { Compile } from "typebox/compile";
 import { getCustomThemesDir, getThemesDir } from "../../../config.js";
@@ -660,7 +660,7 @@ function getDefaultTheme(): string {
 
 function normalizeThemeName(name: string | undefined): string {
 	if (!name) return getDefaultTheme();
-	if (name === "moon") return "Moon Apex";
+	if (name === "astro" || name === "moon") return "Moon Apex";
 	if (name === "dark") return "North Dark";
 	if (name === "light") return "North light";
 	if (name === "soft") return "Moon Apex";
@@ -672,7 +672,7 @@ function normalizeThemeName(name: string | undefined): string {
 // ============================================================================
 
 // Use globalThis to share theme across module loaders (tsx + jiti in dev mode)
-const THEME_KEY = Symbol.for("MoonCode:theme");
+const THEME_KEY = Symbol.for("Astro-Agent:theme");
 
 // Export theme as a getter that reads from globalThis
 // This ensures all module instances (tsx, jiti) see the same theme
@@ -1163,7 +1163,7 @@ export function getEditorTheme(): EditorTheme {
 	};
 }
 
-export function getSettingsListTheme(): import("moon-tui").SettingsListTheme {
+export function getSettingsListTheme(): import("astro-tui").SettingsListTheme {
 	return {
 		label: (text: string, selected: boolean) => (selected ? theme.fg("accent", text) : text),
 		value: (text: string, selected: boolean) => (selected ? theme.fg("accent", text) : theme.fg("muted", text)),

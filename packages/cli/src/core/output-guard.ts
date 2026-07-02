@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Stdout takeover for TUI modes.
  *

@@ -1,6 +1,6 @@
 # Antigravity Integration
 
-MoonAgent features native integration with Antigravity through the highly optimized `google-antigravity` API adapter and `antigravity` provider. This integration allows senior developers and agentic systems to exploit Google's robust sandbox environments and state-of-the-art reasoning architectures.
+AstroAgent features native integration with Antigravity through the highly optimized `google-antigravity` API adapter and `antigravity` provider. This integration allows senior developers and agentic systems to exploit Google's robust sandbox environments and state-of-the-art reasoning architectures.
 
 All mappings and limits are structurally verified against `marcodiniz/ag-local-bridge` technical specifications.
 
@@ -37,24 +37,24 @@ Ensure you utilize the exact canonical IDs listed below for perfect compatibilit
 ### 1. Launching the Interactive TUI
 Launch the workspace directly using Claude Sonnet 4.6 as the primary agentic engine:
 ```bash
-moonagent --provider antigravity --model antigravity-claude-sonnet-4-6-thinking
+AstroAgent --provider antigravity --model antigravity-claude-sonnet-4-6-thinking
 ```
 
 ### 2. Autonomous Task Execution
 Execute an autonomous codebase fix with deep reasoning via Gemini 3.5 Flash (High):
 ```bash
-moonagent "fix connection leaks in src/db.ts and verify using npm run test" --model antigravity-gemini-3-5-flash-high
+AstroAgent "fix connection leaks in src/db.ts and verify using npm run test" --model antigravity-gemini-3-5-flash-high
 ```
 
 ### 3. Quick System Information
 Query the active bridge connection, model mappings, and configuration state:
 ```bash
-moonagent --info
+AstroAgent --info
 ```
 
 #### Expected System Verification Output:
 ```text
-[MoonAgent 1.26-v2] - Local Coding Environment Status
+[AstroAgent 1.26-v2] - Local Coding Environment Status
 -----------------------------------------------
 Active Provider: Antigravity (google-antigravity)
 Connected Bridge: OK (Port: 11434, Status: active)

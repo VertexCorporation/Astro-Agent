@@ -5,9 +5,9 @@
 import { chmodSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { getModel, type OAuthCredentials, type OAuthProvider } from "moon-core";
-import { getOAuthApiKey } from "moon-core/oauth";
-import { Engine } from "moon-engine";
+import { getModel, type OAuthCredentials, type OAuthProvider } from "astro-core";
+import { getOAuthApiKey } from "astro-core/oauth";
+import { Engine } from "astro-engine";
 import { AuthStorage } from "../src/core/auth-storage.js";
 import { EngineSession } from "../src/core/engine-session.js";
 import { createEventBus } from "../src/core/event-bus.js";
@@ -26,10 +26,10 @@ import { createCodingTools } from "../src/index.js";
 export const API_KEY = process.env.ANTHROPIC_OAUTH_TOKEN || process.env.ANTHROPIC_API_KEY;
 
 // ============================================================================
-// OAuth API key resolution from ~/.mooncode/engine/auth.json
+// OAuth API key resolution from ~/.astroagent/engine/auth.json
 // ============================================================================
 
-const AUTH_PATH = join(homedir(), ".mooncode", "engine", "auth.json");
+const AUTH_PATH = join(homedir(), ".astroagent", "engine", "auth.json");
 
 type ApiKeyCredential = {
 	type: "api_key";
@@ -66,7 +66,7 @@ function saveAuthStorage(storage: AuthStorageData): void {
 }
 
 /**
- * Resolve API key for a provider from ~/.mooncode/engine/auth.json
+ * Resolve API key for a provider from ~/.astroagent/engine/auth.json
  *
  * For API key credentials, returns the key directly.
  * For OAuth credentials, returns the access token (refreshing if expired and saving back).
@@ -106,18 +106,18 @@ export async function resolveApiKey(provider: string): Promise<string | undefine
 }
 
 /**
- * Check if a provider has credentials in ~/.mooncode/engine/auth.json
+ * Check if a provider has credentials in ~/.astroagent/engine/auth.json
  */
 export function hasAuthForProvider(provider: string): boolean {
 	const storage = loadAuthStorage();
 	return provider in storage;
 }
 
-/** Path to the real Mooncli engine config directory */
-export const PI_AGENT_DIR = join(homedir(), ".mooncode", "engine");
+/** Path to the real AstroAgent engine config directory */
+export const PI_AGENT_DIR = join(homedir(), ".astroagent", "engine");
 
 /**
- * Get an AuthStorage instance backed by ~/.mooncode/engine/auth.json
+ * Get an AuthStorage instance backed by ~/.astroagent/engine/auth.json
  * Use this for tests that need real OAuth credentials.
  */
 export function getRealAuthStorage(): AuthStorage {
@@ -232,7 +232,7 @@ export function createTestResourceLoader(options: CreateTestResourceLoaderOption
  * Use this for e2e tests that need real Provider calls.
  */
 export function createTestSession(options: TestSessionOptions = {}): TestSessionContext {
-	const tempDir = join(tmpdir(), `Mooncli-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+	const tempDir = join(tmpdir(), `astroagent-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
 	mkdirSync(tempDir, { recursive: true });
 
 	const model = getModel("anthropic", "claude-sonnet-4-5")!;

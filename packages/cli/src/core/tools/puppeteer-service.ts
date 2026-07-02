@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { platform } from "node:os";
 import puppeteer, { type Browser } from "puppeteer-core";
 

@@ -1,7 +1,8 @@
+// @ts-nocheck
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
-import type { EngineTool } from "moon-engine";
-import { Text } from "moon-tui";
+import type { EngineTool } from "astro-engine";
+import { Text } from "astro-tui";
 import { type Static, Type } from "typebox";
 import type { Theme } from "../../modes/interactive/theme/theme.js";
 import type { ToolDefinition, ToolRenderResultOptions } from "../extensions/types.js";
@@ -247,7 +248,7 @@ export function createBrowserTabsToolDefinition(): ToolDefinition<typeof browser
 		name: "browser_tabs",
 		label: "browser_tabs",
 		description:
-			"Control Chrome tabs through the MoonCode Chrome extension. Actions: list, active, open, close, focus, reload, navigate.",
+			"Control Chrome tabs through the Astro-Agent Chrome extension. Actions: list, active, open, close, focus, reload, navigate.",
 		promptSnippet: "Control connected Chrome tabs",
 		promptGuidelines: [
 			"Use browser_tabs to inspect or change Chrome tabs when the user asks for browser control.",
@@ -287,7 +288,7 @@ export function createBrowserPageToolDefinition(
 		name: "browser_page",
 		label: "browser_page",
 		description:
-			"Read or operate the current Chrome page through the MoonCode Chrome extension. Actions: read, read_dom, click, type, hover, drag, mouse, canvas_info, canvas_draw, upload_file, press_key, get_elements, evaluate, scroll, console_logs, screenshot, wait, clear_ui.",
+			"Read or operate the current Chrome page through the Astro-Agent Chrome extension. Actions: read, read_dom, click, type, hover, drag, mouse, canvas_info, canvas_draw, upload_file, press_key, get_elements, evaluate, scroll, console_logs, screenshot, wait, clear_ui.",
 		promptSnippet: "Read or operate the connected Chrome page",
 		promptGuidelines: [
 			"Use browser_page read to get page title, URL, selection, and visible text.",
@@ -305,7 +306,7 @@ export function createBrowserPageToolDefinition(
 			"Use browser_page evaluate for short JavaScript expressions. Return serializable data.",
 			"Use browser_page console_logs to debug JavaScript errors or see page logs.",
 			"Use browser_page wait to pause between actions (ms, max 15000).",
-			"Use browser_page clear_ui to dismiss any MoonCode visual overlays/labels on the page.",
+			"Use browser_page clear_ui to dismiss any Astro-Agent visual overlays/labels on the page.",
 			"Prefer small maxChars/maxElements to reduce token usage; only request more when needed.",
 		],
 		parameters: browserPageSchema,

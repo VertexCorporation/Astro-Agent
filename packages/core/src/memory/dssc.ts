@@ -8,7 +8,7 @@ import path from "path";
  * and semantic noise, preparing it for RFF/LLM digestion.
  */
 
-const EXCLUDED_DIRS = new Set(["node_modules", ".git", "dist", "build", ".mooncode", "coverage"]);
+const EXCLUDED_DIRS = new Set(["node_modules", ".git", "dist", "build", ".astroagent", "coverage"]);
 const EXCLUDED_EXTS = new Set([
 	".png",
 	".jpg",

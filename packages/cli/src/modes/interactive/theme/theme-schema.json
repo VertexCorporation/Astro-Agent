@@ -1,7 +1,7 @@
 {
 	"$schema": "http://json-schema.org/draft-07/schema#",
-	"title": "MoonCode Coding Engine Theme",
-	"description": "Theme schema for MoonCode coding engine",
+	"title": "Astro-Agent Coding Engine Theme",
+	"description": "Theme schema for Astro-Agent coding engine",
 	"type": "object",
 	"required": ["name", "colors"],
 	"properties": {

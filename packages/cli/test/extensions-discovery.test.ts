@@ -12,7 +12,7 @@ describe("extensions discovery", () => {
 	let extensionsDir: string;
 
 	beforeEach(() => {
-		tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "MoonCode-ext-test-"));
+		tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "astroagent-ext-test-"));
 		extensionsDir = path.join(tempDir, "extensions");
 		fs.mkdirSync(extensionsDir);
 	});
@@ -22,15 +22,15 @@ describe("extensions discovery", () => {
 	});
 
 	const extensionCode = `
-		export default function(MoonCode) {
-			MoonCode.registerCommand("test", { handler: async () => {} });
+		export default function(api) {
+			api.registerCommand("test", { handler: async () => {} });
 		}
 	`;
 
 	const extensionCodeWithTool = (toolName: string) => `
 		import { Type } from "typebox";
-		export default function(MoonCode) {
-			MoonCode.registerTool({
+		export default function(api) {
+			api.registerTool({
 				name: "${toolName}",
 				label: "${toolName}",
 				description: "Test tool",
@@ -99,7 +99,7 @@ describe("extensions discovery", () => {
 		expect(result.extensions[0].path).toContain("index.ts");
 	});
 
-	it("discovers subdirectory with package.json MoonCode field", async () => {
+	it("discovers subdirectory with package.json AstroAgent field", async () => {
 		const subdir = path.join(extensionsDir, "my-package");
 		const srcDir = path.join(subdir, "src");
 		fs.mkdirSync(subdir);
@@ -109,7 +109,7 @@ describe("extensions discovery", () => {
 			path.join(subdir, "package.json"),
 			JSON.stringify({
 				name: "my-package",
-				MoonCode: {
+				AstroAgent: {
 					extensions: ["./src/main.ts"],
 				},
 			}),
@@ -132,7 +132,7 @@ describe("extensions discovery", () => {
 			path.join(subdir, "package.json"),
 			JSON.stringify({
 				name: "my-package",
-				MoonCode: {
+				AstroAgent: {
 					extensions: ["./ext1.ts", "./ext2.ts"],
 				},
 			}),
@@ -144,7 +144,7 @@ describe("extensions discovery", () => {
 		expect(result.extensions).toHaveLength(2);
 	});
 
-	it("package.json with MoonCode field takes precedence over index.ts", async () => {
+	it("package.json with AstroAgent field takes precedence over index.ts", async () => {
 		const subdir = path.join(extensionsDir, "my-package");
 		fs.mkdirSync(subdir);
 		fs.writeFileSync(path.join(subdir, "index.ts"), extensionCodeWithTool("from-index"));
@@ -153,7 +153,7 @@ describe("extensions discovery", () => {
 			path.join(subdir, "package.json"),
 			JSON.stringify({
 				name: "my-package",
-				MoonCode: {
+				AstroAgent: {
 					extensions: ["./custom.ts"],
 				},
 			}),
@@ -169,7 +169,7 @@ describe("extensions discovery", () => {
 		expect(result.extensions[0].tools.has("from-index")).toBe(false);
 	});
 
-	it("ignores package.json without MoonCode field, falls back to index.ts", async () => {
+	it("ignores package.json without AstroAgent field, falls back to index.ts", async () => {
 		const subdir = path.join(extensionsDir, "my-package");
 		fs.mkdirSync(subdir);
 		fs.writeFileSync(path.join(subdir, "index.ts"), extensionCode);
@@ -229,7 +229,7 @@ describe("extensions discovery", () => {
 		fs.writeFileSync(path.join(subdir2, "entry.ts"), extensionCode);
 		fs.writeFileSync(
 			path.join(subdir2, "package.json"),
-			JSON.stringify({ MoonCode: { extensions: ["./entry.ts"] } }),
+			JSON.stringify({ AstroAgent: { extensions: ["./entry.ts"] } }),
 		);
 
 		const result = await discoverAndLoadExtensions([], tempDir, tempDir);
@@ -245,7 +245,7 @@ describe("extensions discovery", () => {
 		fs.writeFileSync(
 			path.join(subdir, "package.json"),
 			JSON.stringify({
-				MoonCode: {
+				AstroAgent: {
 					extensions: ["./exists.ts", "./missing.ts"],
 				},
 			}),
@@ -315,8 +315,8 @@ describe("extensions discovery", () => {
 
 	it("registers message renderers", async () => {
 		const extCode = `
-			export default function(MoonCode) {
-				MoonCode.registerMessageRenderer("my-custom-type", (message, options, theme) => {
+			export default function(api) {
+				api.registerMessageRenderer("my-custom-type", (message, options, theme) => {
 					return null; // Use default rendering
 				});
 			}
@@ -332,7 +332,7 @@ describe("extensions discovery", () => {
 
 	it("reports error when extension throws during initialization", async () => {
 		const extCode = `
-			export default function(MoonCode) {
+			export default function(api) {
 				throw new Error("Initialization failed!");
 			}
 		`;
@@ -347,8 +347,8 @@ describe("extensions discovery", () => {
 
 	it("reports error when extension has no default export", async () => {
 		const extCode = `
-			export function notDefault(MoonCode) {
-				MoonCode.registerCommand("test", { handler: async () => {} });
+			export function notDefault(api) {
+				api.registerCommand("test", { handler: async () => {} });
 			}
 		`;
 		fs.writeFileSync(path.join(extensionsDir, "no-default.ts"), extCode);
@@ -381,10 +381,10 @@ describe("extensions discovery", () => {
 
 	it("loads extension with event handlers", async () => {
 		const extCode = `
-			export default function(MoonCode) {
-				MoonCode.on("engine_start", async () => {});
-				MoonCode.on("tool_call", async (event) => undefined);
-				MoonCode.on("engine_end", async () => {});
+			export default function(api) {
+				api.on("engine_start", async () => {});
+				api.on("tool_call", async (event) => undefined);
+				api.on("engine_end", async () => {});
 			}
 		`;
 		fs.writeFileSync(path.join(extensionsDir, "with-handlers.ts"), extCode);
@@ -400,8 +400,8 @@ describe("extensions discovery", () => {
 
 	it("loads extension with shortcuts", async () => {
 		const extCode = `
-			export default function(MoonCode) {
-				MoonCode.registerShortcut("ctrl+t", {
+			export default function(api) {
+				api.registerShortcut("ctrl+t", {
 					description: "Test shortcut",
 					handler: async (ctx) => {},
 				});
@@ -418,8 +418,8 @@ describe("extensions discovery", () => {
 
 	it("loads extension with flags", async () => {
 		const extCode = `
-			export default function(MoonCode) {
-				MoonCode.registerFlag("my-flag", {
+			export default function(api) {
+				api.registerFlag("my-flag", {
 					description: "My custom flag",
 					handler: async (value) => {},
 				});

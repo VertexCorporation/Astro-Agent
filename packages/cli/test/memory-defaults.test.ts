@@ -13,7 +13,7 @@ describe("memory defaults", () => {
 
 	it("does not inject saved memory signals into prompts by default", async () => {
 		harness = createHarness({ responses: ["ok"] });
-		const configDir = join(harness.tempDir, ".mooncode");
+		const configDir = join(harness.tempDir, ".astroagent");
 		if (!existsSync(configDir)) mkdirSync(configDir, { recursive: true });
 		writeFileSync(
 			join(configDir, "memory-signals.json"),

@@ -31,4 +31,3 @@ import { mkdirSync } from "fs";
 mkdirSync(join(__dirname, "..", "test", "data"), { recursive: true });
 
 writeFileSync(outputPath, buffer);
-console.log(`Generated test image at: ${outputPath}`);

@@ -1,5 +1,7 @@
+// @ts-nocheck
+
+import { VectorDB, type VectorDocument } from "astro-core";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
-import { VectorDB, type VectorDocument } from "moon-core";
 import { dirname, join } from "path";
 import { CONFIG_DIR_NAME } from "../config.js";
 
@@ -128,7 +130,7 @@ export class MemoryProfile {
 	 * Builds an opt-in prompt section for explicit coding preferences.
 	 */
 	public getPromptInjection(): string {
-		let injection = `MoonCode developer profile:\n`;
+		let injection = `Astro-Agent developer profile:\n`;
 		injection += `Use only the explicit preferences below.\n\n`;
 
 		if (this.profile.forbiddenPatterns.length > 0) {

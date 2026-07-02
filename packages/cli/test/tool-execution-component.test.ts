@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { Text, type TUI } from "moon-tui";
+import { Text, type TUI } from "astro-tui";
 import stripAnsi from "strip-ansi";
 import { Type } from "typebox";
 import { beforeAll, describe, expect, test } from "vitest";
@@ -349,7 +349,7 @@ describe("ToolExecutionComponent parity", () => {
 			absent: undefined,
 		},
 		{
-			title: "Mooncli documentation",
+			title: "AstroAgent documentation",
 			path: getReadmePath(),
 			content: "Hidden docs content",
 			compact: "read docs README.md",

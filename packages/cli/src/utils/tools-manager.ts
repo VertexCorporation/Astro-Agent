@@ -1,4 +1,3 @@
-import chalk from "chalk";
 import { spawnSync } from "child_process";
 import extractZip from "extract-zip";
 import { chmodSync, createWriteStream, existsSync, mkdirSync, readdirSync, renameSync, rmSync } from "fs";
@@ -13,7 +12,7 @@ const NETWORK_TIMEOUT_MS = 10_000;
 const DOWNLOAD_TIMEOUT_MS = 120_000;
 
 function isOfflineModeEnabled(): boolean {
-	const value = process.env.MOON_OFFLINE ?? process.env.PI_OFFLINE;
+	const value = process.env.ASTRO_OFFLINE ?? process.env.PI_OFFLINE;
 	if (!value) return false;
 	return value === "1" || value.toLowerCase() === "true" || value.toLowerCase() === "yes";
 }
@@ -257,7 +256,6 @@ export async function ensureTool(tool: "fd" | "rg", silent: boolean = false): Pr
 
 	if (isOfflineModeEnabled()) {
 		if (!silent) {
-			console.log(chalk.yellow(`${config.name} not found. Offline mode enabled, skipping download.`));
 		}
 		return undefined;
 	}
@@ -265,27 +263,23 @@ export async function ensureTool(tool: "fd" | "rg", silent: boolean = false): Pr
 	// On Android/Termux, Linux binaries don't work due to Bionic libc incompatibility.
 	// Users must install via pkg.
 	if (platform() === "android") {
-		const pkgName = TERMUX_PACKAGES[tool] ?? tool;
+		const _pkgName = TERMUX_PACKAGES[tool] ?? tool;
 		if (!silent) {
-			console.log(chalk.yellow(`${config.name} not found. Install with: pkg install ${pkgName}`));
 		}
 		return undefined;
 	}
 
 	// Tool not found - download it
 	if (!silent) {
-		console.log(chalk.dim(`${config.name} not found. Downloading...`));
 	}
 
 	try {
 		const path = await downloadTool(tool);
 		if (!silent) {
-			console.log(chalk.dim(`${config.name} installed to ${path}`));
 		}
 		return path;
-	} catch (e) {
+	} catch (_e) {
 		if (!silent) {
-			console.log(chalk.yellow(`Failed to download ${config.name}: ${e instanceof Error ? e.message : e}`));
 		}
 		return undefined;
 	}

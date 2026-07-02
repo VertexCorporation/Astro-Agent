@@ -9,7 +9,7 @@ import {
 	type SimpleStreamOptions,
 	type StreamFunction,
 	streamSimple,
-} from "moon-core";
+} from "astro-core";
 
 export interface SwarmTask {
 	id: string;
@@ -103,7 +103,7 @@ export class SwarmManager extends EventEmitter {
 	private async compactContext(context: string[], taskDescription: string): Promise<string[]> {
 		if (context.length <= 3) return context;
 
-		const { VectorDB } = await import("moon-core");
+		const { VectorDB } = await import("astro-core");
 		const vdb = new VectorDB();
 
 		context.forEach((c, i) => {

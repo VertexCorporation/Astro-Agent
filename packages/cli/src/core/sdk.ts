@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { join } from "node:path";
-import { clampThinkingLevel, type Message, type Model, streamSimple } from "moon-core";
-import { Engine, type EngineMessage, type ThinkingLevel } from "moon-engine";
+import { clampThinkingLevel, type Message, type Model, streamSimple } from "astro-core";
+import { Engine, type EngineMessage, type ThinkingLevel } from "astro-engine";
 import { getEngineDir } from "../config.js";
 import { formatNoModelsAvailableMessage } from "./auth-guidance.js";
 import { AuthStorage } from "./auth-storage.js";
@@ -34,7 +34,7 @@ import {
 export interface CreateEngineSessionOptions {
 	/** Working directory for project-local discovery. Default: process.cwd() */
 	cwd?: string;
-	/** Global config directory. Default: ~/.mooncode/engine */
+	/** Global config directory. Default: ~/.astroagent/engine */
 	engineDir?: string;
 
 	/** Auth storage for credentials. Default: AuthStorage.create(engineDir/auth.json) */
@@ -79,7 +79,7 @@ export interface CreateEngineSessionOptions {
 	/** Session start event metadata for extension runtime startup. */
 	sessionStartEvent?: SessionStartEvent;
 	/** MCP manager instance for the session. */
-	mcpManager?: import("moon-engine").McpManager;
+	mcpManager?: import("astro-engine").McpManager;
 	/** Disable memory signals and developer profile injection/persistence. */
 	noMemory?: boolean;
 }
@@ -93,7 +93,7 @@ export interface CreateEngineSessionResult {
 	/** Warning if session was restored with a different model than saved */
 	modelFallbackMessage?: string;
 	/** MCP manager used by the session */
-	mcpManager?: import("moon-engine").McpManager;
+	mcpManager?: import("astro-engine").McpManager;
 }
 
 // Re-exports
@@ -142,7 +142,7 @@ function getAttributionHeaders(
 
 	if (model.provider === "openrouter" || model.baseUrl.includes("openrouter.ai")) {
 		return {
-			"HTTP-Referer": "https://github.com/theayzek01/MoonCode",
+			"HTTP-Referer": "https://github.com/theayzek01/Astro-Agent",
 			"X-OpenRouter-Title": "Moon",
 			"X-OpenRouter-Categories": "cli-engine",
 		};
@@ -155,7 +155,7 @@ function getAttributionHeaders(
 		model.baseUrl.includes("gateway.ai.cloudflare.com")
 	) {
 		return {
-			"User-Engine": "moon-cli",
+			"User-Engine": "astro-cli",
 		};
 	}
 
@@ -198,7 +198,7 @@ export async function createEngineSession(
 		}));
 
 	if (!mcpManager && mcpServerConfigs.length > 0) {
-		const { McpManager } = await import("moon-engine");
+		const { McpManager } = await import("astro-engine");
 		mcpManager = new McpManager(mcpServerConfigs);
 		await mcpManager.initialize();
 	}

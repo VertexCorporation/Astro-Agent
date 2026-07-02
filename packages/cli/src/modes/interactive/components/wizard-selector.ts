@@ -5,7 +5,7 @@
  * Tab = next step | ↑↓ / number = select | Enter = confirm | Esc = cancel
  */
 
-import { Container, getKeybindings, Spacer, Text } from "moon-tui";
+import { Container, getKeybindings, Spacer, Text } from "astro-tui";
 import { DynamicBorder } from "./dynamic-border.js";
 
 const ANSI_RE = /\x1b\[[0-9;]*m/g;

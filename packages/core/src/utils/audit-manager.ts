@@ -45,8 +45,7 @@ export class AuditManager {
 		}
 
 		// In a real enterprise system, this would stream to ELK, Datadog, or CloudWatch
-		if (process.env.MOON_DEBUG === "1") {
-			console.log(`[AUDIT] [${entry.component}] ${entry.action} - ${entry.status}`);
+		if (process.env.ASTRO_DEBUG === "1") {
 		}
 	}
 

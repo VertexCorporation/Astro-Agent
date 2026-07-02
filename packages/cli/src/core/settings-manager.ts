@@ -1,7 +1,7 @@
 // @ts-nocheck
 
+import type { Transport } from "astro-core";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
-import type { Transport } from "moon-core";
 import { homedir } from "os";
 import { dirname, join } from "path";
 import lockfile from "proper-lockfile";

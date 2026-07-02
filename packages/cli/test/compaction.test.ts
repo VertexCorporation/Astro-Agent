@@ -1,7 +1,7 @@
+import type { AssistantMessage, Usage } from "astro-core";
+import { getModel } from "astro-core";
+import type { EngineMessage } from "astro-engine";
 import { readFileSync } from "fs";
-import type { AssistantMessage, Usage } from "moon-core";
-import { getModel } from "moon-core";
-import type { EngineMessage } from "moon-engine";
 import { join } from "path";
 import { beforeEach, describe, expect, it } from "vitest";
 import {

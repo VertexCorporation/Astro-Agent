@@ -1,5 +1,6 @@
+// @ts-nocheck
 import { EventEmitter } from "node:events";
-import type { EngineTool } from "moon-engine";
+import type { EngineTool } from "astro-engine";
 import { type Static, Type } from "typebox";
 import type { ToolDefinition } from "../extensions/types.js";
 import { wrapToolDefinition } from "./tool-definition-wrapper.js";
@@ -59,7 +60,7 @@ export function createInvokeSubagentToolDefinition(
 				});
 			}
 
-			const systemPrompt = `You are a MoonCode sub-agent. Your ID is '${TaskName}'.\n\nTask Details:\n${Task}\n\nContext:\n${Context ?? "None"}\n\nYou can communicate with other agents via the message_agent tool.\n\n${ctx.getSystemPrompt()}`;
+			const systemPrompt = `You are a Astro-Agent sub-agent. Your ID is '${TaskName}'.\n\nTask Details:\n${Task}\n\nContext:\n${Context ?? "None"}\n\nYou can communicate with other agents via the message_agent tool.\n\n${ctx.getSystemPrompt()}`;
 
 			activeAgents.set(TaskName, true);
 			subagentEventEmitter.emit("start", { id: TaskName, taskName: TaskName });

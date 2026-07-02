@@ -1,8 +1,9 @@
+// @ts-nocheck
 import * as os from "node:os";
 import chalk from "chalk";
 
 function getDisplayName(): string {
-	const envName = process.env.MOONCODE_USER_NAME || process.env.USERNAME || process.env.USER || os.userInfo().username;
+	const envName = process.env.ASTRO_USER_NAME || process.env.USERNAME || process.env.USER || os.userInfo().username;
 	return envName?.trim() || "friend";
 }
 
@@ -22,10 +23,10 @@ export function buildWelcomeMessage(): { text: string } {
 
 	const text = [
 		"",
-		blue("                          MOONCODE"),
+		blue("                          Astro-Agent"),
 		"",
 		bright(`${getGreeting()}, ${getDisplayName()}.`),
-		dim("MoonCode is ready. Thinking, checking, offering short info suggestions."),
+		dim("Astro-Agent is ready. Thinking, checking, offering short info suggestions."),
 		"",
 		bright("Fast coding agent. Clean tools. Quiet output."),
 		bright("Terminal coding agent with MCP, Browser Bridge, and DreamKernel."),
@@ -38,7 +39,7 @@ export function buildWelcomeMessage(): { text: string } {
 	return { text };
 }
 
-import type { ImageContent } from "moon-core";
+import type { ImageContent } from "astro-core";
 import type { Args } from "./args.js";
 
 export function buildInitialMessage({

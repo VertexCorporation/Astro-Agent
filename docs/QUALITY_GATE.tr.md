@@ -1,6 +1,6 @@
 # Kalite Kapısı (Quality Gate)
 
-MoonAgent değişiklikleri, birleştirme (merge) veya sürümleme (release) öncesinde küçük şirket üretim standartlarından (production gate) geçmelidir.
+AstroAgent değişiklikleri, birleştirme (merge) veya sürümleme (release) öncesinde küçük şirket üretim standartlarından (production gate) geçmelidir.
 
 ## Gerekli Kontroller
 

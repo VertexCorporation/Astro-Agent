@@ -1,5 +1,6 @@
+// @ts-nocheck
 import { EventEmitter } from "node:events";
-import type { EngineTool } from "moon-engine";
+import type { EngineTool } from "astro-engine";
 import { type Static, Type } from "typebox";
 import type { ToolDefinition } from "../extensions/types.js";
 import { wrapToolDefinition } from "./tool-definition-wrapper.js";

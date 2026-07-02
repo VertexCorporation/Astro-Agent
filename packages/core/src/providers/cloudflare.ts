@@ -1,4 +1,3 @@
-// @ts-nocheck
 import type { Api, Model } from "../types.js";
 
 /** Workers Core direct endpoint. */

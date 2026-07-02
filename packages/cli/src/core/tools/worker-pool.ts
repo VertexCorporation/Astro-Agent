@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { EventEmitter } from "node:events";
 import { cpus } from "node:os";
 import { Worker } from "node:worker_threads";

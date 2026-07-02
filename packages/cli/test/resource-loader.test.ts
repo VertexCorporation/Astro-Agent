@@ -58,7 +58,7 @@ Skill content here.`,
 		});
 
 		it("should ignore extra markdown files in auto-discovered skill dirs", async () => {
-			const skillDir = join(engineDir, "skills", "Mooncli-skills", "browser-tools");
+			const skillDir = join(engineDir, "skills", "astroagent-skills", "browser-tools");
 			mkdirSync(skillDir, { recursive: true });
 			writeFileSync(
 				join(skillDir, "SKILL.md"),
@@ -98,7 +98,7 @@ Prompt content.`,
 
 		it("should prefer project resources over user on name collisions", async () => {
 			const userPromptsDir = join(engineDir, "prompts");
-			const projectPromptsDir = join(cwd, ".mooncode", "prompts");
+			const projectPromptsDir = join(cwd, ".astroagent", "prompts");
 			mkdirSync(userPromptsDir, { recursive: true });
 			mkdirSync(projectPromptsDir, { recursive: true });
 			const userPromptPath = join(userPromptsDir, "commit.md");
@@ -107,7 +107,7 @@ Prompt content.`,
 			writeFileSync(projectPromptPath, "Project prompt");
 
 			const userSkillDir = join(engineDir, "skills", "collision-skill");
-			const projectSkillDir = join(cwd, ".mooncode", "skills", "collision-skill");
+			const projectSkillDir = join(cwd, ".astroagent", "skills", "collision-skill");
 			mkdirSync(userSkillDir, { recursive: true });
 			mkdirSync(projectSkillDir, { recursive: true });
 			const userSkillPath = join(userSkillDir, "SKILL.md");
@@ -134,9 +134,9 @@ Project skill`,
 			) as { name: string; vars?: Record<string, string> };
 			baseTheme.name = "collision-theme";
 			const userThemePath = join(engineDir, "themes", "collision.json");
-			const projectThemePath = join(cwd, ".mooncode", "themes", "collision.json");
+			const projectThemePath = join(cwd, ".astroagent", "themes", "collision.json");
 			mkdirSync(join(engineDir, "themes"), { recursive: true });
-			mkdirSync(join(cwd, ".mooncode", "themes"), { recursive: true });
+			mkdirSync(join(cwd, ".astroagent", "themes"), { recursive: true });
 			writeFileSync(userThemePath, JSON.stringify(baseTheme, null, 2));
 			if (baseTheme.vars) {
 				baseTheme.vars.accent = "#ff00ff";
@@ -161,8 +161,8 @@ Project skill`,
 			mkdirSync(sharedExtDir, { recursive: true });
 			writeFileSync(
 				join(sharedExtDir, "shared.ts"),
-				`export default function(Mooncli) {
-	Mooncli.registerCommand("shared", {
+				`export default function(AstroAgent) {
+	AstroAgent.registerCommand("shared", {
 		description: "shared command",
 		handler: async () => {},
 	});
@@ -170,9 +170,9 @@ Project skill`,
 			);
 
 			mkdirSync(engineDir, { recursive: true });
-			mkdirSync(join(cwd, ".mooncode"), { recursive: true });
+			mkdirSync(join(cwd, ".astroagent"), { recursive: true });
 			symlinkSync(sharedExtDir, join(engineDir, "extensions"), "dir");
-			symlinkSync(sharedExtDir, join(cwd, ".mooncode", "extensions"), "dir");
+			symlinkSync(sharedExtDir, join(cwd, ".astroagent", "extensions"), "dir");
 
 			const loader = new DefaultResourceLoader({ cwd, engineDir });
 			await loader.reload();
@@ -183,23 +183,23 @@ Project skill`,
 
 			// mergePaths processes project paths before user paths, so the project
 			// alias is the canonical survivor.
-			expect(extensionsResult.extensions[0].path).toBe(join(cwd, ".mooncode", "extensions", "shared.ts"));
+			expect(extensionsResult.extensions[0].path).toBe(join(cwd, ".astroagent", "extensions", "shared.ts"));
 		});
 
 		it("should keep both extensions loaded when command names collide", async () => {
 			const userExtDir = join(engineDir, "extensions");
-			const projectExtDir = join(cwd, ".mooncode", "extensions");
+			const projectExtDir = join(cwd, ".astroagent", "extensions");
 			mkdirSync(userExtDir, { recursive: true });
 			mkdirSync(projectExtDir, { recursive: true });
 
 			writeFileSync(
 				join(projectExtDir, "project.ts"),
-				`export default function(Mooncli) {
-	Mooncli.registerCommand("deploy", {
+				`export default function(AstroAgent) {
+	AstroAgent.registerCommand("deploy", {
 		description: "project deploy",
 		handler: async () => {},
 	});
-	Mooncli.registerCommand("project-only", {
+	AstroAgent.registerCommand("project-only", {
 		description: "project only",
 		handler: async () => {},
 	});
@@ -208,12 +208,12 @@ Project skill`,
 
 			writeFileSync(
 				join(userExtDir, "user.ts"),
-				`export default function(Mooncli) {
-	Mooncli.registerCommand("deploy", {
+				`export default function(AstroAgent) {
+	AstroAgent.registerCommand("deploy", {
 		description: "user deploy",
 		handler: async () => {},
 	});
-	Mooncli.registerCommand("user-only", {
+	AstroAgent.registerCommand("user-only", {
 		description: "user only",
 		handler: async () => {},
 	});
@@ -317,8 +317,8 @@ Content`,
 			expect(enginesFiles).toEqual([]);
 		});
 
-		it("should discover SYSTEM.md from cwd/.mooncode", async () => {
-			const piDir = join(cwd, ".mooncode");
+		it("should discover SYSTEM.md from cwd/.astroagent", async () => {
+			const piDir = join(cwd, ".astroagent");
 			mkdirSync(piDir, { recursive: true });
 			writeFileSync(join(piDir, "SYSTEM.md"), "You are a helpful assistant.");
 
@@ -329,7 +329,7 @@ Content`,
 		});
 
 		it("should discover APPEND_SYSTEM.md", async () => {
-			const piDir = join(cwd, ".mooncode");
+			const piDir = join(cwd, ".astroagent");
 			mkdirSync(piDir, { recursive: true });
 			writeFileSync(join(piDir, "APPEND_SYSTEM.md"), "Additional instructions.");
 
@@ -500,10 +500,10 @@ Content`,
 			writeFileSync(
 				join(ext1Dir, "index.ts"),
 				`
-import type { ExtensionAPI } from "Mooncli";
+import type { ExtensionAPI } from "astrocli";
 import { Type } from "typebox";
-export default function(Mooncli: ExtensionAPI) {
-  Mooncli.registerTool({
+export default function(AstroAgent: ExtensionAPI) {
+  AstroAgent.registerTool({
     name: "duplicate-tool",
     description: "First",
     parameters: Type.Object({}),
@@ -515,10 +515,10 @@ export default function(Mooncli: ExtensionAPI) {
 			writeFileSync(
 				join(ext2Dir, "index.ts"),
 				`
-import type { ExtensionAPI } from "Mooncli";
+import type { ExtensionAPI } from "astrocli";
 import { Type } from "typebox";
-export default function(Mooncli: ExtensionAPI) {
-  Mooncli.registerTool({
+export default function(AstroAgent: ExtensionAPI) {
+  AstroAgent.registerTool({
     name: "duplicate-tool",
     description: "Second",
     parameters: Type.Object({}),
@@ -542,16 +542,16 @@ export default function(Mooncli: ExtensionAPI) {
 			writeFileSync(
 				join(globalExtDir, "global.ts"),
 				`
-import type { ExtensionAPI } from "Mooncli";
+import type { ExtensionAPI } from "astrocli";
 import { Type } from "typebox";
-export default function(Mooncli: ExtensionAPI) {
-  Mooncli.registerTool({
+export default function(AstroAgent: ExtensionAPI) {
+  AstroAgent.registerTool({
     name: "duplicate-tool",
     description: "global tool",
     parameters: Type.Object({}),
     execute: async () => ({ result: "global" }),
   });
-  Mooncli.registerCommand("deploy", {
+  AstroAgent.registerCommand("deploy", {
     description: "global command",
     handler: async () => {},
   });
@@ -561,16 +561,16 @@ export default function(Mooncli: ExtensionAPI) {
 			writeFileSync(
 				explicitExtPath,
 				`
-import type { ExtensionAPI } from "Mooncli";
+import type { ExtensionAPI } from "astrocli";
 import { Type } from "typebox";
-export default function(Mooncli: ExtensionAPI) {
-  Mooncli.registerTool({
+export default function(AstroAgent: ExtensionAPI) {
+  AstroAgent.registerTool({
     name: "duplicate-tool",
     description: "explicit tool",
     parameters: Type.Object({}),
     execute: async () => ({ result: "explicit" }),
   });
-  Mooncli.registerCommand("deploy", {
+  AstroAgent.registerCommand("deploy", {
     description: "explicit command",
     handler: async () => {},
   });

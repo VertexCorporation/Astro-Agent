@@ -3,16 +3,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import chalk from "chalk";
-import {
-	APP_NAME,
-	detectInstallMethod,
-	getEngineDir,
-	getPackageDir,
-	getSelfUpdateCommand,
-	getSelfUpdateUnavailableInstruction,
-	PACKAGE_NAME,
-	VERSION,
-} from "../config.js";
+import { detectInstallMethod, getPackageDir, getSelfUpdateCommand, PACKAGE_NAME, VERSION } from "../config.js";
 
 function run(command: string, args: string[]): { status: number | null; stdout: string; stderr: string } {
 	const result = spawnSync(command, args, {
@@ -55,44 +46,30 @@ function unique<T>(items: T[]): T[] {
 export function printDoctor(): void {
 	const packageDir = getPackageDir();
 	const packageVersion = readPackageVersion(packageDir);
-	const method = detectInstallMethod();
+	const _method = detectInstallMethod();
 	const selfUpdate = getSelfUpdateCommand(PACKAGE_NAME);
 	const candidates = unique([
-		...resolveCommandCandidates("mooncode"),
-		...resolveCommandCandidates("moon"),
-		...resolveCommandCandidates("mooncli"),
+		...resolveCommandCandidates("astroagent"),
+		...resolveCommandCandidates("astro"),
+		...resolveCommandCandidates("astrocli"),
 	]);
 
-	console.log(chalk.bold(`${APP_NAME} Doctor`));
 	console.log(
 		`Version        : ${VERSION}${packageVersion && packageVersion !== VERSION ? ` (package.json: ${packageVersion})` : ""}`,
 	);
-	console.log(`Package        : ${PACKAGE_NAME}`);
-	console.log(`Install method : ${method}`);
-	console.log(`Runtime        : ${process.execPath}`);
-	console.log(`Package dir    : ${packageDir}`);
-	console.log(`Engine dir     : ${getEngineDir()}`);
-	console.log(`Node           : ${process.version}`);
-	console.log(`Platform       : ${process.platform} ${process.arch}`);
 
-	console.log(chalk.bold("\nmooncode/moon/mooncli candidates on PATH:"));
 	if (candidates.length === 0) {
-		console.log(chalk.yellow("  Not found. Check your terminal PATH setting."));
 	} else {
 		for (const candidate of candidates) {
-			const marker = candidate === process.argv[1] ? chalk.green("active") : "";
-			console.log(`  - ${candidate}${marker ? ` ${marker}` : ""}`);
+			const _marker = candidate === process.argv[1] ? chalk.green("active") : "";
 		}
 	}
 
-	console.log(chalk.bold("\nUpdate:"));
 	if (selfUpdate) {
-		console.log(`  ${selfUpdate.display}`);
 	} else {
-		console.log(`  ${getSelfUpdateUnavailableInstruction(PACKAGE_NAME)}`);
 	}
 
-	const activeDir = dirname(process.argv[1] || "");
+	const _activeDir = dirname(process.argv[1] || "");
 	if (candidates.length > 1) {
 		console.log(
 			chalk.yellow(
@@ -107,5 +84,4 @@ export function printDoctor(): void {
 			),
 		);
 	}
-	console.log(chalk.dim(`\nActive argv[1]: ${process.argv[1] || activeDir}`));
 }

@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { getModel } from "moon-core";
+import { getModel } from "astro-core";
 import { Type } from "typebox";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { DefaultResourceLoader } from "../../../src/core/resource-loader.js";
@@ -14,7 +14,7 @@ describe("regression #2835: tool allowlists filter extension tools", () => {
 	let engineDir: string;
 
 	beforeEach(() => {
-		tempDir = join(tmpdir(), `Mooncli-tools-filter-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+		tempDir = join(tmpdir(), `astroagent-tools-filter-${Date.now()}-${Math.random().toString(36).slice(2)}`);
 		engineDir = join(tempDir, "engine");
 		mkdirSync(engineDir, { recursive: true });
 	});
@@ -33,9 +33,9 @@ describe("regression #2835: tool allowlists filter extension tools", () => {
 			engineDir,
 			settingsManager,
 			extensionFactories: [
-				(Mooncli) => {
-					Mooncli.on("session_start", () => {
-						Mooncli.registerTool({
+				(AstroAgent) => {
+					AstroAgent.on("session_start", () => {
+						AstroAgent.registerTool({
 							name: "dynamic_tool",
 							label: "Dynamic Tool",
 							description: "Tool registered from session_start",

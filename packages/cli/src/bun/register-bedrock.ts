@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { setBedrockProviderModule } from "moon-core";
-import { bedrockProviderModule } from "moon-core/bedrock-provider";
+import { setBedrockProviderModule } from "astro-core";
+import { bedrockProviderModule } from "astro-core/bedrock-provider";
 
 setBedrockProviderModule(bedrockProviderModule);

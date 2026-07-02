@@ -1,6 +1,6 @@
 # Antigravity Entegrasyonu
 
-MoonAgent, optimize edilmiş `google-antigravity` API adaptörü ve `antigravity` sağlayıcısı aracılığıyla Antigravity ortamlarına yerel entegrasyon desteği sunar. Bu entegrasyon, kıdemli geliştiricilerin ve otonom sistemlerin Google'ın güvenli korumalı alan (sandbox) altyapısından ve yeni nesil akıl yürütme (reasoning) mimarilerinden en üst düzeyde yararlanmasını sağlar.
+AstroAgent, optimize edilmiş `google-antigravity` API adaptörü ve `antigravity` sağlayıcısı aracılığıyla Antigravity ortamlarına yerel entegrasyon desteği sunar. Bu entegrasyon, kıdemli geliştiricilerin ve otonom sistemlerin Google'ın güvenli korumalı alan (sandbox) altyapısından ve yeni nesil akıl yürütme (reasoning) mimarilerinden en üst düzeyde yararlanmasını sağlar.
 
 Tüm model eşleştirmeleri ve sınırları `marcodiniz/ag-local-bridge` teknik spesifikasyonlarına göre yapısal olarak doğrulanmıştır.
 
@@ -37,24 +37,24 @@ Yerel köprü ve yönlendirme katmanlarıyla kusursuz uyumluluk sağlamak için 
 ### 1. Etkileşimli TUI Arayüzünü Başlatma
 Projeyi Claude Sonnet 4.6 akıl yürütme motoruyla interaktif TUI modunda açın:
 ```bash
-moonagent --provider antigravity --model antigravity-claude-sonnet-4-6-thinking
+AstroAgent --provider antigravity --model antigravity-claude-sonnet-4-6-thinking
 ```
 
 ### 2. Otonom Görev Çalıştırma
 Gemini 3.5 Flash (High) kullanarak derinlemesine akıl yürütme ile otonom bir düzeltme görevi başlatın:
 ```bash
-moonagent "fix connection leaks in src/db.ts and verify using npm run test" --model antigravity-gemini-3-5-flash-high
+AstroAgent "fix connection leaks in src/db.ts and verify using npm run test" --model antigravity-gemini-3-5-flash-high
 ```
 
 ### 3. Sistem Bilgisini Sorgulama
 Köprü bağlantı durumunu, model eşleştirmelerini ve aktif yapılandırmayı sorgulayın:
 ```bash
-moonagent --info
+AstroAgent --info
 ```
 
 #### Beklenen Sistem Çıktısı (Stdout):
 ```text
-[MoonAgent 1.26-v2] - Local Coding Environment Status
+[AstroAgent 1.26-v2] - Local Coding Environment Status
 -----------------------------------------------
 Active Provider: Antigravity (google-antigravity)
 Connected Bridge: OK (Port: 11434, Status: active)

@@ -1,6 +1,6 @@
 // @ts-nocheck
 import * as fs from "node:fs";
-import { Container, Image, Spacer, Text } from "moon-tui";
+import { Container, Image, Spacer, Text } from "astro-tui";
 import { getBundledInteractiveAssetPath } from "../../../config.js";
 import { theme } from "../theme/theme.js";
 import { DynamicBorder } from "./dynamic-border.js";

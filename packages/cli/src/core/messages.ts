@@ -6,8 +6,8 @@
  * and provides a transformer to convert them to Provider-compatible messages.
  */
 
-import type { ImageContent, Message, TextContent } from "moon-core";
-import type { EngineMessage } from "moon-engine";
+import type { ImageContent, Message, TextContent } from "astro-core";
+import type { EngineMessage } from "astro-engine";
 import { optimizePromptText } from "./token-optimizer.js";
 
 export const COMPACTION_SUMMARY_PREFIX = `Prior context compacted:\n<summary>\n`;
@@ -151,7 +151,7 @@ export interface CompactionSummaryMessage {
 }
 
 // Extend CustomEngineMessages via declaration merging
-declare module "moon-engine" {
+declare module "astro-engine" {
 	interface CustomEngineMessages {
 		bashExecution: BashExecutionMessage;
 		custom: CustomMessage;

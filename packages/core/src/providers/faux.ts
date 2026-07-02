@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { registerApiProvider, unregisterApiProviders } from "../api-registry.js";
 import type {
 	AssistantMessage,

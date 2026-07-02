@@ -1,12 +1,12 @@
-# MoonAgent Deep Dive & Architectural Reference Manual
+# AstroAgent Deep Dive & Architectural Reference Manual
 
-This document provides a comprehensive structural guide to MoonAgent's design philosophy, monorepo architecture, execution modes, tool interfaces, MCP integrations, and local development lifecycles. It is curated specifically for senior developers and system architects looking to refactor or extend the codebase.
+This document provides a comprehensive structural guide to AstroAgent's design philosophy, monorepo architecture, execution modes, tool interfaces, MCP integrations, and local development lifecycles. It is curated specifically for senior developers and system architects looking to refactor or extend the codebase.
 
 ---
 
-## 1. What is MoonAgent?
+## 1. What is AstroAgent?
 
-MoonAgent is a terminal-centric software development agent designed for low-latency, autonomous codebase operations. Unlike traditional chat-first LLM wrappers, MoonAgent's core architecture is built around **maximum token economy** and strict **correctness verification**.
+AstroAgent is a terminal-centric software development agent designed for low-latency, autonomous codebase operations. Unlike traditional chat-first LLM wrappers, AstroAgent's core architecture is built around **maximum token economy** and strict **correctness verification**.
 
 ### Core Operational Principles
 *   **Token Efficiency**: Strictly minimizes context window bloat via context-aware token tracking and aggressive semantic compaction.
@@ -18,13 +18,13 @@ MoonAgent is a terminal-centric software development agent designed for low-late
 
 ## 2. Quick Start & Path Configuration
 
-MoonAgent is designed to be highly pluggable and easily bootstrapped in any standard UNIX/Windows terminal workspace.
+AstroAgent is designed to be highly pluggable and easily bootstrapped in any standard UNIX/Windows terminal workspace.
 
 ### Core Installation Workflow
 ```bash
 # 1. Clone the repository
-git clone https://github.com/theayzek01/mooncode.git
-cd mooncode
+git clone https://github.com/theayzek01/astroagent.git
+cd astroagent
 
 # 2. Install monorepo dependencies
 npm install
@@ -37,11 +37,11 @@ npm install -g ./packages/cli
 ```
 
 ### Path & Directory Configuration
-MoonAgent relies on designated paths for assets, configurations, and persistent workspaces. These can be fully overridden using standard environment variables:
+AstroAgent relies on designated paths for assets, configurations, and persistent workspaces. These can be fully overridden using standard environment variables:
 
-*   **`MOON_PACKAGE_DIR`**: Root asset resolution path. Defines where themes, HTML templates, and CLI assets are stored.
-*   **`MOON_SHARE_VIEWER_URL`**: Base URL for hosting and displaying shareable session logs and traces.
-*   **`MOON_CODING_AGENT_DIR`**: The primary user directory for model configurations, credential syncs, and custom themes (Defaults to `~/.mooncode/engine/`).
+*   **`ASTRO_PACKAGE_DIR`**: Root asset resolution path. Defines where themes, HTML templates, and CLI assets are stored.
+*   **`ASTRO_SHARE_VIEWER_URL`**: Base URL for hosting and displaying shareable session logs and traces.
+*   **`ASTRO_CODING_AGENT_DIR`**: The primary user directory for model configurations, credential syncs, and custom themes (Defaults to `~/.astroagent/engine/`).
 
 ---
 
@@ -51,7 +51,7 @@ Common operational edge-cases and their structural mitigation strategies are doc
 
 ### Error 1: UND_ERR_BODY_TIMEOUT (SSE Body Stream Interruption)
 *   **Cause**: Triggered when a slow local provider (e.g., Ollama) or complex reasoning models under Antigravity spend more than 300 seconds formatting large payload responses.
-*   **Mitigation**: MoonAgent overrides Undici's global dispatcher timeouts on start. If issues persist, verify that your local network/proxy is not hard-imposing intermediate write deadlines.
+*   **Mitigation**: AstroAgent overrides Undici's global dispatcher timeouts on start. If issues persist, verify that your local network/proxy is not hard-imposing intermediate write deadlines.
 
 ### Error 2: Browser Bridge Offline
 *   **Cause**: The local WebSocket bridge server failed to bind to its port, or the Chrome extension lacks permissions.
@@ -65,7 +65,7 @@ Common operational edge-cases and their structural mitigation strategies are doc
 
 ## 4. High-Level Architecture
 
-MoonAgent is built as a highly decoupled monorepo, separating UI presentation, core domain logic, tool executors, and entry orchestration into dedicated packages:
+AstroAgent is built as a highly decoupled monorepo, separating UI presentation, core domain logic, tool executors, and entry orchestration into dedicated packages:
 
 ```mermaid
 graph TD
@@ -84,9 +84,9 @@ graph TD
 
 ## 5. Bootstrapping and Runtime Flow
 
-Executing `mooncode` initiates a deterministic bootstrapping sequence:
+Executing `astroagent` initiates a deterministic bootstrapping sequence:
 
-1.  **Install Detection & Config Boot**: Detects global paths and reads local configurations from the `.mooncode` package folder.
+1.  **Install Detection & Config Boot**: Detects global paths and reads local configurations from the `.astroagent` package folder.
 2.  **Session Orchestration (`EngineSession`)**: Establishes or resumes a stateful workspace session. If resuming, it reloads files and outline states.
 3.  **Model & Provider Resolution**: Validates model bindings against active providers (such as `antigravity`'s Gemini and Claude endpoints).
 4.  **Dynamic System Prompt Assembly**: Gathers current repository paths, design tokens, active tool schemas, and custom guidelines to build a context-optimized system prompt.
@@ -96,7 +96,7 @@ Executing `mooncode` initiates a deterministic bootstrapping sequence:
 
 ## 6. Context Compaction & Token Discipline
 
-To manage large context sizes on long sessions, MoonAgent executes automated semantic compaction:
+To manage large context sizes on long sessions, AstroAgent executes automated semantic compaction:
 
 *   **Compaction Threshold**: When cumulative session tokens approach 85% of the model's native context limit, a background compaction event is scheduled.
 *   **Semantic Compression**: Compresses raw back-and-forth interactions into a structured workspace outline, keeping only the final state, diff history, and core technical goals while pruning redundant debug logs.

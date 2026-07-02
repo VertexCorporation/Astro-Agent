@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { Text } from "moon-tui";
+import { Text } from "astro-tui";
 import { theme } from "../theme/theme.js";
 
 export function colorizeUnifiedDiff(diff: string): string {

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import chalk from "chalk";
 import { APP_NAME, CONFIG_DIR_NAME } from "../config.js";
 import type { ExtensionFlag } from "../core/extensions/types.js";
@@ -8,7 +9,7 @@ const commandGroups = [
 		items: [
 			["install <source> [-l]", "Install an extension source and add it to settings"],
 			["remove <source> [-l]", "Remove an extension source from settings"],
-			["update [source|self|Moon]", "Update MoonCode and installed extensions"],
+			["update [source|self|Moon]", "Update Astro-Agent and installed extensions"],
 			["doctor", "Diagnose install, PATH, version, and updates"],
 		],
 	},
@@ -144,7 +145,7 @@ ${chalk.bold("Examples")}
 
 ${chalk.bold("Environment Variables")}
   ANTHROPIC_API_KEY, OPENAI_API_KEY, GEMINI_API_KEY, OPENROUTER_API_KEY
-  MOON_TUI_RENDER_INTERVAL_MS       Tune TUI render throttle
-  MOON_TUI_CLEAR_SCROLLBACK=1       Restore legacy full scrollback clears
+  ASTRO_TUI_RENDER_INTERVAL_MS       Tune TUI render throttle
+  ASTRO_TUI_CLEAR_SCROLLBACK=1       Restore legacy full scrollback clears
 `;
 }

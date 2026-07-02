@@ -264,7 +264,7 @@ describe("Token Statistics on Abort", () => {
 	});
 
 	// =========================================================================
-	// OAuth-based providers (credentials from ~/.Mooncli/engine/oauth.json)
+	// OAuth-based providers (credentials from ~/.astroagent/engine/oauth.json)
 	// =========================================================================
 
 	describe("Anthropic OAuth Provider", () => {

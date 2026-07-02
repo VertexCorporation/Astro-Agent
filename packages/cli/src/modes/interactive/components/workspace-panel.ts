@@ -1,7 +1,7 @@
 // @ts-nocheck
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { type Component, truncateToWidth } from "moon-tui";
+import { type Component, truncateToWidth } from "astro-tui";
 import type { EngineSession } from "../../../core/engine-session.js";
 import { theme } from "../theme/theme.js";
 

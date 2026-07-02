@@ -4,7 +4,7 @@
  * Used by both tool-execution.ts and bash-execution.ts for consistent behavior.
  */
 
-import { Text } from "moon-tui";
+import { Text } from "astro-tui";
 
 export interface VisualTruncateResult {
 	/** The visual lines to display */

@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-nocheck -- TODO: Update to match current OpenAI SDK types
 import OpenAI from "openai";
 import type { ResponseCreateParamsStreaming } from "openai/resources/responses/responses.js";
 import { getEnvApiKey } from "../env-api-keys.js";
@@ -181,12 +181,12 @@ function createClient(
 	sessionId?: string,
 ) {
 	if (!apiKey) {
-		if (!process.env.OpenAI_API_KEY) {
+		if (!process.env.OPENAI_API_KEY) {
 			throw new Error(
 				"OpenAI API key is required. Set OpenAI_API_KEY environment variable or pass it as an argument.",
 			);
 		}
-		apiKey = process.env.OpenAI_API_KEY;
+		apiKey = process.env.OPENAI_API_KEY;
 	}
 
 	const compat = getCompat(model);

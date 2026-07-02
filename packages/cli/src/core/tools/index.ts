@@ -114,7 +114,7 @@ export {
 	type WriteToolOptions,
 } from "./write.js";
 
-import type { EngineTool } from "moon-engine";
+import type { EngineTool } from "astro-engine";
 import type { ToolDefinition } from "../extensions/types.js";
 import { createAskQuestionTool, createAskQuestionToolDefinition } from "./ask_question.js";
 import { type BashToolOptions, createBashTool, createBashToolDefinition } from "./bash.js";

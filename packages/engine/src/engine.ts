@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
 	type ImageContent,
 	type Message,
@@ -8,7 +7,7 @@ import {
 	type TextContent,
 	type ThinkingBudgets,
 	type Transport,
-} from "moon-core";
+} from "astro-core";
 import { runEngineLoop, runEngineLoopContinue } from "./engine-loop.js";
 import type {
 	AfterToolCallContext,

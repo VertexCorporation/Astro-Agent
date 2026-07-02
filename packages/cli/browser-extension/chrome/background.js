@@ -5,7 +5,7 @@ const HEARTBEAT_INTERVAL_MS = 20000;
 const RECONNECT_DELAY_MS = 2000;
 const COMMAND_TIMEOUT_MS = 12000;
 const MAX_TABS_RETURNED = 100;
-const ALARM_NAME = "mooncode-bridge-reconnect";
+const ALARM_NAME = "Astro-Agent-bridge-reconnect";
 
 /** @type {Map<number, { socket: WebSocket, info?: any }>} */
 let connections = new Map();
@@ -22,8 +22,8 @@ chrome.runtime.onInstalled.addListener(() => {
   // Cleanup old context menus first to avoid errors on reload
   chrome.contextMenus.removeAll(() => {
     chrome.contextMenus.create({
-      id: "mooncode-ingest",
-      title: "Send to MoonCode Knowledge Base",
+      id: "Astro-Agent-ingest",
+      title: "Send to Astro-Agent Knowledge Base",
       contexts: ["page", "selection"]
     }, () => {
        if (chrome.runtime.lastError) console.log("ContextMenu error:", chrome.runtime.lastError.message);
@@ -78,7 +78,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
-  if (info.menuItemId === "mooncode-ingest" && tab?.id) {
+  if (info.menuItemId === "Astro-Agent-ingest" && tab?.id) {
     executePage({ action: "read_dom", tabId: tab.id, maxChars: 20000 }).then(result => {
       broadcast({
         type: "knowledge_ingest",
@@ -86,7 +86,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
         title: result?.title || tab.title,
         content: result?.content || ""
       });
-      injectOverlay(tab.id, "Sent to MoonCode Knowledge Base ✓");
+      injectOverlay(tab.id, "Sent to Astro-Agent Knowledge Base ✓");
     }).catch(err => {
       console.error("Failed to ingest knowledge:", err);
     });
@@ -206,11 +206,11 @@ function updateBadge() {
   if (activeCount > 0) {
     chrome.action.setBadgeText({ text: String(activeCount) });
     chrome.action.setBadgeBackgroundColor({ color: "#22c55e" });
-    chrome.action.setTitle({ title: `MoonCode: ${activeCount} session(s) active` });
+    chrome.action.setTitle({ title: `Astro-Agent: ${activeCount} session(s) active` });
   } else {
     chrome.action.setBadgeText({ text: isConnecting ? "..." : "OFF" });
     chrome.action.setBadgeBackgroundColor({ color: isConnecting ? "#38bdf8" : "#ef4444" });
-    chrome.action.setTitle({ title: isConnecting ? "MoonCode: Scanning ports..." : "MoonCode: Offline" });
+    chrome.action.setTitle({ title: isConnecting ? "Astro-Agent: Scanning ports..." : "Astro-Agent: Offline" });
   }
 }
 
@@ -264,7 +264,7 @@ async function executeTabs(args) {
     const smartUrl = resolveSmartUrl(args.url);
     await chrome.tabs.update(tabId, { url: smartUrl, active: args.active !== false });
     await waitForTabReady(tabId);
-    try { await injectOverlay(tabId, "MoonCode Synchronized"); } catch { /* internal/CSP pages are still navigated */ }
+    try { await injectOverlay(tabId, "Astro-Agent Synchronized"); } catch { /* internal/CSP pages are still navigated */ }
     return tabSummary(await chrome.tabs.get(tabId));
   }
   throw new Error(`Unknown tabs action: ${action}`);
@@ -457,7 +457,7 @@ async function executePage(args) {
     const [result] = await chrome.scripting.executeScript({
       target: { tabId },
       func: (maxElements, showLabels) => {
-        document.querySelectorAll(".moon-label").forEach(el => el.remove());
+        document.querySelectorAll(".astro-label").forEach(el => el.remove());
         if (window.__moon_labels_cleanup) clearTimeout(window.__moon_labels_cleanup);
 
         const selectors = [
@@ -499,11 +499,11 @@ async function executePage(args) {
           if (style.pointerEvents === "none") continue;
 
           const id = idCounter++;
-          el.setAttribute("data-moon-id", String(id));
+          el.setAttribute("data-astro-id", String(id));
 
           if (showLabels) {
             const label = document.createElement("div");
-            label.className = "moon-label";
+            label.className = "astro-label";
             label.textContent = String(id);
             label.style.cssText = [
               "position:fixed",
@@ -545,7 +545,7 @@ async function executePage(args) {
         if (showLabels) {
           (document.body || document.documentElement).appendChild(fragment);
           window.__moon_labels_cleanup = setTimeout(() => {
-            document.querySelectorAll(".moon-label").forEach(el => el.remove());
+            document.querySelectorAll(".astro-label").forEach(el => el.remove());
           }, 10000);
         }
         return map;
@@ -852,8 +852,8 @@ async function executePage(args) {
     const [result] = await chrome.scripting.executeScript({
       target: { tabId },
       func: () => {
-        document.querySelectorAll(".moon-label,#mooncode-overlay,#moon-visual-cursor,#mooncode-banner,#mooncode-bar,#mooncode-style").forEach(el => el.remove());
-        if (window.__mooncode_hide) clearTimeout(window.__mooncode_hide);
+        document.querySelectorAll(".astro-label,#Astro-Agent-overlay,#astro-visual-cursor,#Astro-Agent-banner,#Astro-Agent-bar,#Astro-Agent-style").forEach(el => el.remove());
+        if (window.__Astro-Agent_hide) clearTimeout(window.__Astro-Agent_hide);
         if (window.__moon_labels_cleanup) clearTimeout(window.__moon_labels_cleanup);
         return { cleared: true };
       }
@@ -1236,8 +1236,8 @@ async function resolveSelector(tabId, selector) {
     const [res] = await chrome.scripting.executeScript({
       target: { tabId },
       func: (id) => {
-        const el = document.querySelector(`[data-moon-id="${id}"]`);
-        return el ? `[data-moon-id="${id}"]` : null;
+        const el = document.querySelector(`[data-astro-id="${id}"]`);
+        return el ? `[data-astro-id="${id}"]` : null;
       },
       args: [id]
     });
@@ -1288,8 +1288,8 @@ async function resolveSelector(tabId, selector) {
       const el = best.el;
       // build a specific selector
       if (el.id) return `#${CSS.escape(el.id)}`;
-      const moonId = el.getAttribute('data-moon-id');
-      if (moonId) return `[data-moon-id="${moonId}"]`;
+      const moonId = el.getAttribute('data-astro-id');
+      if (moonId) return `[data-astro-id="${moonId}"]`;
       // nth-child path
       const path = [];
       let cur = el;
@@ -1481,7 +1481,7 @@ function resolveSmartUrl(url) {
 // Overlay is injected once and reused; message updates in-place
 const overlayInjectedTabs = new Set();
 
-async function injectOverlay(tabId, message = "MoonCode Active Control") {
+async function injectOverlay(tabId, message = "Astro-Agent Active Control") {
   const arrowUrl = chrome.runtime.getURL("cursors/arrow.cur");
   const handUrl  = chrome.runtime.getURL("cursors/hand.cur");
   const typeUrl  = chrome.runtime.getURL("cursors/ibeam.cur");
@@ -1489,10 +1489,10 @@ async function injectOverlay(tabId, message = "MoonCode Active Control") {
   await chrome.scripting.executeScript({
     target: { tabId },
     func: (msg, arrowUrl, handUrl, typeUrl) => {
-      const OVERLAY_ID = "mooncode-overlay";
-      const CURSOR_ID  = "moon-visual-cursor";
-      const BANNER_ID  = "mooncode-banner";
-      const FRAME_ID   = "mooncode-neon-frame";
+      const OVERLAY_ID = "Astro-Agent-overlay";
+      const CURSOR_ID  = "astro-visual-cursor";
+      const BANNER_ID  = "Astro-Agent-banner";
+      const FRAME_ID   = "Astro-Agent-neon-frame";
 
       // ── Premium Glassmorphism Banner ──────────────────────────────────────
       let banner = document.getElementById(BANNER_ID);
@@ -1526,17 +1526,17 @@ async function injectOverlay(tabId, message = "MoonCode Active Control") {
         `;
 
         const pulse = document.createElement("div");
-        pulse.style.cssText = "width:8px;height:8px;background:#38bdf8;border-radius:50%;box-shadow:0 0 10px #38bdf8;animation:moon-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;";
+        pulse.style.cssText = "width:8px;height:8px;background:#38bdf8;border-radius:50%;box-shadow:0 0 10px #38bdf8;animation:astro-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;";
         banner.appendChild(pulse);
 
         const txt = document.createElement("span");
-        txt.id = "mooncode-txt";
+        txt.id = "Astro-Agent-txt";
         banner.appendChild(txt);
 
-        if (!document.getElementById("moon-style")) {
+        if (!document.getElementById("astro-style")) {
           const s = document.createElement("style");
-          s.id = "moon-style";
-          s.textContent = "@keyframes moon-pulse{0%,100%{opacity:1}50%{opacity:.4}}";
+          s.id = "astro-style";
+          s.textContent = "@keyframes astro-pulse{0%,100%{opacity:1}50%{opacity:.4}}";
           document.head.appendChild(s);
         }
 
@@ -1549,7 +1549,7 @@ async function injectOverlay(tabId, message = "MoonCode Active Control") {
         });
       }
 
-      document.getElementById("mooncode-txt").textContent = msg;
+      document.getElementById("Astro-Agent-txt").textContent = msg;
 
       // Clear auto-hide if exists
       if (window._moon_hide_timer) clearTimeout(window._moon_hide_timer);
@@ -1621,7 +1621,7 @@ async function injectOverlay(tabId, message = "MoonCode Active Control") {
         if (!el) return;
         const rect = el.getBoundingClientRect();
         const glow = document.createElement("div");
-        glow.className = "moon-element-glow";
+        glow.className = "astro-element-glow";
         glow.style.cssText = `
           position: fixed;
           top: ${rect.top - 4}px;

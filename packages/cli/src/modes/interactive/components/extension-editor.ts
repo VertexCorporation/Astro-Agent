@@ -17,7 +17,7 @@ import {
 	Spacer,
 	Text,
 	type TUI,
-} from "moon-tui";
+} from "astro-tui";
 import type { KeybindingsManager } from "../../../core/keybindings.js";
 import { getEditorTheme, theme } from "../theme/theme.js";
 import { DynamicBorder } from "./dynamic-border.js";

@@ -50,7 +50,7 @@ let authUrl = 'http://127.0.0.1:3131';
 let currentAssistantMsgId = null;
 let isGenerating = false;
 let attachedFiles = [];
-let currentTheme = localStorage.getItem('mc-theme') || 'mooncode';
+let currentTheme = localStorage.getItem('mc-theme') || 'Astro-Agent';
 let allCommands = [];
 let filteredCmds = [];
 let cmdIndex = -1;
@@ -159,17 +159,17 @@ function searchChat(query) {
 // ─── EXPORT ───────────────────────────────────────────────────────────────
 function exportChat() {
 	const rows = chatInner.querySelectorAll('.msg-row');
-	let md = `# MoonCode Sohbet Dışa Aktarma\n\n_${new Date().toLocaleString('tr-TR')}_\n\n---\n\n`;
+	let md = `# Astro-Agent Sohbet Dışa Aktarma\n\n_${new Date().toLocaleString('tr-TR')}_\n\n---\n\n`;
 	rows.forEach(row => {
 		const isUser = row.classList.contains('user');
 		const bubble = row.querySelector('.user-bubble, .assistant-content');
 		if (!bubble) return;
-		md += `**${isUser ? '👤 Kullanıcı' : '🤖 MoonCode'}**\n\n${bubble.textContent.trim()}\n\n---\n\n`;
+		md += `**${isUser ? '👤 Kullanıcı' : '🤖 Astro-Agent'}**\n\n${bubble.textContent.trim()}\n\n---\n\n`;
 	});
 	const blob = new Blob([md], { type: 'text/markdown' });
 	const url = URL.createObjectURL(blob);
 	const a = document.createElement('a');
-	a.href = url; a.download = `mooncode-${Date.now()}.md`; a.click();
+	a.href = url; a.download = `Astro-Agent-${Date.now()}.md`; a.click();
 	URL.revokeObjectURL(url);
 	toast('Sohbet dışa aktarıldı', 'success');
 }
@@ -666,7 +666,7 @@ function newChat() {
 	chatInner.innerHTML = `
 		<div id="empty-state">
 			<div class="empty-orb" style="background:none;border:none;">
-				<img src="/assets/Mooncodewhitelogo.png" alt="MoonCode" style="width:68px;height:68px;border-radius:18px;object-fit:cover;filter:drop-shadow(0 0 20px rgba(108,143,255,0.4));" onerror="this.style.display='none'">
+				<img src="/assets/Astro-Agentwhitelogo.png" alt="Astro-Agent" style="width:68px;height:68px;border-radius:18px;object-fit:cover;filter:drop-shadow(0 0 20px rgba(108,143,255,0.4));" onerror="this.style.display='none'">
 			</div>
 			<h2 style="font-size:1.3rem;font-weight:600;margin:0 0 8px;">Bugün nasıl yardımcı olabilirim?</h2>
 			<p style="color:var(--muted);font-size:0.85rem;margin:0 0 28px;max-width:400px;line-height:1.6;">Kodunuzu yazın, hata ayıklayın, refactor yapın veya sıfırdan proje başlatın.</p>
@@ -773,7 +773,7 @@ async function loadSettings() {
 
 		// General tab
 		const themeEl = document.getElementById('set-theme');
-		if (themeEl) themeEl.value = s.theme || 'mooncode';
+		if (themeEl) themeEl.value = s.theme || 'Astro-Agent';
 
 		// Compaction tab
 		const profileEl = document.getElementById('set-profile');
@@ -867,7 +867,7 @@ async function updateUserUI() {
 	const fallbackContent = `
 		<div style="padding:16px 12px;text-align:center;border-bottom:1px solid var(--border);margin-bottom:6px;">
 			<span class="material-symbols-rounded" style="font-size:40px;color:var(--accent);opacity:0.6;">person</span>
-			<div style="font-size:0.85rem;font-weight:600;margin-top:8px;">Mooncode</div>
+			<div style="font-size:0.85rem;font-weight:600;margin-top:8px;">Astro-Agent</div>
 			<div style="font-size:0.72rem;color:var(--muted);margin-top:2px;">Yerel oturum</div>
 		</div>
 		<div class="sidebar-item" onclick="openModal('settingsModal')" style="gap:10px;">
@@ -1427,7 +1427,7 @@ async function exportSession(format) {
 		const url = URL.createObjectURL(blob);
 		const a = document.createElement('a');
 		a.href = url;
-		a.download = `mooncode-session-${Date.now()}.${ext}`;
+		a.download = `Astro-Agent-session-${Date.now()}.${ext}`;
 		a.click();
 		URL.revokeObjectURL(url);
 		closeModal('exportModal');

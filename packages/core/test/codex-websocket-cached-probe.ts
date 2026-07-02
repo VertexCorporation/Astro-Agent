@@ -2,12 +2,10 @@
 /**
  * Live probe for OpenAI Codex Responses websocket-cached mode.
  *
- * Runs a simple tool loop directly against the Mooncli-ai provider source so it does not
+ * Runs a simple tool loop directly against the astroagent-ai provider source so it does not
  * depend on built dist packages or cli SDK wiring.
  */
 
-import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
 import { Type } from "typebox";
 import { AuthStorage } from "../../cli/src/core/auth-storage.js";
 import { getModel } from "../src/models.js";
@@ -37,7 +35,7 @@ function parseArgs(argv: string[]): Args {
 	let transport: Transport = "websocket-cached";
 	let maxTokens = DEFAULT_MAX_TOKENS;
 	let reasoning: ThinkingLevel = "low";
-	let sessionId = `Mooncli-ai-codex-ws-cached-probe-${Date.now()}`;
+	let sessionId = `astroagent-ai-codex-ws-cached-probe-${Date.now()}`;
 
 	for (let i = 0; i < argv.length; i++) {
 		const arg = argv[i];
@@ -107,7 +105,7 @@ function buildPrompt(turn: number): string {
 	];
 	for (let i = 1; i <= 180; i++) {
 		lines.push(
-			`Turn ${turn} synthetic record ${String(i).padStart(3, "0")}: alpha beta gamma delta epsilon zeta eta theta iota kappa lambda mu nu xi omicron Mooncli rho sigma tau upsilon phi chi psi omega.`,
+			`Turn ${turn} synthetic record ${String(i).padStart(3, "0")}: alpha beta gamma delta epsilon zeta eta theta iota kappa lambda mu nu xi omicron AstroAgent rho sigma tau upsilon phi chi psi omega.`,
 		);
 	}
 	return lines.join("\n");
@@ -173,13 +171,9 @@ async function main(): Promise<void> {
 	const elapsed: number[] = [];
 	resetOpenAICodexWebSocketDebugStats(args.sessionId);
 
-	console.log(`provider openai-codex, model gpt-5.5`);
-	console.log(`sessionId ${args.sessionId}`);
 	console.log(
 		`turns ${args.turns}, transport ${args.transport}, reasoning ${args.reasoning}, maxTokens ${args.maxTokens}`,
 	);
-	console.log(`scratch ${resolve(join(tmpdir(), args.sessionId))}`);
-	console.log("");
 
 	for (let turn = 1; turn <= args.turns; turn++) {
 		context.messages.push({ role: "user", content: buildPrompt(turn), timestamp: Date.now() });
@@ -259,7 +253,6 @@ async function main(): Promise<void> {
 	}
 
 	const stats = getOpenAICodexWebSocketDebugStats(args.sessionId);
-	console.log("");
 	console.log(
 		[
 			"timing",

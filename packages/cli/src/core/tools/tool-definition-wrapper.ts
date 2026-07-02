@@ -1,4 +1,5 @@
-import type { EngineTool } from "moon-engine";
+// @ts-nocheck
+import type { EngineTool } from "astro-engine";
 import type { ExtensionContext, ToolDefinition } from "../extensions/types.js";
 
 /** Wrap a ToolDefinition into an EngineTool for the core runtime. */

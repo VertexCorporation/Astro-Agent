@@ -6,9 +6,9 @@
  * and after compaction the session is reloaded.
  */
 
-import type { AssistantMessage, Model, Usage } from "moon-core";
-import { completeSimple } from "moon-core";
-import type { EngineMessage, ThinkingLevel } from "moon-engine";
+import type { AssistantMessage, Model, Usage } from "astro-core";
+import { completeSimple } from "astro-core";
+import type { EngineMessage, ThinkingLevel } from "astro-engine";
 import {
 	convertToLlm,
 	createBranchSummaryMessage,
@@ -44,7 +44,7 @@ function extractFileOperations(
 ): FileOperations {
 	const fileOps = createFileOps();
 
-	// Collect from previous compaction's details (if MoonCode-generated)
+	// Collect from previous compaction's details (if Astro-Agent-generated)
 	if (prevCompactionIndex >= 0) {
 		const prevCompaction = entries[prevCompactionIndex] as CompactionEntry;
 		if (!prevCompaction.fromHook && prevCompaction.details) {

@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Engine loop that works with EngineMessage throughout.
  * Transforms to Message[] only at the Provider call boundary.
@@ -11,7 +10,7 @@ import {
 	streamSimple,
 	type ToolResultMessage,
 	validateToolArguments,
-} from "moon-core";
+} from "astro-core";
 import type {
 	EngineContext,
 	EngineEvent,
@@ -224,7 +223,11 @@ async function runLoop(
 						const errorMsg =
 							"Loop detected: The agent is repeating the same tool calls without progress. Stopping to save tokens.";
 						const errorResult: ToolResultMessage = {
-							role: "user",
+							role: "toolResult",
+							toolCallId: toolCalls[0]?.id || "unknown",
+							toolName: toolCalls[0]?.name || "unknown",
+							isError: true,
+							timestamp: Date.now(),
 							content: [{ type: "text", text: errorMsg }],
 						};
 						currentContext.messages.push(errorResult);
@@ -288,8 +291,6 @@ async function runLoop(
  * Stream an assistant response from the Provider.
  * This is where EngineMessage[] gets transformed to Message[] for the Provider.
  */
-import { extractAndSaveFacts, memoryMiddleware } from "./memory-middleware.js";
-
 async function streamAssistantResponse(
 	context: EngineContext,
 	config: EngineLoopConfig,
@@ -302,10 +303,6 @@ async function streamAssistantResponse(
 	if (config.transformContext) {
 		messages = await config.transformContext(messages, signal);
 	}
-
-	// AGI REVOLUTION: Apply Memory Middleware (RFF + Grover Oracle + SQLite R-Graph)
-	const memResult = await memoryMiddleware(messages);
-	messages = memResult.messages;
 
 	// Convert to Provider-compatible messages (EngineMessage[] → Message[])
 	const llmMessages = await config.convertToLlm(messages);
@@ -365,17 +362,6 @@ async function streamAssistantResponse(
 			case "error": {
 				const finalMessage = await response.result();
 
-				// AGI REVOLUTION: Extract facts after response
-				if (event.type === "done" && finalMessage) {
-					const userMessages = messages.filter((m) => m.role === "user");
-					const lastUser = userMessages[userMessages.length - 1];
-					const userText = lastUser && typeof lastUser.content === "string" ? lastUser.content : "";
-					const assistantText = finalMessage.content
-						.filter((c) => c.type === "text")
-						.map((c: any) => c.text)
-						.join(" ");
-					extractAndSaveFacts(userText, assistantText);
-				}
 				if (addedPartial) {
 					context.messages[context.messages.length - 1] = finalMessage;
 				} else {

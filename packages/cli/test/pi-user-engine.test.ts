@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { getMoonUserEngine } from "../src/utils/moon-user-engine.js";
+import { getAstroUserEngine } from "../src/utils/astro-user-engine.js";
 
-describe("getMoonUserEngine", () => {
-	it("formats the user engine expected by Mooncli.dev", () => {
+describe("getAstroUserEngine", () => {
+	it("formats the user engine expected by AstroAgent.dev", () => {
 		const runtime = process.versions.bun ? `bun/${process.versions.bun}` : `node/${process.version}`;
-		const userEngine = getMoonUserEngine("1.2.3");
+		const userEngine = getAstroUserEngine("1.2.3");
 
-		expect(userEngine).toBe(`Moon/1.2.3 (${process.platform}; ${runtime}; ${process.arch})`);
-		expect(userEngine).toMatch(/^Moon\/[^\s()]+ \([^;()]+;\s*[^;()]+;\s*[^()]+\)$/);
+		expect(userEngine).toBe(`AstroAgent/1.2.3 (${process.platform}; ${runtime}; ${process.arch})`);
+		expect(userEngine).toMatch(/^AstroAgent\/[^\s()]+ \([^;()]+;\s*[^;()]+;\s*[^()]+\)$/);
 	});
 });

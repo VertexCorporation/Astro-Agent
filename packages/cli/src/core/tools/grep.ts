@@ -1,9 +1,9 @@
 // @ts-nocheck
 import { createInterface } from "node:readline";
+import type { EngineTool } from "astro-engine";
+import { Text } from "astro-tui";
 import { spawn } from "child_process";
 import { readFileSync, statSync } from "fs";
-import type { EngineTool } from "moon-engine";
-import { Text } from "moon-tui";
 import path from "path";
 import { type Static, Type } from "typebox";
 import { keyHint } from "../../modes/interactive/components/keybinding-hints.js";
@@ -130,6 +130,9 @@ export function createGrepToolDefinition(
 		label: "grep",
 		description: `Search file contents for a pattern. Returns matching lines with file paths and line numbers. Respects .gitignore. Output is truncated to ${DEFAULT_LIMIT} matches or ${DEFAULT_MAX_BYTES / 1024}KB (whichever is hit first). Long lines are truncated to ${GREP_MAX_LINE_LENGTH} chars.`,
 		promptSnippet: "Search file contents for patterns (respects .gitignore)",
+		promptGuidelines: [
+			"CRITICAL: NEVER use bash (cat, grep, Select-String, findstr, type, more, less) to search files. Always use this grep tool instead. Bash-based file search will hang the system.",
+		],
 		parameters: grepSchema,
 		async execute(
 			_toolCallId,

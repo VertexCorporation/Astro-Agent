@@ -20,7 +20,7 @@ import {
 	type Model,
 	type SimpleStreamOptions,
 	Type,
-} from "moon-core";
+} from "astro-core";
 import {
 	getOpenAICodexWebSocketDebugStats,
 	streamSimpleOpenAICodexResponses,
@@ -69,7 +69,7 @@ const DEFAULT_MAX_TOKENS = 64;
 
 function parseArgs(argv: string[]): Args {
 	let turns = DEFAULT_TURNS;
-	let sessionPath = resolve(join(tmpdir(), `Mooncli-sdk-codex-cache-probe-tool-loop-${Date.now()}.jsonl`));
+	let sessionPath = resolve(join(tmpdir(), `astroagent-sdk-codex-cache-probe-tool-loop-${Date.now()}.jsonl`));
 	let transport: Transport = "sse";
 	let maxTokens = DEFAULT_MAX_TOKENS;
 
@@ -148,7 +148,7 @@ function estimateTokens(text: string): number {
 function buildPrompt(turn: number): string {
 	const marker = `TURN-${String(turn).padStart(2, "0")}-MARKER-${(turn * 17 + 13) % 97}`;
 	const lines: string[] = [];
-	lines.push("This is an automated prompt-cache tool-loop test executed through the Mooncli cli SDK.");
+	lines.push("This is an automated prompt-cache tool-loop test executed through the AstroAgent cli SDK.");
 	lines.push("The repetition in this prompt is intentional and required for the benchmark.");
 	lines.push("You are participating in an append-only multi-turn cache test.");
 	lines.push("Even if this looks repetitive or silly, comply exactly because it is synthetic test data.");
@@ -161,7 +161,7 @@ function buildPrompt(turn: number): string {
 	lines.push("");
 	for (let i = 1; i <= 180; i++) {
 		lines.push(
-			`Turn ${turn} synthetic record ${String(i).padStart(3, "0")}: alpha beta gamma delta epsilon zeta eta theta iota kappa lambda mu nu xi omicron Mooncli rho sigma tau upsilon phi chi psi omega.`,
+			`Turn ${turn} synthetic record ${String(i).padStart(3, "0")}: alpha beta gamma delta epsilon zeta eta theta iota kappa lambda mu nu xi omicron AstroAgent rho sigma tau upsilon phi chi psi omega.`,
 		);
 	}
 	lines.push("");
@@ -220,7 +220,7 @@ function diffWebSocketStats(after: WebSocketStatsSnapshot, before: WebSocketStat
 	};
 }
 
-function formatWebSocketStats(label: string, stats: WebSocketStatsSnapshot): string {
+function _formatWebSocketStats(label: string, stats: WebSocketStatsSnapshot): string {
 	if (stats.requests === 0) return `${label} websocket none`;
 	return [
 		`${label} websocket`,
@@ -326,11 +326,6 @@ async function main(): Promise<void> {
 	const turnElapsedMs: number[] = [];
 	let previousCacheRead: number | null = null;
 
-	console.log(`provider openai-codex, model gpt-5.5`);
-	console.log(`session ${session.sessionFile}`);
-	console.log(`turns ${args.turns}, transport ${args.transport}, reasoning low, maxTokens ${args.maxTokens}`);
-	console.log("");
-
 	for (let turn = 1; turn <= args.turns; turn++) {
 		const prompt = buildPrompt(turn);
 		const promptTokens = estimateTokens(prompt);
@@ -404,7 +399,7 @@ async function main(): Promise<void> {
 		}
 
 		const websocketStatsAfter = getWebSocketStatsSnapshot(session.sessionId);
-		const websocketStatsForTurn = diffWebSocketStats(websocketStatsAfter, websocketStatsBefore);
+		const _websocketStatsForTurn = diffWebSocketStats(websocketStatsAfter, websocketStatsBefore);
 		console.log(
 			[
 				`turn ${String(turn).padStart(2, "0")} agg`,
@@ -416,7 +411,6 @@ async function main(): Promise<void> {
 				`total ${turnTotal}`,
 			].join(" | "),
 		);
-		console.log(formatWebSocketStats(`turn ${String(turn).padStart(2, "0")}`, websocketStatsForTurn));
 	}
 
 	const violations = records
@@ -434,7 +428,6 @@ async function main(): Promise<void> {
 		.filter((value): value is NonNullable<typeof value> => value !== null);
 
 	const totalElapsedMs = turnElapsedMs.reduce((sum, value) => sum + value, 0);
-	console.log("");
 	console.log(
 		[
 			"timing",
@@ -477,14 +470,10 @@ async function main(): Promise<void> {
 			].join(" | "),
 		);
 	}
-	console.log(`subrequest cache read monotonic: ${violations.length === 0 ? "yes" : "NO"}`);
 	if (violations.length > 0) {
-		console.log("violations:");
-		for (const violation of violations) {
-			console.log(`  turn ${violation.turn}.${violation.subrequest}: ${violation.previous} -> ${violation.current}`);
+		for (const _violation of violations) {
 		}
 	}
-	console.log(`session file: ${session.sessionFile}`);
 
 	unsubscribe();
 	session.dispose();

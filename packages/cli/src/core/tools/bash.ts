@@ -3,9 +3,9 @@ import { randomBytes } from "node:crypto";
 import { createWriteStream, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import type { EngineTool } from "astro-engine";
+import { Container, Text, truncateToWidth } from "astro-tui";
 import { spawn } from "child_process";
-import type { EngineTool } from "moon-engine";
-import { Container, Text, truncateToWidth } from "moon-tui";
 import { type Static, Type } from "typebox";
 import { keyHint } from "../../modes/interactive/components/keybinding-hints.js";
 import { truncateToVisualLines } from "../../modes/interactive/components/visual-truncate.js";
@@ -30,7 +30,7 @@ import { DEFAULT_MAX_BYTES, DEFAULT_MAX_LINES, formatSize, type TruncationResult
  */
 function getTempFilePath(): string {
 	const id = randomBytes(8).toString("hex");
-	return join(tmpdir(), `MoonCode-bash-${id}.log`);
+	return join(tmpdir(), `Astro-Agent-bash-${id}.log`);
 }
 
 const bashSchema = Type.Object({
@@ -70,9 +70,9 @@ export interface BashOperations {
 }
 
 /**
- * Create bash operations using MoonCode's built-in local shell execution backend.
+ * Create bash operations using Astro-Agent's built-in local shell execution backend.
  *
- * This is useful for extensions that intercept user_bash and still want MoonCode's
+ * This is useful for extensions that intercept user_bash and still want Astro-Agent's
  * standard local shell behavior while wrapping or rewriting commands.
  */
 export function createLocalBashOperations(options?: { shellPath?: string }): BashOperations {

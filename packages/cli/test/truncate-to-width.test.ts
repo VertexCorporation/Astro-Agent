@@ -1,4 +1,4 @@
-import { truncateToWidth, visibleWidth } from "moon-tui";
+import { truncateToWidth, visibleWidth } from "astro-tui";
 import { describe, expect, it } from "vitest";
 
 /**

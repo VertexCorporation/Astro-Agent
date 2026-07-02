@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-nocheck -- TODO: Update to match current OpenAI SDK types
 /**
  * Google Gemini CLI / Antigravity provider.
  * Shared implementation for both google-gemini-cli and google-antigravity providers.
@@ -225,7 +225,7 @@ function isGemini3Model(modelId: string): boolean {
 }
 
 /**
- * Maps custom Mooncli model IDs back to the real IDs expected by the Cloud Code Assist API.
+ * Maps custom AstroAgent model IDs back to the real IDs expected by the Cloud Code Assist API.
  */
 function getApiModelId(modelId: string): string {
 	const id = modelId.toLowerCase();
@@ -974,7 +974,7 @@ type ClampedThinkingLevel = Exclude<ThinkingLevel, "xhigh">;
 function getDisabledThinkingConfig(modelId: string): ThinkingConfig {
 	// Google docs: Gemini 3.1 Pro cannot disable thinking, and Gemini 3 Flash / Flash-Lite
 	// do not support full thinking-off either. For Gemini 3 models, use the lowest supported
-	// thinkingLevel without includeThoughts so hidden thinking remains invisible to Mooncli.
+	// thinkingLevel without includeThoughts so hidden thinking remains invisible to astroAgent.
 	if (isGemini3ProModel(modelId)) {
 		return { thinkingLevel: "LOW" as any };
 	}

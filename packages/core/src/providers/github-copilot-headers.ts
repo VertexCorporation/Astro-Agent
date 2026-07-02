@@ -1,4 +1,3 @@
-// @ts-nocheck
 import type { Message } from "../types.js";
 
 // Copilot expects X-Initiator to indicate whether the request is user-initiated

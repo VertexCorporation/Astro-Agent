@@ -17,7 +17,7 @@ Report privately with:
 
 ## Security Baseline
 
-MoonCode must keep these rules:
+AstroAgent must keep these rules:
 
 - never log API keys, OAuth tokens, session secrets, or raw auth headers
 - validate filesystem paths before destructive writes/deletes

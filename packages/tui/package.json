@@ -1,5 +1,5 @@
 {
-	"name": "moon-tui",
+	"name": "astro-tui",
 	"version": "49.0.0",
 	"description": "Terminal User Interface library with differential rendering for efficient text-based applications",
 	"type": "module",
@@ -28,7 +28,7 @@
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/theayzek01/MoonCode.git",
+		"url": "git+https://github.com/vertexcorporation/Astro-Agent.git",
 		"directory": "packages/tui"
 	},
 	"engines": {

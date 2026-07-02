@@ -54,9 +54,9 @@ export const BUILTIN_SLASH_COMMANDS: ReadonlyArray<BuiltinSlashCommand> = [
 	{ name: "index", description: "Index codebase for semantic search" },
 	{ name: "browser", description: "Chrome extension status and control" },
 	{ name: "app", description: "Open /app Web Studio and lock TUI" },
-	{ name: "interface", description: "Open MoonCode Special OpenClaw OS Interface" },
-	{ name: "videoedit", description: "Open MoonCode Pro Video Studio (Browser)" },
-	{ name: "photoedit", description: "Open MoonCode Pro Photo Editor (Browser)" },
+	{ name: "interface", description: "Open Astro-Agent Special OpenClaw OS Interface" },
+	{ name: "videoedit", description: "Open Astro-Agent Pro Video Studio (Browser)" },
+	{ name: "photoedit", description: "Open Astro-Agent Pro Photo Editor (Browser)" },
 	{ name: "mcp", description: "List connected MCP servers" },
 	{ name: "blendermcp", description: "Install or connect Blender MCP on demand" },
 	{ name: "scratchmcp", description: "Connect Scratch/TurboWarp MCP on demand" },
@@ -70,12 +70,12 @@ export const BUILTIN_SLASH_COMMANDS: ReadonlyArray<BuiltinSlashCommand> = [
 
 	// === Update & System ===
 	{ name: "status", description: "Show detailed diagnostics" },
-	{ name: "update", description: "Update MoonCode to latest version" },
+	{ name: "update", description: "Update Astro-Agent to latest version" },
 	{ name: "ollama", description: "Ollama model management" },
 	{ name: "hotkeys", description: "List keyboard shortcuts" },
 	{ name: "changelog", description: "Show changelog" },
 	{ name: "reload", description: "Reload system components" },
-	{ name: "hub", description: "MoonCode Dashboard and Project Hub" },
+	{ name: "hub", description: "Astro-Agent Dashboard and Project Hub" },
 	{ name: "metrics", description: "Show system metrics and token usage" },
 	{ name: "quit", description: `Quit ${APP_NAME}` },
 ];

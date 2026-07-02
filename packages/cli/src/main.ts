@@ -9,18 +9,18 @@
 import { existsSync, rmSync } from "node:fs";
 import { resolve } from "node:path";
 import { createInterface } from "node:readline";
+import { type ImageContent, modelsAreEqual } from "astro-core";
+import { ProcessTerminal, setKeybindings, TUI } from "astro-tui";
 import chalk from "chalk";
-import { type ImageContent, modelsAreEqual } from "moon-core";
-import { ProcessTerminal, setKeybindings, TUI } from "moon-tui";
 import { type Args, type Mode, parseArgs, printHelp } from "./cli/args.js";
 import { processFileArguments } from "./cli/file-processor.js";
 import { buildInitialMessage } from "./cli/initial-message.js";
 import { listModels } from "./cli/list-models.js";
 import { selectSession } from "./cli/session-picker.js";
-import { ENV_SESSION_DIR, expandTildePath, getEngineDir, getSessionsDir, VERSION } from "./config.js";
+import { ENV_SESSION_DIR, expandTildePath, getEngineDir, getSessionsDir } from "./config.js";
 import { formatNoModelsAvailableMessage } from "./core/auth-guidance.js";
 import { AuthStorage } from "./core/auth-storage.js";
-import { getBrowserBridgeStatus, startBrowserBridgeServer } from "./core/browser-bridge-server.js";
+import { startBrowserBridgeServer } from "./core/browser-bridge-server.js";
 import { type CreateEngineSessionRuntimeFactory, createEngineSessionRuntime } from "./core/engine-session-runtime.js";
 import {
 	createEngineSessionFromServices,
@@ -258,10 +258,8 @@ async function createSessionManager(
 				return SessionManager.open(resolved.path, sessionDir);
 
 			case "global": {
-				console.log(chalk.yellow(`Session found in another project: ${resolved.cwd}`));
 				const shouldFork = await promptConfirm("Fork this session into the current directory?");
 				if (!shouldFork) {
-					console.log(chalk.dim("Cancelled."));
 					process.exit(0);
 				}
 				return forkSessionOrExit(resolved.path, cwd, sessionDir);
@@ -281,7 +279,6 @@ async function createSessionManager(
 				SessionManager.listAll,
 			);
 			if (!selectedPath) {
-				console.log(chalk.dim("No session selected"));
 				process.exit(0);
 			}
 			return SessionManager.open(selectedPath, sessionDir);
@@ -440,9 +437,7 @@ export async function main(args: string[], options?: MainOptions) {
 	resetTimings();
 
 	if (args[0] === "browser-bridge") {
-		const status = startBrowserBridgeServer({ keepAlive: true });
-		console.log(`Browser Bridge → ws://127.0.0.1:${status.port}`);
-		console.log(`Health check   → http://127.0.0.1:${status.port}/health`);
+		const _status = startBrowserBridgeServer({ keepAlive: true });
 		process.on("SIGINT", () => process.exit(0));
 		await new Promise(() => {});
 		return;
@@ -472,9 +467,7 @@ export async function main(args: string[], options?: MainOptions) {
 			);
 		};
 
-		const bridgeStatus = startBrowserBridgeServer({ keepAlive: true });
-		console.log(`[Moon Service] Browser Bridge listening on ws://127.0.0.1:${bridgeStatus.port}/ws`);
-		console.log(`[Moon Service] Web UI active on http://127.0.0.1:3131`);
+		const _bridgeStatus = startBrowserBridgeServer({ keepAlive: true });
 
 		process.on("SIGINT", () => process.exit(0));
 		process.on("SIGTERM", () => process.exit(0));
@@ -485,7 +478,6 @@ export async function main(args: string[], options?: MainOptions) {
 	if (args[0] === "service") {
 		const action = args[1];
 		if (!action || !["start", "stop", "restart", "status", "logs"].includes(action)) {
-			console.log("Usage: mooncode service <start|stop|restart|status|logs>");
 			return;
 		}
 
@@ -555,12 +547,11 @@ export async function main(args: string[], options?: MainOptions) {
 			const runningStatus = await checkRunning();
 			if (runningStatus) {
 				console.log(
-					chalk.yellow(`MoonCode Service is already running on port 3133 (Clients: ${runningStatus.clients}).`),
+					chalk.yellow(`AstroAgent Service is already running on port 3133 (Clients: ${runningStatus.clients}).`),
 				);
 				return;
 			}
 
-			console.log("Starting MoonCode background service daemon...");
 			const { spawn } = await import("node:child_process");
 			const cliEntry = process.argv[1];
 
@@ -597,11 +588,7 @@ export async function main(args: string[], options?: MainOptions) {
 			}
 
 			if (success) {
-				console.log(chalk.green(`✓ MoonCode Service started successfully.`));
-				console.log(`Logs: ${serviceLogPath}`);
-				console.log(`Dashboard: http://127.0.0.1:3131`);
 			} else {
-				console.log(chalk.red(`✗ Service failed to start within 8 seconds. Check logs at: ${serviceLogPath}`));
 			}
 			return;
 		}
@@ -609,16 +596,12 @@ export async function main(args: string[], options?: MainOptions) {
 		if (action === "stop") {
 			const isRunning = await checkRunning();
 			if (!isRunning) {
-				console.log(chalk.yellow("MoonCode Service is not running."));
 				return;
 			}
 
-			console.log("Stopping MoonCode Service...");
 			const stopped = await postToShutdown();
 			if (stopped) {
-				console.log(chalk.green("✓ MoonCode Service stopped successfully."));
 			} else {
-				console.log(chalk.red("✗ Failed to stop service."));
 			}
 			return;
 		}
@@ -626,12 +609,10 @@ export async function main(args: string[], options?: MainOptions) {
 		if (action === "restart") {
 			const isRunning = await checkRunning();
 			if (isRunning) {
-				console.log("Stopping MoonCode Service...");
 				await postToShutdown();
 				await new Promise((r) => setTimeout(r, 1000));
 			}
 
-			console.log("Starting MoonCode background service daemon...");
 			const { spawn } = await import("node:child_process");
 			const cliEntry = process.argv[1];
 			const isWin = process.platform === "win32";
@@ -667,11 +648,7 @@ export async function main(args: string[], options?: MainOptions) {
 			}
 
 			if (success) {
-				console.log(chalk.green(`✓ MoonCode Service restarted successfully.`));
-				console.log(`Logs: ${serviceLogPath}`);
-				console.log(`Dashboard: http://127.0.0.1:3131`);
 			} else {
-				console.log(chalk.red(`✗ Service failed to restart. Check logs at: ${serviceLogPath}`));
 			}
 			return;
 		}
@@ -679,26 +656,17 @@ export async function main(args: string[], options?: MainOptions) {
 		if (action === "status") {
 			const runningStatus = await checkRunning();
 			if (runningStatus) {
-				console.log(chalk.green("● MoonCode Service: RUNNING"));
-				console.log(`  Bridge Port:  3133`);
-				console.log(`  Web Port:     3131`);
-				console.log(`  Clients:      ${runningStatus.clients}`);
-				console.log(`  Dashboard:    http://127.0.0.1:3131`);
 			} else {
-				console.log(chalk.red("○ MoonCode Service: STOPPED"));
 			}
 			return;
 		}
 
 		if (action === "logs") {
 			if (!fs.existsSync(serviceLogPath)) {
-				console.log(chalk.yellow("No logs found. Service has not been started yet."));
 				return;
 			}
 			const lines = fs.readFileSync(serviceLogPath, "utf-8").split("\n");
-			const tail = lines.slice(-50).join("\n");
-			console.log(chalk.cyan("--- Service Logs (last 50 lines) ---"));
-			console.log(tail);
+			const _tail = lines.slice(-50).join("\n");
 			return;
 		}
 	}
@@ -765,22 +733,17 @@ export async function main(args: string[], options?: MainOptions) {
 		if (existsSync(localMemoryFile)) rmSync(localMemoryFile, { force: true });
 		if (existsSync(localProfileFile)) rmSync(localProfileFile, { force: true });
 
-		console.log(`Cleared MoonCode session memory: ${sessionsDir}`);
-		console.log(`Cleared MoonCode global and local memory signals/profiles/lessons`);
 		process.exit(0);
 	}
 
 	if (parsed.version) {
 		if (parsed.verbose) {
-			console.log(`${VERSION} (${process.argv[1]})`);
 		} else {
-			console.log(VERSION);
 		}
 		process.exit(0);
 	}
 
 	if (parsed.messages.length === 1 && parsed.messages[0] === "browser-status") {
-		console.log(JSON.stringify(getBrowserBridgeStatus(), null, 2));
 		process.exit(0);
 	}
 
@@ -800,16 +763,15 @@ export async function main(args: string[], options?: MainOptions) {
 	}
 
 	if (parsed.export) {
-		let result: string;
+		let _result: string;
 		try {
 			const outputPath = parsed.messages.length > 0 ? parsed.messages[0] : undefined;
-			result = await exportFromFile(parsed.export, outputPath);
+			_result = await exportFromFile(parsed.export, outputPath);
 		} catch (error: unknown) {
 			const message = error instanceof Error ? error.message : "Session export failed";
 			console.error(chalk.red(`Error: ${message}`));
 			process.exit(1);
 		}
-		console.log(`Exported to: ${result}`);
 		process.exit(0);
 	}
 
@@ -1027,13 +989,12 @@ export async function main(args: string[], options?: MainOptions) {
 		// Portal/dashboard bypass - direkt chat
 
 		if (scopedModels.length > 0 && (parsed.verbose || !settingsManager.getQuietStartup())) {
-			const modelList = scopedModels
+			const _modelList = scopedModels
 				.map((sm) => {
 					const thinkingStr = sm.thinkingLevel ? `:${sm.thinkingLevel}` : "";
 					return `${sm.model.id}${thinkingStr}`;
 				})
 				.join(", ");
-			console.log(chalk.dim(`Model scope: ${modelList} ${chalk.gray("(Ctrl+P to cycle)")}`));
 		}
 
 		const appModeInstance = new StudioMode(runtime, {

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import type { AutocompleteProvider } from "./autocomplete.js";
 import type { Component } from "./tui.js";
 

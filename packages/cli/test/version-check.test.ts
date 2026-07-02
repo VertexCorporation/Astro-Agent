@@ -1,25 +1,25 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
-	checkForNewMoonCodeVersion,
+	checkForNewAstroAgentVersion,
 	comparePackageVersions,
-	getLatestMoonCodeVersion,
+	getLatestAstroAgentVersion,
 	isNewerPackageVersion,
 } from "../src/utils/version-check.js";
 
-const originalSkipVersionCheck = process.env.MOON_SKIP_VERSION_CHECK;
-const originalOffline = process.env.MOON_OFFLINE;
+const originalSkipVersionCheck = process.env.ASTRO_SKIP_VERSION_CHECK;
+const originalOffline = process.env.ASTRO_OFFLINE;
 
 afterEach(() => {
 	vi.unstubAllGlobals();
 	if (originalSkipVersionCheck === undefined) {
-		delete process.env.MOON_SKIP_VERSION_CHECK;
+		delete process.env.ASTRO_SKIP_VERSION_CHECK;
 	} else {
-		process.env.MOON_SKIP_VERSION_CHECK = originalSkipVersionCheck;
+		process.env.ASTRO_SKIP_VERSION_CHECK = originalSkipVersionCheck;
 	}
 	if (originalOffline === undefined) {
-		delete process.env.MOON_OFFLINE;
+		delete process.env.ASTRO_OFFLINE;
 	} else {
-		process.env.MOON_OFFLINE = originalOffline;
+		process.env.ASTRO_OFFLINE = originalOffline;
 	}
 });
 
@@ -36,17 +36,17 @@ describe("version checks", () => {
 		const fetchMock = vi.fn(async () => Response.json({ version: "1.2.3" }));
 		vi.stubGlobal("fetch", fetchMock);
 
-		await expect(checkForNewMoonCodeVersion("1.2.3")).resolves.toBeUndefined();
-		await expect(checkForNewMoonCodeVersion("1.2.2")).resolves.toBe("1.2.3");
+		await expect(checkForNewAstroAgentVersion("1.2.3")).resolves.toBeUndefined();
+		await expect(checkForNewAstroAgentVersion("1.2.2")).resolves.toBe("1.2.3");
 	});
 
-	it("uses the Mooncli.dev version check api with a Mooncli user engine", async () => {
+	it("uses the AstroAgent.dev version check api with a AstroAgent user engine", async () => {
 		const fetchMock = vi.fn(async () => Response.json({ version: "1.2.4" }));
 		vi.stubGlobal("fetch", fetchMock);
 
-		await expect(getLatestMoonCodeVersion("1.2.3")).resolves.toBe("1.2.4");
+		await expect(getLatestAstroAgentVersion("1.2.3")).resolves.toBe("1.2.4");
 		expect(fetchMock).toHaveBeenCalledWith(
-			"https://github.com/theayzek01/MoonCode/api/latest-version",
+			"https://github.com/theayzek01/Astro-Agent/api/latest-version",
 			expect.objectContaining({
 				headers: expect.objectContaining({
 					"User-Engine": expect.stringMatching(/^Moon\/1\.2\.3 /),
@@ -57,11 +57,11 @@ describe("version checks", () => {
 	});
 
 	it("skips api calls when version checks are disabled", async () => {
-		process.env.MOON_SKIP_VERSION_CHECK = "1";
+		process.env.ASTRO_SKIP_VERSION_CHECK = "1";
 		const fetchMock = vi.fn();
 		vi.stubGlobal("fetch", fetchMock);
 
-		await expect(getLatestMoonCodeVersion("1.2.3")).resolves.toBeUndefined();
+		await expect(getLatestAstroAgentVersion("1.2.3")).resolves.toBeUndefined();
 		expect(fetchMock).not.toHaveBeenCalled();
 	});
 });

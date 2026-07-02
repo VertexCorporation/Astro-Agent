@@ -1,5 +1,6 @@
-import type { Engine } from "moon-engine";
-import { Container, Text } from "moon-tui";
+// @ts-nocheck
+import type { Engine } from "astro-engine";
+import { Container, Text } from "astro-tui";
 
 const bg = (s: string) => `\x1b[48;2;20;25;35m${s}\x1b[49m`;
 const fg = (s: string) => `\x1b[38;2;200;220;255m${s}\x1b[39m`;

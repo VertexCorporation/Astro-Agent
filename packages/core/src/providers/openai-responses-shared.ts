@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-nocheck -- TODO: Update to match current OpenAI SDK types
 import type OpenAI from "openai";
 import type {
 	Tool as OpenAITool,

@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { getModel } from "moon-core";
+import { getModel } from "astro-core";
 import { Type } from "typebox";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { DefaultResourceLoader } from "../src/core/resource-loader.js";
@@ -14,7 +14,7 @@ describe("EngineSession dynamic tool registration", () => {
 	let engineDir: string;
 
 	beforeEach(() => {
-		tempDir = join(tmpdir(), `Mooncli-dynamic-tool-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+		tempDir = join(tmpdir(), `astroagent-dynamic-tool-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
 		engineDir = join(tempDir, "engine");
 		mkdirSync(engineDir, { recursive: true });
 	});
@@ -34,9 +34,9 @@ describe("EngineSession dynamic tool registration", () => {
 			engineDir,
 			settingsManager,
 			extensionFactories: [
-				(Mooncli) => {
-					Mooncli.on("session_start", () => {
-						Mooncli.registerTool({
+				(AstroAgent) => {
+					AstroAgent.on("session_start", () => {
+						AstroAgent.registerTool({
 							name: "dynamic_tool",
 							label: "Dynamic Tool",
 							description: "Tool registered from session_start",
@@ -179,9 +179,9 @@ describe("EngineSession dynamic tool registration", () => {
 			engineDir,
 			settingsManager,
 			extensionFactories: [
-				(Mooncli) => {
-					Mooncli.on("session_start", () => {
-						Mooncli.registerTool({
+				(AstroAgent) => {
+					AstroAgent.on("session_start", () => {
+						AstroAgent.registerTool({
 							name: "hidden_tool",
 							label: "Hidden Tool",
 							description: "Description should not appear in available tools",

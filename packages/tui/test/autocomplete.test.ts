@@ -130,7 +130,7 @@ describe("CombinedAutocompleteProvider", () => {
 		let outsideDir = "";
 
 		beforeEach(() => {
-			rootDir = mkdtempSync(join(tmpdir(), "Mooncli-autocomplete-root-"));
+			rootDir = mkdtempSync(join(tmpdir(), "astroagent-autocomplete-root-"));
 			baseDir = join(rootDir, "cwd");
 			outsideDir = join(rootDir, "outside");
 			mkdirSync(baseDir, { recursive: true });
@@ -292,9 +292,9 @@ describe("CombinedAutocompleteProvider", () => {
 
 		test("includes hidden paths but excludes .git", async () => {
 			setupFolder(baseDir, {
-				dirs: [".Mooncli", ".github", ".git"],
+				dirs: [".astroagent", ".github", ".git"],
 				files: {
-					".Mooncli/config.json": "{}",
+					".astroagent/config.json": "{}",
 					".github/workflows/ci.yml": "name: ci",
 					".git/config": "[core]",
 				},
@@ -305,7 +305,7 @@ describe("CombinedAutocompleteProvider", () => {
 			const result = await getSuggestions(provider, [line], 0, line.length);
 
 			const values = result?.items.map((item) => item.value) ?? [];
-			assert.ok(values.includes("@.Mooncli/"));
+			assert.ok(values.includes("@.astroagent/"));
 			assert.ok(values.includes("@.github/"));
 			assert.ok(!values.some((value) => value === "@.git" || value.startsWith("@.git/")));
 		});
@@ -439,7 +439,7 @@ describe("CombinedAutocompleteProvider", () => {
 		let baseDir = "";
 
 		beforeEach(() => {
-			baseDir = mkdtempSync(join(tmpdir(), "Mooncli-autocomplete-"));
+			baseDir = mkdtempSync(join(tmpdir(), "astroagent-autocomplete-"));
 		});
 
 		afterEach(() => {
@@ -485,7 +485,7 @@ describe("CombinedAutocompleteProvider", () => {
 		let baseDir = "";
 
 		beforeEach(() => {
-			baseDir = mkdtempSync(join(tmpdir(), "Mooncli-autocomplete-"));
+			baseDir = mkdtempSync(join(tmpdir(), "astroagent-autocomplete-"));
 		});
 
 		afterEach(() => {

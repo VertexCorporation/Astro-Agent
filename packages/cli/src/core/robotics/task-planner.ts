@@ -1,6 +1,6 @@
 // @ts-nocheck
 /**
- * Görev planlama - doğal dil komutunu robot fonksiyon çağrılarına dönüştürür.
+ * Task planning - translates natural language commands into robot function calls.
  */
 
 import { existsSync, readFileSync } from "node:fs";
@@ -47,14 +47,14 @@ export class TaskPlanner {
 	}
 
 	/**
-	 * Doğal dil komutunu robot API çağrılarına dönüştür.
-	 * imageBase64 opsiyonel - sahne görseli varsa daha iyi plan yapıyor.
+	 * Translates a natural language command into robot API calls.
+	 * imageBase64 is optional - providing a scene image yields better plans.
 	 */
 	async planTask(instruction: string, imageBase64?: string): Promise<TaskPlanResult> {
 		const start = Date.now();
 
 		if (this.functions.length === 0) {
-			throw new Error("Robot fonksiyonlari tanimlanmamis. /robotics functions <path> ile yukleyin.");
+			throw new Error("Robot functions are undefined. Load them via /robotics functions <path>.");
 		}
 
 		const functionDefinitions = this.formatFunctionDefs();
@@ -67,7 +67,7 @@ export class TaskPlanner {
 		if (imageBase64) {
 			rawResponse = await this.vision.generate(prompt, imageBase64, { temperature: 0.3 });
 		} else {
-			// görüntü yoksa 1x1 siyah piksel gönder (Ollama vision model görüntü ister)
+			// if no image is provided, send a 1x1 black pixel (Ollama vision model requires an image)
 			const blankPixel =
 				"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
 			rawResponse = await this.vision.generate(prompt, blankPixel, { temperature: 0.3 });
@@ -83,7 +83,7 @@ export class TaskPlanner {
 	}
 
 	/**
-	 * Fonksiyon listesini güncelle.
+	 * Update the function list.
 	 */
 	setFunctions(functions: RobotFunction[]): void {
 		this.functions = functions;
@@ -94,13 +94,13 @@ export class TaskPlanner {
 	}
 
 	/**
-	 * JSON dosyasından fonksiyon tanımlarını yükle.
+	 * Load function definitions from a JSON file.
 	 * Format: { functions: RobotFunction[] }
-	 * veya direkt RobotFunction[]
+	 * or directly RobotFunction[]
 	 */
 	static loadFunctions(filePath: string): RobotFunction[] {
 		if (!existsSync(filePath)) {
-			throw new Error(`Robot fonksiyon dosyasi bulunamadi: ${filePath}`);
+			throw new Error(`Robot function file not found: ${filePath}`);
 		}
 
 		const raw = readFileSync(filePath, "utf-8");
@@ -109,38 +109,38 @@ export class TaskPlanner {
 		const arr = Array.isArray(parsed) ? parsed : (parsed.functions ?? []);
 
 		if (!Array.isArray(arr) || arr.length === 0) {
-			throw new Error("Gecersiz robot fonksiyon dosyasi formati");
+			throw new Error("Invalid robot function file format");
 		}
 
 		return arr as RobotFunction[];
 	}
 
 	/**
-	 * Örnek mock robot API'si üretir (test için).
+	 * Generates sample mock robot API for testing.
 	 */
 	static mockPickAndPlaceFunctions(): RobotFunction[] {
 		return [
 			{
 				name: "move",
-				description: "Kolu belirtilen koordinata taşır",
+				description: "Moves arm to the specified coordinates",
 				parameters: [
-					{ name: "x", type: "number", description: "X koordinatı (normalize 0-1000)" },
-					{ name: "y", type: "number", description: "Y koordinatı (normalize 0-1000)" },
+					{ name: "x", type: "number", description: "X coordinate (normalized 0-1000)" },
+					{ name: "y", type: "number", description: "Y coordinate (normalized 0-1000)" },
 					{
 						name: "high",
 						type: "boolean",
-						description: "true = kolunu kaldır (engel aşma), false = yüzeye indir",
+						description: "true = lift arm (overcome obstacle), false = lower to surface",
 					},
 				],
 			},
 			{
 				name: "setGripperState",
-				description: "Gripper durumunu ayarlar",
-				parameters: [{ name: "opened", type: "boolean", description: "true = aç, false = kapat" }],
+				description: "Sets the gripper state",
+				parameters: [{ name: "opened", type: "boolean", description: "true = open, false = close" }],
 			},
 			{
 				name: "returnToOrigin",
-				description: "Robotu başlangıç pozisyonuna döndürür",
+				description: "Returns the robot to the origin position",
 				parameters: [],
 			},
 		];
@@ -160,11 +160,11 @@ export class TaskPlanner {
 	private parseActionResponse(raw: string): PlannedAction[] {
 		let cleaned = raw.trim();
 
-		// JSON array'i bul
+		// Find JSON array
 		const codeBlockMatch = cleaned.match(/```(?:json)?\s*\n?([\s\S]*?)\n?\s*```/);
 		if (codeBlockMatch) cleaned = codeBlockMatch[1].trim();
 
-		// [{ ... }] kısmını çek
+		// Extract [{ ... }] portion
 		const startIdx = cleaned.indexOf("[");
 		const endIdx = cleaned.lastIndexOf("]");
 		if (startIdx === -1 || endIdx === -1) return [];

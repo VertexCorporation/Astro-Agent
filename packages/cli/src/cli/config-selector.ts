@@ -1,9 +1,9 @@
 // @ts-nocheck
 /**
- * TUI config selector for `MoonCode config` command
+ * TUI config selector for `Astro-Agent config` command
  */
 
-import { ProcessTerminal, TUI } from "moon-tui";
+import { ProcessTerminal, TUI } from "astro-tui";
 import type { ResolvedPaths } from "../core/package-manager.js";
 import type { SettingsManager } from "../core/settings-manager.js";
 import { ConfigSelectorComponent } from "../modes/interactive/components/config-selector.js";

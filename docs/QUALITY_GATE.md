@@ -1,6 +1,6 @@
 # Quality Gate
 
-MoonAgent changes must pass a small-company production gate before merge/release.
+AstroAgent changes must pass a small-company production gate before merge/release.
 
 ## Required Checks
 

@@ -11,11 +11,11 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createJiti } from "@mariozechner/jiti";
-import * as _bundledPiAi from "moon-core";
-import * as _bundledPiAiOauth from "moon-core/oauth";
-import * as _bundledPiEngineCore from "moon-engine";
-import type { KeyId } from "moon-tui";
-import * as _bundledPiTui from "moon-tui";
+import * as _bundledPiAi from "astro-core";
+import * as _bundledPiAiOauth from "astro-core/oauth";
+import * as _bundledPiEngineCore from "astro-engine";
+import type { KeyId } from "astro-tui";
+import * as _bundledPiTui from "astro-tui";
 // Static imports of packages that extensions may use.
 // These MUST be static so Bun bundles them into the compiled binary.
 // The virtualModules option then makes them available to extensions.
@@ -24,7 +24,7 @@ import * as _bundledTypeboxCompile from "typebox/compile";
 import * as _bundledTypeboxValue from "typebox/value";
 import { CONFIG_DIR_NAME, getEngineDir, isBunBinary } from "../../config.js";
 // NOTE: This import works because loader.ts exports are NOT re-exported from index.ts,
-// avoiding a circular dependency. Extensions can import from MoonCode.
+// avoiding a circular dependency. Extensions can import from Astro-Agent.
 import * as _bundledPiCodingEngine from "../../index.js";
 import { createEventBus, type EventBus } from "../event-bus.js";
 import type { ExecOptions } from "../exec.js";
@@ -50,11 +50,11 @@ const VIRTUAL_MODULES: Record<string, unknown> = {
 	"@sinclair/typebox": _bundledTypebox,
 	"@sinclair/typebox/compile": _bundledTypeboxCompile,
 	"@sinclair/typebox/value": _bundledTypeboxValue,
-	"moon-engine": _bundledPiEngineCore,
-	"moon-tui": _bundledPiTui,
-	"moon-core": _bundledPiAi,
-	"moon-core/oauth": _bundledPiAiOauth,
-	MoonCode: _bundledPiCodingEngine,
+	"astro-engine": _bundledPiEngineCore,
+	"astro-tui": _bundledPiTui,
+	"astro-core": _bundledPiAi,
+	"astro-core/oauth": _bundledPiAiOauth,
+	"astro-agent": _bundledPiCodingEngine,
 };
 
 const require = createRequire(import.meta.url);
@@ -89,11 +89,11 @@ function getAliases(): Record<string, string> {
 	};
 
 	_aliases = {
-		MoonCode: packageIndex,
-		"moon-engine": resolveWorkspaceOrImport("engine/dist/index.js", "moon-engine"),
-		"moon-tui": resolveWorkspaceOrImport("tui/dist/index.js", "moon-tui"),
-		"moon-core": resolveWorkspaceOrImport("core/dist/index.js", "moon-core"),
-		"moon-core/oauth": resolveWorkspaceOrImport("core/dist/oauth.js", "moon-core/oauth"),
+		"astro-agent": packageIndex,
+		"astro-engine": resolveWorkspaceOrImport("engine/dist/index.js", "astro-engine"),
+		"astro-tui": resolveWorkspaceOrImport("tui/dist/index.js", "astro-tui"),
+		"astro-core": resolveWorkspaceOrImport("core/dist/index.js", "astro-core"),
+		"astro-core/oauth": resolveWorkspaceOrImport("core/dist/oauth.js", "astro-core/oauth"),
 		typebox: typeboxEntry,
 		"typebox/compile": typeboxCompileEntry,
 		"typebox/value": typeboxValueEntry,
@@ -169,7 +169,7 @@ export function createExtensionRuntime(): ExtensionRuntime {
 		invalidate: (message) => {
 			state.staleMessage ??=
 				message ??
-				"This extension ctx is stale after session replacement or reload. Do not use a captured MoonCode or command ctx after ctx.newSession(), ctx.fork(), ctx.switchSession(), or ctx.reload(). For newSession, fork, and switchSession, move post-replacement work into withSession and use the ctx passed to withSession. For reload, do not use the old ctx after await ctx.reload().";
+				"This extension ctx is stale after session replacement or reload. Do not use a captured Astro-Agent or command ctx after ctx.newSession(), ctx.fork(), ctx.switchSession(), or ctx.reload(). For newSession, fork, and switchSession, move post-replacement work into withSession and use the ctx passed to withSession. For reload, do not use the old ctx after await ctx.reload().";
 		},
 		// Pre-bind: queue registrations so bindCore() can flush them once the
 		// model registry is available. bindCore() replaces both with direct calls.
@@ -461,8 +461,8 @@ function readPiManifest(packageJsonPath: string): PiManifest | null {
 	try {
 		const content = fs.readFileSync(packageJsonPath, "utf-8");
 		const pkg = JSON.parse(content);
-		if (pkg.MoonCode && typeof pkg.MoonCode === "object") {
-			return pkg.MoonCode as PiManifest;
+		if (pkg.Astro - Agent && typeof pkg.Astro - Agent === "object") {
+			return (pkg.Astro - Agent) as PiManifest;
 		}
 		return null;
 	} catch {
@@ -478,13 +478,13 @@ function isExtensionFile(name: string): boolean {
  * Resolve extension entry points from a directory.
  *
  * Checks for:
- * 1. package.json with "MoonCode.extensions" field -> returns declared paths
+ * 1. package.json with "Astro-Agent.extensions" field -> returns declared paths
  * 2. index.ts or index.js -> returns the index file
  *
  * Returns resolved paths or null if no entry points found.
  */
 function resolveExtensionEntries(dir: string): string[] | null {
-	// Check for package.json with "MoonCode" field first
+	// Check for package.json with "Astro-Agent" field first
 	const packageJsonPath = path.join(dir, "package.json");
 	if (fs.existsSync(packageJsonPath)) {
 		const manifest = readPiManifest(packageJsonPath);
@@ -521,7 +521,7 @@ function resolveExtensionEntries(dir: string): string[] | null {
  * Discovery rules:
  * 1. Direct files: `extensions/*.ts` or `*.js` → load
  * 2. Subdirectory with index: `extensions/* /index.ts` or `index.js` → load
- * 3. Subdirectory with package.json: `extensions/* /package.json` with "MoonCode" field → load what it declares
+ * 3. Subdirectory with package.json: `extensions/* /package.json` with "Astro-Agent" field → load what it declares
  *
  * No recursion beyond one level. Complex packages must use package.json manifest.
  */
@@ -593,7 +593,7 @@ export async function discoverAndLoadExtensions(
 	for (const p of configuredPaths) {
 		const resolved = resolvePath(p, cwd);
 		if (fs.existsSync(resolved) && fs.statSync(resolved).isDirectory()) {
-			// Check for package.json with MoonCode manifest or index.ts
+			// Check for package.json with Astro-Agent manifest or index.ts
 			const entries = resolveExtensionEntries(resolved);
 			if (entries) {
 				addPaths(entries);

@@ -21,14 +21,14 @@ import type {
 	SimpleStreamOptions,
 	TextContent,
 	ToolResultMessage,
-} from "moon-core";
+} from "astro-core";
 import type {
 	EngineMessage,
 	EngineToolResult,
 	EngineToolUpdateCallback,
 	ThinkingLevel,
 	ToolExecutionMode,
-} from "moon-engine";
+} from "astro-engine";
 import type {
 	AutocompleteItem,
 	AutocompleteProvider,
@@ -39,7 +39,7 @@ import type {
 	OverlayHandle,
 	OverlayOptions,
 	TUI,
-} from "moon-tui";
+} from "astro-tui";
 import type { Static, TSchema } from "typebox";
 import type { Theme } from "../../modes/interactive/theme/theme.js";
 import type { BashResult } from "../bash-executor.js";
@@ -227,12 +227,12 @@ export interface ExtensionUIContext {
 	 * - `keybindings`: KeybindingsManager for app-level keybindings
 	 *
 	 * For full app keybinding support (escape, ctrl+d, model switching, etc.),
-	 * extend `CustomEditor` from `MoonCode` and call
+	 * extend `CustomEditor` from `Astro-Agent` and call
 	 * `super.handleInput(data)` for keys you don't handle.
 	 *
 	 * @example
 	 * ```ts
-	 * import { CustomEditor } from "MoonCode";
+	 * import { CustomEditor } from "Astro-Agent";
 	 *
 	 * class VimEditor extends CustomEditor {
 	 *   private mode: "normal" | "insert" = "insert";
@@ -317,7 +317,7 @@ export interface ExtensionContext {
 	abort(): void;
 	/** Whether there are queued messages waiting */
 	hasPendingMessages(): boolean;
-	/** Gracefully shutdown MoonCode and exit. Available in all contexts. */
+	/** Gracefully shutdown Astro-Agent and exit. Available in all contexts. */
 	shutdown(): void;
 	/** Get current context usage for the active model. */
 	getContextUsage(): ContextUsage | undefined;
@@ -630,7 +630,7 @@ export interface BeforeEngineStartEvent {
 	images?: ImageContent[];
 	/** The fully assembled system prompt string. */
 	systemPrompt: string;
-	/** Structured options used to build the system prompt. Extensions can inspect this to understand what MoonCode loaded without re-discovering resources. */
+	/** Structured options used to build the system prompt. Extensions can inspect this to understand what Astro-Agent loaded without re-discovering resources. */
 	systemPromptOptions: BuildSystemPromptOptions;
 }
 
@@ -1256,7 +1256,7 @@ export interface ExtensionAPI {
 	 *
 	 * @example
 	 * // Register a new provider with custom models
-	 * MoonCode.registerProvider("my-proxy", {
+	 * Astro-Agent.registerProvider("my-proxy", {
 	 *   baseUrl: "https://proxy.example.com",
 	 *   apiKey: "PROXY_API_KEY",
 	 *   api: "anthropic-messages",
@@ -1275,13 +1275,13 @@ export interface ExtensionAPI {
 	 *
 	 * @example
 	 * // Override baseUrl for an existing provider
-	 * MoonCode.registerProvider("anthropic", {
+	 * Astro-Agent.registerProvider("anthropic", {
 	 *   baseUrl: "https://proxy.example.com"
 	 * });
 	 *
 	 * @example
 	 * // Register provider with OAuth support
-	 * MoonCode.registerProvider("corporate-ai", {
+	 * Astro-Agent.registerProvider("corporate-ai", {
 	 *   baseUrl: "https://ai.corp.com",
 	 *   api: "openai-responses",
 	 *   models: [...],
@@ -1306,7 +1306,7 @@ export interface ExtensionAPI {
 	 * the initial load phase.
 	 *
 	 * @example
-	 * MoonCode.unregisterProvider("my-proxy");
+	 * Astro-Agent.unregisterProvider("my-proxy");
 	 */
 	unregisterProvider(name: string): void;
 
@@ -1318,7 +1318,7 @@ export interface ExtensionAPI {
 // Provider Registration Types
 // ============================================================================
 
-/** Configuration for registering a provider via MoonCode.registerProvider(). */
+/** Configuration for registering a provider via Astro-Agent.registerProvider(). */
 export interface ProviderConfig {
 	/** Display name for the provider in UI. */
 	name?: string;
@@ -1363,7 +1363,7 @@ export interface ProviderModelConfig {
 	baseUrl?: string;
 	/** Whether the model supports extended thinking. */
 	reasoning: boolean;
-	/** Maps MoonCode thinking levels to provider/model-specific values; null marks a level unsupported. */
+	/** Maps Astro-Agent thinking levels to provider/model-specific values; null marks a level unsupported. */
 	thinkingLevelMap?: Model<Api>["thinkingLevelMap"];
 	/** Supported input types. */
 	input: ("text" | "image")[];
@@ -1380,7 +1380,7 @@ export interface ProviderModelConfig {
 }
 
 /** Extension factory function type. Supports both sync and async initialization. */
-export type ExtensionFactory = (MoonCode: ExtensionAPI) => void | Promise<void>;
+export type ExtensionFactory = (api: ExtensionAPI) => void | Promise<void>;
 
 // ============================================================================
 // Loaded Extension Types
@@ -1470,7 +1470,7 @@ export interface ExtensionRuntimeState {
 }
 
 /**
- * Action implementations for MoonCode.* API methods.
+ * Action implementations for Astro-Agent.* API methods.
  * Provided to runner.initialize(), copied into the shared runtime.
  */
 export interface ExtensionActions {

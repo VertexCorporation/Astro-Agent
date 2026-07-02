@@ -1,8 +1,8 @@
 import { existsSync, mkdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { type AssistantMessage, getModel } from "moon-core";
-import { Engine } from "moon-engine";
+import { type AssistantMessage, getModel } from "astro-core";
+import { Engine } from "astro-engine";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthStorage } from "../src/core/auth-storage.js";
 import { EngineSession } from "../src/core/engine-session.js";
@@ -59,7 +59,7 @@ describe("EngineSession auto-compaction queue resume", () => {
 	let tempDir: string;
 
 	beforeEach(() => {
-		tempDir = join(tmpdir(), `Mooncli-auto-compaction-queue-${Date.now()}`);
+		tempDir = join(tmpdir(), `astroagent-auto-compaction-queue-${Date.now()}`);
 		mkdirSync(tempDir, { recursive: true });
 		vi.useFakeTimers();
 

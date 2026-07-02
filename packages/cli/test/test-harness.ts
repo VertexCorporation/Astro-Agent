@@ -22,10 +22,10 @@ import type {
 	ThinkingContent,
 	ToolCall,
 	Usage,
-} from "moon-core";
-import { createAssistantMessageEventStream } from "moon-core";
-import type { EngineTool } from "moon-engine";
-import { Engine } from "moon-engine";
+} from "astro-core";
+import { createAssistantMessageEventStream } from "astro-core";
+import type { EngineTool } from "astro-engine";
+import { Engine } from "astro-engine";
 import { AuthStorage } from "../src/core/auth-storage.js";
 import { EngineSession, type EngineSessionEvent } from "../src/core/engine-session.js";
 import { ModelRegistry } from "../src/core/model-registry.js";
@@ -356,7 +356,7 @@ export interface Harness {
 }
 
 function createTempDir(): string {
-	const tempDir = join(tmpdir(), `Mooncli-harness-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+	const tempDir = join(tmpdir(), `astroagent-harness-${Date.now()}-${Math.random().toString(36).slice(2)}`);
 	mkdirSync(tempDir, { recursive: true });
 	return tempDir;
 }

@@ -82,7 +82,7 @@ document.getElementById("refresh-btn").addEventListener("click", () => {
 document.getElementById("nodes-grid").addEventListener("click", (e) => {
   if (e.target.classList.contains("terminate-btn")) {
     const port = Number(e.target.getAttribute("data-port"));
-    if (confirm(`Are you sure you want to terminate the MoonCode session on port :${port}?`)) {
+    if (confirm(`Are you sure you want to terminate the Astro-Agent session on port :${port}?`)) {
       chrome.runtime.sendMessage({ type: "close_port", port });
       setTimeout(refresh, 250);
     }

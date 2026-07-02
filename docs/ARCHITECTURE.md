@@ -1,4 +1,4 @@
-# MoonAgent Architecture
+# AstroAgent Architecture
 
 ## Workspaces
 

@@ -22,7 +22,7 @@ const INDEX_HTML = `
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>MoonCode Premium Dashboard</title>
+  <title>Astro-Agent Premium Dashboard</title>
   <link rel="stylesheet" href="/style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -33,7 +33,7 @@ const INDEX_HTML = `
     <header class="topbar">
       <div class="logo">
         <div class="logo-circle"></div>
-        <b>MoonCode</b>
+        <b>Astro-Agent</b>
         <span class="version-tag">26v-8</span>
       </div>
       <nav class="nav-links">
@@ -111,7 +111,7 @@ const INDEX_HTML = `
           <div class="preview-container" id="preview-frame">
             <div class="preview-card">
               <span class="p-badge">Featured Component</span>
-              <h2 class="p-title">MoonCode Design System</h2>
+              <h2 class="p-title">Astro-Agent Design System</h2>
               <p class="p-text">This preview shows the generated HSL variables being applied to components in real time. Drag the sliders or select a preset to see the palette update instantly.</p>
 
               <div class="p-alert">
@@ -128,8 +128,8 @@ const INDEX_HTML = `
         </main>
 
         <section class="designer-export card">
-          <h3>MoonCode AI Prompt</h3>
-          <p class="hint">Copy this prompt into MoonCode to ask it to apply the selected design across your project.</p>
+          <h3>Astro-Agent AI Prompt</h3>
+          <p class="hint">Copy this prompt into Astro-Agent to ask it to apply the selected design across your project.</p>
           <div class="code-container">
             <button class="copy-btn" id="copy-theme-btn">Copy Prompt</button>
             <textarea id="prompt-code" readonly style="width: 100%; height: 280px; background: #000000; color: #10b981; border: 1px solid var(--line); border-radius: 8px; padding: 12px; font-family: 'JetBrains Mono', monospace; font-size: 12px; resize: none; outline: none;"></textarea>
@@ -466,7 +466,7 @@ function renderEntry(entry) {
   if (entry.type === 'message' && entry.message) {
     const role = entry.message.role || 'system';
     const className = role === 'user' ? 'user' : role === 'assistant' ? 'assistant' : 'system';
-    const label = role === 'user' ? 'User' : role === 'assistant' ? 'MoonCode' : role;
+    const label = role === 'user' ? 'User' : role === 'assistant' ? 'Astro-Agent' : role;
     const content = compact(textOf(entry.message.content || entry.message.text || entry.message));
     return '<div class="msg ' + className + '"><div class="role">' + escapeHtml(label) + '</div><pre>' + escapeHtml(content) + '</pre></div>';
   }
@@ -494,7 +494,7 @@ const APP_HTML = `<!doctype html>
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>MoonCode — Web Studio</title>
+  <title>Astro-Agent — Web Studio</title>
   <link rel="stylesheet" href="/app.css" />
 </head>
 <body>
@@ -504,7 +504,7 @@ const APP_HTML = `<!doctype html>
         <div class="brand">
           <span class="logo-emoji">🌝</span>
           <div class="brand-text">
-            <h2>MoonCode</h2>
+            <h2>Astro-Agent</h2>
             <span>Web Studio</span>
           </div>
         </div>
@@ -538,8 +538,8 @@ const APP_HTML = `<!doctype html>
         <!-- JS ile dolacak (messages-content wrapper ile sarmalanacak) -->
         <div class="messages-content">
           <div class="welcome-screen">
-          <span class="moon-mascot"><i data-lucide="moon" style="width:48px;height:48px;"></i></span>
-            <h1>Hello! I'm MoonCode.</h1>
+          <span class="astro-mascot"><i data-lucide="sparkles" style="width:48px;height:48px;"></i></span>
+            <h1>Hello! I'm Astro-Agent.</h1>
             <p>Select a live or past session from the sidebar to start. Monitor and direct all repo activity from here.</p>
           </div>
         </div>
@@ -548,12 +548,12 @@ const APP_HTML = `<!doctype html>
       <footer class="input-bar">
         <div class="input-container">
           <form id="message-form" class="message-form">
-            <textarea id="message-input" placeholder="Ask MoonCode something... [Enter to send, Shift+Enter for new line]" rows="1"></textarea>
+            <textarea id="message-input" placeholder="Ask Astro-Agent something... [Enter to send, Shift+Enter for new line]" rows="1"></textarea>
             <button type="submit" class="btn btn-primary" id="btn-send">
               <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
             </button>
           </form>
-          <div class="input-footer-text">MoonCode is an autonomous development assistant</div>
+          <div class="input-footer-text">Astro-Agent is an autonomous development assistant</div>
         </div>
       </footer>
     </main>
@@ -850,7 +850,7 @@ body {
   padding: 40px 20px;
 }
 
-.moon-mascot {
+.astro-mascot {
   font-size: 64px;
   margin-bottom: 20px;
   animation: float 4s infinite ease-in-out;
@@ -1474,7 +1474,7 @@ async function loadSession(id, isPoll = false) {
         if (msgHtml.trim() || thinkingHtml.trim()) {
           const wrapperClass = isUser ? "user" : "assistant";
           const avatar = isUser ? '<i data-lucide="user" style="width:14px;height:14px;"></i>' : '<i data-lucide="bot" style="width:14px;height:14px;"></i>';
-          const authorLabel = isUser ? "User" : "MoonCode";
+          const authorLabel = isUser ? "User" : "Astro-Agent";
 
           html += \`
             <div class="msg-wrapper \${wrapperClass}">
@@ -1519,7 +1519,7 @@ async function loadSession(id, isPoll = false) {
     viewport.innerHTML = html ? \`<div class="messages-content">\${html}</div>\` : \`
       <div class="messages-content">
         <div class="welcome-screen">
-          <span class="moon-mascot">🌝</span>
+          <span class="astro-mascot">✦</span>
           <h1>Session Empty</h1>
           <p>There are no messages in this session yet. When you start a conversation via CLI, it will flow here in real-time.</p>
         </div>
@@ -1850,7 +1850,7 @@ const AUTH_PANEL_HTML = `<!doctype html>
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>MoonCode — Sign in</title>
+  <title>Astro-Agent — Sign in</title>
   <style>
     * { box-sizing: border-box; margin: 0; }
     body {
@@ -1961,7 +1961,7 @@ const AUTH_PANEL_HTML = `<!doctype html>
 <body>
   <div class="app">
     <div class="card">
-      <div class="brand"><h1>MoonCode</h1><p>Sign in to your provider</p></div>
+      <div class="brand"><h1>Astro-Agent</h1><p>Sign in to your provider</p></div>
 
       <section id="overview" class="tab">
         <div class="top"><h1>Control panel</h1></div>
@@ -2164,7 +2164,7 @@ const MCP_PANEL_HTML = `<!doctype html>
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>MoonCode MCP Control</title>
+  <title>Astro-Agent MCP Control</title>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <style>
     :root{color-scheme:dark;--bg:#020503;--panel:#07110b;--panel2:#0d1b12;--line:#1d412c;--fg:#eafff2;--muted:#8db29c;--green:#56f0a4;--green2:#19b96b;--red:#ff5667;font-family:Inter,Roboto,"Segoe UI",system-ui,sans-serif}
@@ -2184,7 +2184,7 @@ const MCP_PANEL_HTML = `<!doctype html>
     <div class="grid">
       <article class="card wide"><h2>Installed providers</h2><div id="servers" class="server-grid"></div></article>
       <article class="card side"><h2>Runtime</h2><p class="muted" id="runtime">Loading...</p><div class="toolbar"><button class="btn" onclick="action({action:'connect_builtin',name:'blender'})"><i data-lucide="box"></i>Connect Blender</button><button class="btn" onclick="action({action:'connect_builtin',name:'scratch'})"><i data-lucide="blocks"></i>Connect Scratch</button></div></article>
-      <article class="card full"><h2>MCP Market</h2><p class="muted">Search public registries, review the server, then paste a trusted config below. MoonCode keeps install decisions explicit for security.</p><div class="market-grid">
+      <article class="card full"><h2>MCP Market</h2><p class="muted">Search public registries, review the server, then paste a trusted config below. Astro-Agent keeps install decisions explicit for security.</p><div class="market-grid">
         <a class="market" href="https://mcp.so/?tab=latest" target="_blank" rel="noreferrer"><i data-lucide="store"></i><h3>MCP.so</h3><p class="muted">Large third-party MCP server directory.</p></a>
         <a class="market" href="https://mcpmarket.com/search" target="_blank" rel="noreferrer"><i data-lucide="shopping-bag"></i><h3>MCP Market</h3><p class="muted">Browse categories and search MCP servers.</p></a>
       </div></article>
@@ -2224,7 +2224,7 @@ const TODO_PANEL_HTML = `<!doctype html>
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Todo — MoonCode</title>
+  <title>Todo — Astro-Agent</title>
   <style>
     * { box-sizing: border-box; margin: 0; }
     body {
@@ -2313,7 +2313,7 @@ const BRAIN_PANEL_HTML = `<!doctype html>
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>MoonCode Brain</title>
+  <title>Astro-Agent Brain</title>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <style>
     :root{color-scheme:dark;--bg:#020503;--panel:#07110b;--line:#1d412c;--fg:#eafff2;--muted:#8db29c;--green:#56f0a4;--red:#ff5667;font-family:Inter,Roboto,"Segoe UI",system-ui,sans-serif}
@@ -2341,7 +2341,7 @@ const BRAIN_PANEL_HTML = `<!doctype html>
 </html>`;
 
 export function startWebUiServer(options: { port?: number; staticRoot?: string } = {}) {
-	const requestedPort = options.port ?? Number(process.env.MOON_WEB_PORT || 3131);
+	const requestedPort = options.port ?? Number(process.env.ASTRO_WEB_PORT || 3131);
 	const server = createServer((req, res) => {
 		const url = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
 
@@ -2444,11 +2444,11 @@ export function startWebUiServer(options: { port?: number; staticRoot?: string }
 					if (data?.action === "oauth_login" && webUiAuthActionListeners.size === 0) {
 						setAuthPanelOAuthEvent({
 							providerId: data.providerId,
-							error: "Auth panel is not connected to the running TUI session. Reopen /login from MoonCode.",
+							error: "Auth panel is not connected to the running TUI session. Reopen /login from Astro-Agent.",
 						});
 						return json(res, {
 							ok: false,
-							error: "Auth panel is not connected to the running TUI session. Reopen /login from MoonCode.",
+							error: "Auth panel is not connected to the running TUI session. Reopen /login from Astro-Agent.",
 						});
 					}
 					for (const listener of webUiAuthActionListeners) {

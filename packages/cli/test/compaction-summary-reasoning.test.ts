@@ -1,5 +1,5 @@
-import type { AssistantMessage, Model } from "moon-core";
-import type { EngineMessage } from "moon-engine";
+import type { AssistantMessage, Model } from "astro-core";
+import type { EngineMessage } from "astro-engine";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { generateSummary } from "../src/core/compaction/index.js";
 
@@ -7,8 +7,8 @@ const { completeSimpleMock } = vi.hoisted(() => ({
 	completeSimpleMock: vi.fn(),
 }));
 
-vi.mock("moon-core", async (importOriginal) => {
-	const actual = await importOriginal<typeof import("moon-core")>();
+vi.mock("astro-core", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("astro-core")>();
 	return {
 		...actual,
 		completeSimple: completeSimpleMock,

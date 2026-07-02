@@ -3,19 +3,19 @@
  * Credential storage for API keys and OAuth tokens.
  * Handles loading, saving, and refreshing credentials from auth.json.
  *
- * Uses file locking to prevent race conditions when multiple MoonCode instances
+ * Uses file locking to prevent race conditions when multiple Astro-Agent instances
  * try to refresh tokens simultaneously.
  */
 
-import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import {
 	findEnvKeys,
 	getEnvApiKey,
 	type OAuthCredentials,
 	type OAuthLoginCallbacks,
 	type OAuthProviderId,
-} from "moon-core";
-import { getOAuthApiKey, getOAuthProvider, getOAuthProviders } from "moon-core/oauth";
+} from "astro-core";
+import { getOAuthApiKey, getOAuthProvider, getOAuthProviders } from "astro-core/oauth";
+import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import * as os from "os";
 import { dirname, join } from "path";
 import lockfile from "proper-lockfile";
@@ -603,7 +603,7 @@ export class AuthStorage {
 
 	/**
 	 * Refresh OAuth token with backend locking to prevent race conditions.
-	 * Multiple MoonCode instances may try to refresh simultaneously when tokens expire.
+	 * Multiple Astro-Agent instances may try to refresh simultaneously when tokens expire.
 	 */
 	private async refreshOAuthTokenWithLock(
 		providerId: OAuthProviderId,

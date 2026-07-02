@@ -1,4 +1,5 @@
-import { Container, Spacer, Text } from "moon-tui";
+// @ts-nocheck
+import { Container, Spacer, Text } from "astro-tui";
 import { theme } from "../theme/theme.js";
 
 export class MetricsChartComponent extends Container {

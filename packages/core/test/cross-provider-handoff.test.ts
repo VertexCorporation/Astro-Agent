@@ -181,7 +181,7 @@ function hasAnyApiKey(): boolean {
 }
 
 function dumpFailurePayload(params: { label: string; error: string; payload?: unknown; messages: Message[] }): void {
-	const filename = `/tmp/Mooncli-handoff-${params.label}-${Date.now()}.json`;
+	const filename = `/tmp/astroagent-handoff-${params.label}-${Date.now()}.json`;
 	const body = {
 		label: params.label,
 		error: params.error,

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import type {
 	AssistantMessage,
 	AssistantMessageEvent,
@@ -10,7 +9,7 @@ import type {
 	TextContent,
 	Tool,
 	ToolResultMessage,
-} from "moon-core";
+} from "astro-core";
 import type { Static, TSchema } from "typebox";
 
 /**
@@ -251,7 +250,7 @@ export interface EngineLoopConfig extends SimpleStreamOptions {
 /**
  * Thinking/reasoning level for models that support it.
  * Note: "xhigh" is only supported by selected model families. Use model thinking-level metadata
- * from moon-core to detect support for a concrete model.
+ * from astro-core to detect support for a concrete model.
  */
 export type ThinkingLevel = "off" | "minimal" | "low" | "medium" | "high" | "xhigh";
 

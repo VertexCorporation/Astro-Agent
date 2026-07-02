@@ -1,7 +1,7 @@
 // @ts-nocheck
 /**
- * Vision Pipeline - Ana robotik görüntü analiz orchestrator.
- * Ollama VLM'e görüntü gönderip, JSON olarak nesne tespiti, bounding box, yörünge döndürür.
+ * Vision Pipeline - Main robotic image analysis orchestrator.
+ * Sends images to the Ollama VLM, returning object detection, bounding boxes, and trajectories as JSON.
  */
 
 import { ImageAnnotator } from "./image-annotator.js";

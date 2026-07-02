@@ -5,7 +5,7 @@
  * into a compact summary line that can be expanded.
  */
 
-import { Container } from "moon-tui";
+import { Container } from "astro-tui";
 import { theme } from "../theme/theme.js";
 import type { ToolExecutionComponent } from "./tool-execution.js";
 

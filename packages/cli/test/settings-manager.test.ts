@@ -15,7 +15,7 @@ describe("SettingsManager", () => {
 			rmSync(testDir, { recursive: true });
 		}
 		mkdirSync(engineDir, { recursive: true });
-		mkdirSync(join(projectDir, ".mooncode"), { recursive: true });
+		mkdirSync(join(projectDir, ".astroagent"), { recursive: true });
 	});
 
 	afterEach(() => {
@@ -36,7 +36,7 @@ describe("SettingsManager", () => {
 				}),
 			);
 
-			// Create SettingsManager (simulates Mooncli starting up)
+			// Create SettingsManager (simulates AstroAgent starting up)
 			const manager = SettingsManager.create(projectDir, engineDir);
 
 			// Simulate user editing settings.json externally to add enabledModels
@@ -200,7 +200,7 @@ describe("SettingsManager", () => {
 	describe("error tracking", () => {
 		it("should collect and clear load errors via drainErrors", () => {
 			const globalSettingsPath = join(engineDir, "settings.json");
-			const projectSettingsPath = join(projectDir, ".mooncode", "settings.json");
+			const projectSettingsPath = join(projectDir, ".astroagent", "settings.json");
 			writeFileSync(globalSettingsPath, "{ invalid global json");
 			writeFileSync(projectSettingsPath, "{ invalid project json");
 
@@ -214,46 +214,46 @@ describe("SettingsManager", () => {
 	});
 
 	describe("project settings directory creation", () => {
-		it("should not create .mooncode folder when only reading project settings", () => {
-			// Create engine dir with global settings, but NO .mooncode folder in project
+		it("should not create .astroagent folder when only reading project settings", () => {
+			// Create engine dir with global settings, but NO .astroagent folder in project
 			const settingsPath = join(engineDir, "settings.json");
 			writeFileSync(settingsPath, JSON.stringify({ theme: "dark" }));
 
-			// Delete the .mooncode folder that beforeEach created
-			rmSync(join(projectDir, ".mooncode"), { recursive: true });
+			// Delete the .astroagent folder that beforeEach created
+			rmSync(join(projectDir, ".astroagent"), { recursive: true });
 
 			// Create SettingsManager (reads both global and project settings)
 			const manager = SettingsManager.create(projectDir, engineDir);
 
-			// .mooncode folder should NOT have been created just from reading
-			expect(existsSync(join(projectDir, ".mooncode"))).toBe(false);
+			// .astroagent folder should NOT have been created just from reading
+			expect(existsSync(join(projectDir, ".astroagent"))).toBe(false);
 
 			// Settings should still be loaded from global
 			expect(manager.getTheme()).toBe("dark");
 		});
 
-		it("should create .mooncode folder when writing project settings", async () => {
-			// Create engine dir with global settings, but NO .mooncode folder in project
+		it("should create .astroagent folder when writing project settings", async () => {
+			// Create engine dir with global settings, but NO .astroagent folder in project
 			const settingsPath = join(engineDir, "settings.json");
 			writeFileSync(settingsPath, JSON.stringify({ theme: "dark" }));
 
-			// Delete the .mooncode folder that beforeEach created
-			rmSync(join(projectDir, ".mooncode"), { recursive: true });
+			// Delete the .astroagent folder that beforeEach created
+			rmSync(join(projectDir, ".astroagent"), { recursive: true });
 
 			const manager = SettingsManager.create(projectDir, engineDir);
 
-			// .mooncode folder should NOT exist yet
-			expect(existsSync(join(projectDir, ".mooncode"))).toBe(false);
+			// .astroagent folder should NOT exist yet
+			expect(existsSync(join(projectDir, ".astroagent"))).toBe(false);
 
 			// Write a project-specific setting
 			manager.setProjectPackages([{ source: "npm:test-pkg" }]);
 			await manager.flush();
 
-			// Now .mooncode folder should exist
-			expect(existsSync(join(projectDir, ".mooncode"))).toBe(true);
+			// Now .astroagent folder should exist
+			expect(existsSync(join(projectDir, ".astroagent"))).toBe(true);
 
 			// And settings file should be created
-			expect(existsSync(join(projectDir, ".mooncode", "settings.json"))).toBe(true);
+			expect(existsSync(join(projectDir, ".astroagent", "settings.json"))).toBe(true);
 		});
 	});
 
@@ -305,7 +305,7 @@ describe("SettingsManager", () => {
 
 		it("should return project sessionDir, overriding global", () => {
 			writeFileSync(join(engineDir, "settings.json"), JSON.stringify({ sessionDir: "/global/sessions" }));
-			writeFileSync(join(projectDir, ".mooncode", "settings.json"), JSON.stringify({ sessionDir: "./sessions" }));
+			writeFileSync(join(projectDir, ".astroagent", "settings.json"), JSON.stringify({ sessionDir: "./sessions" }));
 			const manager = SettingsManager.create(projectDir, engineDir);
 			expect(manager.getSessionDir()).toBe("./sessions");
 		});

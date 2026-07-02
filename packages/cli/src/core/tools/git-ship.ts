@@ -1,5 +1,5 @@
 // @ts-nocheck
-import type { EngineTool } from "moon-engine";
+import type { EngineTool } from "astro-engine";
 import { Type } from "typebox";
 import type { ToolDefinition } from "../extensions/types.js";
 import {
@@ -23,7 +23,7 @@ const gitShipSchema = Type.Object({
 			Type.Literal("pr"),
 			Type.Literal("ship"),
 		],
-		{ description: "Git aksiyonu" },
+		{ description: "Git action to perform" },
 	),
 	message: Type.Optional(Type.String({ description: "Commit/PR message" })),
 	branchName: Type.Optional(Type.String({ description: "Branch name" })),
@@ -33,8 +33,8 @@ export function createGitShipToolDefinition(cwd: string): ToolDefinition<typeof 
 	return {
 		name: "git_ship",
 		label: "git_ship",
-		description: "Git status/branch/commit/push/PR/ship akışını çalıştırır. ship = branch + commit + push + PR.",
-		promptSnippet: "Git değişikliklerini ship et (branch/commit/push/PR)",
+		description: "Executes the Git status/branch/commit/push/PR/ship workflow. ship = branch + commit + push + PR.",
+		promptSnippet: "Ship Git changes (branch/commit/push/PR)",
 		parameters: gitShipSchema,
 		async execute(_id, input, signal) {
 			if (signal?.aborted) throw new Error("aborted");
@@ -42,13 +42,13 @@ export function createGitShipToolDefinition(cwd: string): ToolDefinition<typeof 
 			let text = "";
 			if (action === "status") text = await getGitStatus(cwd);
 			else if (action === "branch")
-				text = `Branch: ${await createBranch(cwd, input.branchName || "MoonCode/update")}`;
-			else if (action === "commit") text = await commitAll(cwd, input.message || "chore: update via MoonCode");
+				text = `Branch: ${await createBranch(cwd, input.branchName || "Astro-Agent/update")}`;
+			else if (action === "commit") text = await commitAll(cwd, input.message || "chore: update via Astro-Agent");
 			else if (action === "push") text = await pushBranch(cwd, input.branchName);
 			else if (action === "pr")
 				text = await createPR(
 					cwd,
-					input.message || "MoonCode changes",
+					input.message || "Astro-Agent changes",
 					await getDiffSummary(cwd),
 					input.branchName,
 				);

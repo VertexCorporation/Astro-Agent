@@ -1,4 +1,5 @@
-import type { Component } from "moon-tui";
+// @ts-nocheck
+import type { Component } from "astro-tui";
 import { VERSION } from "../../../config.js";
 import type { EngineSession } from "../../../core/engine-session.js";
 import type { ReadonlyFooterDataProvider } from "../../../core/footer-data-provider.js";
@@ -71,7 +72,7 @@ function renderStatusLine(left: string, right: string, width: number, painter: (
 	return painter(fittedLeft + pad(gap) + fittedRight);
 }
 
-export class MoonCodeHeaderComponent implements Component {
+export class AstroAgentHeaderComponent implements Component {
 	private expanded = false;
 	private unsubscribeBranch?: () => void;
 
@@ -123,12 +124,12 @@ export class MoonCodeHeaderComponent implements Component {
 		const iconWeb = "🌐";
 
 		if (safeWidth < 72) {
-			const left = color.primary(" MoonCode ") + color.muted(fitText(cwd, Math.max(8, safeWidth - 36)));
+			const left = color.primary(" Astro-Agent ") + color.muted(fitText(cwd, Math.max(8, safeWidth - 36)));
 			const right = color.secondary(mode);
 			return [renderStatusLine(left, right, safeWidth, color.panel)];
 		}
 
-		const logo = bg(40, 40, 60, color.primary(" 🌙 MoonCode "));
+		const logo = bg(40, 40, 60, color.primary(" 🌙 Astro-Agent "));
 		const version = color.accent(`v${VERSION}`);
 		const title = color.text("Console");
 		const right = [color.success(`● ${mode}`), color.muted(`${iconGit} ${branchLabel}`)].join(color.dim("  |  "));

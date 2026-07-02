@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { type ThemeColor, theme } from "../theme/theme.js";
 
 export type ToolFrameState = "running" | "success" | "error" | "cancelled" | "pending";

@@ -1,6 +1,6 @@
 // @ts-nocheck
-import type { Transport } from "moon-core";
-import type { ThinkingLevel } from "moon-engine";
+import type { Transport } from "astro-core";
+import type { ThinkingLevel } from "astro-engine";
 import {
 	Container,
 	getCapabilities,
@@ -11,7 +11,7 @@ import {
 	SettingsList,
 	Spacer,
 	Text,
-} from "moon-tui";
+} from "astro-tui";
 import type { WarningSettings } from "../../../core/settings-manager.js";
 import { getSelectListTheme, getSettingsListTheme, theme } from "../theme/theme.js";
 import { DynamicBorder } from "./dynamic-border.js";

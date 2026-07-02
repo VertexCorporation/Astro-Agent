@@ -1,6 +1,16 @@
 // @ts-nocheck
-import type { Model } from "moon-core";
-import { Container, type Focusable, fuzzyFilter, getKeybindings, Input, Key, matchesKey, Spacer, Text } from "moon-tui";
+import type { Model } from "astro-core";
+import {
+	Container,
+	type Focusable,
+	fuzzyFilter,
+	getKeybindings,
+	Input,
+	Key,
+	matchesKey,
+	Spacer,
+	Text,
+} from "astro-tui";
 import { theme } from "../theme/theme.js";
 import { DynamicBorder } from "./dynamic-border.js";
 import { keyText } from "./keybinding-hints.js";

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Design prompt builder.
  *
@@ -86,7 +87,7 @@ export function buildDesignPrompt(options: {
 
 	sections.push(formatDirection(direction));
 
-	// 3. MoonCode's default UI taste + universal quality rules
+	// 3. Astro-Agent's default UI taste + universal quality rules
 	sections.push(DEFAULT_UI_DESIGN_SYSTEM_PROMPT);
 	sections.push(DESIGN_RULES);
 

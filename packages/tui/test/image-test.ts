@@ -3,13 +3,10 @@ import { Image } from "../src/components/image.js";
 import { Spacer } from "../src/components/spacer.js";
 import { Text } from "../src/components/text.js";
 import { ProcessTerminal } from "../src/terminal.js";
-import { getCapabilities, getImageDimensions } from "../src/terminal-image.js";
+import { getImageDimensions } from "../src/terminal-image.js";
 import { TUI } from "../src/tui.js";
 
 const testImagePath = process.argv[2] || "/tmp/test-image.png";
-
-console.log("Terminal capabilities:", getCapabilities());
-console.log("Loading image from:", testImagePath);
 
 let imageBuffer: Buffer;
 try {
@@ -22,9 +19,6 @@ try {
 
 const base64Data = imageBuffer.toString("base64");
 const dims = getImageDimensions(base64Data, "image/png");
-
-console.log("Image dimensions:", dims);
-console.log("");
 
 const terminal = new ProcessTerminal();
 const tui = new TUI(terminal);

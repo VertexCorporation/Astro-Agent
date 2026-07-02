@@ -28,19 +28,15 @@ async function main() {
 		}
 
 		if (event.type === "tool_execution_start") {
-			console.log(`\n[Tool: ${event.toolName}]`);
 		}
 
 		if (event.type === "tool_execution_end") {
-			console.log(`[Result: ${JSON.stringify(event.result).slice(0, 200)}...]\n`);
 		}
 	});
 
 	await client.start();
 
-	const state = await client.getState();
-	console.log(`Model: ${state.model?.provider}/${state.model?.id}`);
-	console.log(`Thinking: ${state.thinkingLevel ?? "off"}\n`);
+	const _state = await client.getState();
 
 	// Handle user input
 	const rl = readline.createInterface({
@@ -64,14 +60,12 @@ async function main() {
 
 		isWaiting = true;
 		await client.promptAndWait(line);
-		console.log("\n");
 		isWaiting = false;
 		prompt();
 	});
 
 	rl.on("SIGINT", () => {
 		if (isWaiting) {
-			console.log("\n[Aborting...]");
 			client.abort();
 		} else {
 			client.stop();
@@ -79,7 +73,6 @@ async function main() {
 		}
 	});
 
-	console.log("Interactive RPC example. Type 'exit' to quit.\n");
 	prompt();
 }
 

@@ -1,4 +1,5 @@
-import type { Component } from "moon-tui";
+// @ts-nocheck
+import type { Component } from "astro-tui";
 import type { EngineSession } from "../../../core/engine-session.js";
 import type { ReadonlyFooterDataProvider } from "../../../core/footer-data-provider.js";
 

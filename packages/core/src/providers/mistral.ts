@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { getEnvApiKey } from "../env-api-keys.js";
 import { calculateCost, clampThinkingLevel } from "../models.js";
 import type {

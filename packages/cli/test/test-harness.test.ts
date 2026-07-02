@@ -3,8 +3,8 @@
  * Validates that the faux provider and session factory work correctly.
  */
 
-import type { AssistantMessage } from "moon-core";
-import type { EngineTool } from "moon-engine";
+import type { AssistantMessage } from "astro-core";
+import type { EngineTool } from "astro-engine";
 import { Type } from "typebox";
 import { afterEach, describe, expect, it } from "vitest";
 import { createHarness, createHarnessWithExtensions, type Harness } from "./test-harness.js";
@@ -264,8 +264,8 @@ describe("test harness", () => {
 			extensionFactories: [
 				{
 					path: "<alpha>",
-					factory: (Mooncli) => {
-						Mooncli.registerCommand("shared-cmd", {
+					factory: (AstroAgent) => {
+						AstroAgent.registerCommand("shared-cmd", {
 							description: "Alpha command",
 							handler: async (args) => {
 								calls.push(`alpha:${args}`);
@@ -275,8 +275,8 @@ describe("test harness", () => {
 				},
 				{
 					path: "<beta>",
-					factory: (Mooncli) => {
-						Mooncli.registerCommand("shared-cmd", {
+					factory: (AstroAgent) => {
+						AstroAgent.registerCommand("shared-cmd", {
 							description: "Beta command",
 							handler: async (args) => {
 								calls.push(`beta:${args}`);

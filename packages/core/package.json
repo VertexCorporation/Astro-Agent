@@ -1,5 +1,5 @@
 {
-	"name": "moon-core",
+	"name": "astro-core",
 	"version": "49.0.0",
 	"description": "Unified Core Engine for Modern Apps",
 	"type": "module",
@@ -52,7 +52,7 @@
 		}
 	},
 	"bin": {
-		"moon-core": "./dist/cli.js"
+		"astro-core": "./dist/cli.js"
 	},
 	"files": [
 		"dist",
@@ -90,7 +90,7 @@
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/theayzek01/MoonCode",
+		"url": "https://github.com/vertexcorporation/Astro-Agent",
 		"directory": "packages/core"
 	},
 	"engines": {

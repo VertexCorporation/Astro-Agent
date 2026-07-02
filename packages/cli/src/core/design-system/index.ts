@@ -1,5 +1,6 @@
+// @ts-nocheck
 /**
- * MoonCode Design System Module
+ * Astro-Agent Design System Module
  *
  * Inspired by Open Design (nexu-io/open-design) but built lightweight
  * for a CLI-first agent. Provides:

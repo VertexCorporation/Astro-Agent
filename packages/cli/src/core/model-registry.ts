@@ -3,7 +3,6 @@
  * Model registry - manages built-in and custom models, provides API key resolution.
  */
 
-import { existsSync, readFileSync } from "fs";
 import {
 	type AnthropicMessagesCompat,
 	type Api,
@@ -19,8 +18,9 @@ import {
 	registerApiProvider,
 	resetApiProviders,
 	type SimpleStreamOptions,
-} from "moon-core";
-import { registerOAuthProvider, resetOAuthProviders } from "moon-core/oauth";
+} from "astro-core";
+import { registerOAuthProvider, resetOAuthProviders } from "astro-core/oauth";
+import { existsSync, readFileSync } from "fs";
 import { join } from "path";
 import { type Static, Type } from "typebox";
 import { Compile } from "typebox/compile";

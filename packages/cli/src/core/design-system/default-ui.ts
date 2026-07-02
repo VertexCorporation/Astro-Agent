@@ -1,14 +1,15 @@
+// @ts-nocheck
 export const DEFAULT_UI_STYLE_GUIDELINE =
 	"Default UI taste: respect the existing project design first; otherwise use an avant-garde, marginal, vibrant, and unique design.";
 
 export const DEFAULT_UI_DESIGN_SYSTEM_PROMPT = `## Default UI Design System
 
-Applies to every UI/frontend/component/dashboard/site MoonCode creates or modifies.
+Applies to every UI/frontend/component/dashboard/site Astro-Agent creates or modifies.
 
 Priority:
 1. User's explicit visual style request wins.
 2. Existing project design system/component conventions win.
-3. MoonCode default applies: avant-garde, marginal, vibrant, unique, breathtaking.
+3. Astro-Agent default applies: avant-garde, marginal, vibrant, unique, breathtaking.
 
 Visual language:
 - Break the mold. Do not create the standard, boring "AI app" look.

@@ -8,7 +8,6 @@ import * as crypto from "node:crypto";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { spawn, spawnSync } from "child_process";
 import {
 	type AssistantMessage,
 	getProviders,
@@ -16,8 +15,8 @@ import {
 	type Message,
 	type Model,
 	type OAuthProviderId,
-} from "moon-core";
-import type { EngineMessage } from "moon-engine";
+} from "astro-core";
+import type { EngineMessage } from "astro-engine";
 import type {
 	AutocompleteItem,
 	AutocompleteProvider,
@@ -28,7 +27,7 @@ import type {
 	OverlayHandle,
 	OverlayOptions,
 	SlashCommand,
-} from "moon-tui";
+} from "astro-tui";
 import {
 	CombinedAutocompleteProvider,
 	type Component,
@@ -47,7 +46,8 @@ import {
 	TruncatedText,
 	TUI,
 	visibleWidth,
-} from "moon-tui";
+} from "astro-tui";
+import { spawn, spawnSync } from "child_process";
 import { buildWelcomeMessage } from "../../cli/initial-message.js";
 import {
 	APP_NAME,
@@ -97,14 +97,15 @@ import { subagentEventEmitter } from "../../core/tools/invoke_subagent.js";
 import { taskEventEmitter } from "../../core/tools/task.js";
 import type { TruncationResult } from "../../core/tools/truncate.js";
 import { handlePackageCommand } from "../../package-manager-cli.js";
+import { getAstroUserEngine } from "../../utils/astro-user-engine.js";
 import { getChangelogPath, getNewEntries, parseChangelog } from "../../utils/changelog.js";
 import { copyToClipboard } from "../../utils/clipboard.js";
 import { extensionForImageMimeType, readClipboardImage } from "../../utils/clipboard-image.js";
 import { parseGitUrl } from "../../utils/git.js";
-import { getMoonCodeUserEngine } from "../../utils/moon-user-engine.js";
 import { killTrackedDetachedChildren } from "../../utils/shell.js";
 import { ensureTool, getToolPath } from "../../utils/tools-manager.js";
-import { checkForNewMoonCodeVersion } from "../../utils/version-check.js";
+import { checkForNewAstroAgentVersion } from "../../utils/version-check.js";
+import { AstroAgentHeaderComponent } from "./components/Astro-Agent-header.js";
 import { AppLockComponent } from "./components/app-lock.js";
 import { ArminComponent } from "./components/armin.js";
 import { AssistantMessageComponent } from "./components/assistant-message.js";
@@ -122,12 +123,11 @@ import { ExtensionEditorComponent } from "./components/extension-editor.js";
 import { ExtensionInputComponent } from "./components/extension-input.js";
 import { ExtensionSelectorComponent } from "./components/extension-selector.js";
 import { FooterComponent } from "./components/footer.js";
-import { MoonCodeIntroComponent } from "./components/intro.js";
+import { AstroAgentIntroComponent } from "./components/intro.js";
 import { keyHint, keyText, rawKeyHint } from "./components/keybinding-hints.js";
 import { LoginDialogComponent } from "./components/login-dialog.js";
 import { MetricsChartComponent } from "./components/metrics-chart.js";
 import { ModelSelectorComponent } from "./components/model-selector.js";
-import { MoonCodeHeaderComponent } from "./components/mooncode-header.js";
 import { type AuthSelectorProvider, OAuthSelectorComponent } from "./components/oauth-selector.js";
 import { RoadmapComponent, type RoadmapStep } from "./components/roadmap.js";
 import { ScopedModelsSelectorComponent } from "./components/scoped-models-selector.js";
@@ -297,7 +297,7 @@ function hasDefaultModelProvider(providerId: string): providerId is keyof typeof
 }
 
 const BEDROCK_PROVIDER_ID = "amazon-bedrock";
-const MOON_WORKING_FRAMES = ["·", "•", "●", "•"];
+const ASTRO_WORKING_FRAMES = ["·", "•", "●", "•"];
 
 const BUILT_IN_MODEL_PROVIDERS = new Set<string>(getProviders());
 
@@ -684,7 +684,7 @@ export class InteractiveMode {
 		}
 		this.startupNoticesShown = true;
 
-		const introText = new MoonCodeIntroComponent(() => this.ui.requestRender());
+		const introText = new AstroAgentIntroComponent(() => this.ui.requestRender());
 		this.chatContainer.addChild(introText);
 	}
 
@@ -757,7 +757,7 @@ export class InteractiveMode {
 				hint("app.tools.expand", "yardim"),
 			].join(theme.fg("dim", " • "));
 
-			this.builtInHeader = new MoonCodeHeaderComponent(this.session, this.footerDataProvider);
+			this.builtInHeader = new AstroAgentHeaderComponent(this.session, this.footerDataProvider);
 
 			// Setup UI layout
 			this.headerContainer.addChild(this.builtInHeader);
@@ -964,7 +964,7 @@ export class InteractiveMode {
 		await this.init();
 
 		// Start version check asynchronously
-		checkForNewMoonCodeVersion(this.version).then((newVersion) => {
+		checkForNewAstroAgentVersion(this.version).then((newVersion) => {
 			if (newVersion) {
 				this.showNewVersionNotification(newVersion);
 			}
@@ -1125,10 +1125,10 @@ export class InteractiveMode {
 
 				if (isVideo) {
 					await this.handleVideoEditCommand();
-					promptInput = `[Sistem: Kullanıcının talebi üzerine MoonCode Video Studio tarayıcıda otomatik olarak açıldı. Lütfen kullanıcıya video düzenleme konusunda nasıl yardımcı olabileceğini sor ve rehberlik et. Dosya konumları, kesme/cut, efektler, keyframe, altyazı vb. işlemler yapabileceğini ve Browser Bridge üzerinden tarayıcı sekmesini kontrol edebildiğini belirt.]\n\n${userInput}`;
+					promptInput = `[Sistem: Kullanıcının talebi üzerine Astro-Agent Video Studio tarayıcıda otomatik olarak açıldı. Lütfen kullanıcıya video düzenleme konusunda nasıl yardımcı olabileceğini sor ve rehberlik et. Dosya konumları, kesme/cut, efektler, keyframe, altyazı vb. işlemler yapabileceğini ve Browser Bridge üzerinden tarayıcı sekmesini kontrol edebildiğini belirt.]\n\n${userInput}`;
 				} else if (isPhoto) {
 					await this.handlePhotoEditCommand();
-					promptInput = `[Sistem: Kullanıcının mesajı profesyonel fotoğraf düzenleme/retouch niyeti taşıyor; MoonCode Photo Studio tarayıcıda otomatik açıldı. Komut yazmasını bekleme. Önce klasördeki uygun görsel dosyayı bul (png/jpg/webp vb.), sonra Photo Studio ve Browser Bridge üzerinden yükleme/işlem akışını yürüt. İstenen işlem örn. yüz lekesi temizleme, cilt yumuşatma, göz netleştirme, profesyonel portre, arka plan/obje kaldırma, LUT/curves/upscale/export olabilir. Gerekirse yalnızca eksik dosya yolu veya export hedefi sor.]\n\n${userInput}`;
+					promptInput = `[Sistem: Kullanıcının mesajı profesyonel fotoğraf düzenleme/retouch niyeti taşıyor; Astro-Agent Photo Studio tarayıcıda otomatik açıldı. Komut yazmasını bekleme. Önce klasördeki uygun görsel dosyayı bul (png/jpg/webp vb.), sonra Photo Studio ve Browser Bridge üzerinden yükleme/işlem akışını yürüt. İstenen işlem örn. yüz lekesi temizleme, cilt yumuşatma, göz netleştirme, profesyonel portre, arka plan/obje kaldırma, LUT/curves/upscale/export olabilir. Gerekirse yalnızca eksik dosya yolu veya export hedefi sor.]\n\n${userInput}`;
 				} else if (isScratch) {
 					const scratchConfig = this.getScratchMcpConfig();
 					if (fs.existsSync(scratchConfig.args[0])) {
@@ -1179,7 +1179,7 @@ export class InteractiveMode {
 	}
 
 	private async checkForPackageUpdates(): Promise<string[]> {
-		if (process.env.MOON_OFFLINE) {
+		if (process.env.ASTRO_OFFLINE) {
 			return [];
 		}
 
@@ -1275,7 +1275,7 @@ export class InteractiveMode {
 	}
 
 	private reportInstallTelemetry(version: string): void {
-		if (process.env.MOON_OFFLINE) {
+		if (process.env.ASTRO_OFFLINE) {
 			return;
 		}
 
@@ -1283,13 +1283,16 @@ export class InteractiveMode {
 			return;
 		}
 
-		void fetch(`https://github.com/theayzek01/MoonCode/api/report-install?version=${encodeURIComponent(version)}`, {
-			method: "POST",
-			headers: {
-				"User-Engine": getMoonCodeUserEngine(version),
+		void fetch(
+			`https://github.com/theayzek01/Astro-Agent/api/report-install?version=${encodeURIComponent(version)}`,
+			{
+				method: "POST",
+				headers: {
+					"User-Engine": getAstroUserEngine(version),
+				},
+				signal: AbortSignal.timeout(5000),
 			},
-			signal: AbortSignal.timeout(5000),
-		})
+		)
 			.then(() => undefined)
 			.catch(() => undefined);
 	}
@@ -2120,7 +2123,7 @@ export class InteractiveMode {
 			(spinner) => theme.fg("accent", spinner),
 			(text) => theme.fg("muted", text),
 			this.getWorkingLoaderMessage(),
-			this.workingIndicatorOptions ?? { frames: MOON_WORKING_FRAMES, intervalMs: 180 },
+			this.workingIndicatorOptions ?? { frames: ASTRO_WORKING_FRAMES, intervalMs: 180 },
 		);
 	}
 
@@ -4549,7 +4552,7 @@ export class InteractiveMode {
 			theme.fg("muted", `Yeni sürüm ${newVersion} mevcut. Güncellemek için şunu çalıştırın: `) + action;
 		const changelogUrl = theme.fg(
 			"accent",
-			"https://github.com/theayzek01/MoonCode/blob/main/packages/cli/CHANGELOG.md",
+			"https://github.com/theayzek01/Astro-Agent/blob/main/packages/cli/CHANGELOG.md",
 		);
 		const changelogLine = theme.fg("muted", "Değişiklik Günlüğü: ") + changelogUrl;
 
@@ -5913,7 +5916,7 @@ export class InteractiveMode {
 		const providerCount = this.footerDataProvider.getAvailableProviderCount?.() ?? 0;
 		const ctx = this.session.getContextUsage?.();
 		const lines = [
-			"MoonCode Health",
+			"Astro-Agent Health",
 			`Model: ${model?.provider ?? "none"} / ${model?.id ?? "no-model"}`,
 			`Thinking: ${this.session.state.thinkingLevel ?? "off"}`,
 			`Context: ${ctx?.percent != null ? `${ctx.percent.toFixed(0)}%` : "0%"}`,
@@ -5955,7 +5958,7 @@ export class InteractiveMode {
 				"┌────────────────────────────────────────────────────────┐",
 				"│         ✦  M O O N C O D E   O S   I N T E R F A C E ✦  │",
 				"├────────────────────────────────────────────────────────┤",
-				"│  Entegre Geliştirici Arayüzü: MoonCode OS              │",
+				"│  Entegre Geliştirici Arayüzü: Astro-Agent OS              │",
 				"│  Yerel Adres: http://127.0.0.1:3131                    │",
 				"│                                                        │",
 				"│  Özellikler:                                           │",
@@ -5966,7 +5969,7 @@ export class InteractiveMode {
 				`│  Browser Bridge Durumu: ${bridgeStatusText.padEnd(31)}│`,
 				"└────────────────────────────────────────────────────────┘",
 				"",
-				"🚀 Yerel MoonCode OS varsayılan tarayıcınızda başlatılıyor...",
+				"🚀 Yerel Astro-Agent OS varsayılan tarayıcınızda başlatılıyor...",
 			].join("\n");
 
 			this.chatContainer.addChild(new Text(interfaceWelcome, 1, 0));
@@ -5980,7 +5983,7 @@ export class InteractiveMode {
 				spawnSync("xdg-open", [url], { stdio: "ignore" });
 			}
 		} catch (err: any) {
-			this.showError(`MoonCode OS açma hatası: ${err.message}`);
+			this.showError(`Astro-Agent OS açma hatası: ${err.message}`);
 		}
 	}
 
@@ -5994,7 +5997,7 @@ export class InteractiveMode {
 			const compactState = JSON.stringify(payload.state || {}, null, 2).slice(0, 4000);
 			const compactParams = JSON.stringify(payload.params || {}, null, 2).slice(0, 2000);
 			const prompt = [
-				`[Sistem: MoonCode ${editorName} tarayıcı arayüzünden profesyonel edit aksiyonu geldi.]`,
+				`[Sistem: Astro-Agent ${editorName} tarayıcı arayüzünden profesyonel edit aksiyonu geldi.]`,
 				`Editör: ${data.type}`,
 				`Aksiyon: ${data.action}`,
 				`Parametreler: ${compactParams}`,
@@ -6128,7 +6131,7 @@ export class InteractiveMode {
 			clearTimeout(timer);
 			if (!res.ok) return false;
 			const text = await res.text();
-			return text.includes("MoonCode Control Panel") || text.includes("Choose how to sign in");
+			return text.includes("Astro-Agent Control Panel") || text.includes("Choose how to sign in");
 		} catch {
 			return false;
 		}
@@ -6162,7 +6165,7 @@ export class InteractiveMode {
 				// Try next port.
 			}
 		}
-		throw new Error("Could not open MoonCode account panel. Check ports 3131-3140.");
+		throw new Error("Could not open Astro-Agent account panel. Check ports 3131-3140.");
 	}
 
 	private async isWebPanelEndpointReady(url: string, marker: string): Promise<boolean> {
@@ -6221,10 +6224,10 @@ export class InteractiveMode {
 			if (!res.ok) return false;
 			const text = await res.text();
 			return (
-				text.includes("MoonCode Video Studio") ||
-				text.includes("MoonCode Photo Studio") ||
-				text.includes("MoonCode AI Video Studio") ||
-				text.includes("MoonCode AI Photo Studio")
+				text.includes("Astro-Agent Video Studio") ||
+				text.includes("Astro-Agent Photo Studio") ||
+				text.includes("Astro-Agent AI Video Studio") ||
+				text.includes("Astro-Agent AI Photo Studio")
 			);
 		} catch {
 			return false;
@@ -6239,14 +6242,14 @@ export class InteractiveMode {
 			clearTimeout(timer);
 			if (!res.ok) return false;
 			const text = await res.text();
-			return text.includes("MoonCode — Web Studio") || text.includes('id="message-form"');
+			return text.includes("Astro-Agent — Web Studio") || text.includes('id="message-form"');
 		} catch {
 			return false;
 		}
 	}
 
 	private getWebUiCandidatePorts(): number[] {
-		const bridgePort = Number(process.env.MOON_BROWSER_BRIDGE_PORT || 3133);
+		const bridgePort = Number(process.env.ASTRO_BROWSER_BRIDGE_PORT || 3133);
 		return [3131, 3132, 3133, 3134, 3135, 3136, 3137, 3138, 3139, 3140].filter(
 			(candidatePort) => candidatePort !== bridgePort,
 		);
@@ -6281,7 +6284,7 @@ export class InteractiveMode {
 			}
 		}
 
-		throw new Error(`${route} için çalışan MoonCode Web UI bulunamadı. 3131-3140 portlarını kontrol edin.`);
+		throw new Error(`${route} için çalışan Astro-Agent Web UI bulunamadı. 3131-3140 portlarını kontrol edin.`);
 	}
 
 	private openEditorUrl(url: string): void {
@@ -6297,7 +6300,7 @@ export class InteractiveMode {
 	private async handleWebPanelRoute(route: "/mcp" | "/session" | "/brain", label: string): Promise<void> {
 		try {
 			const server = await import("../../core/web-ui-server.js");
-			const marker = route === "/mcp" ? "MCP Control" : "MoonCode";
+			const marker = route === "/mcp" ? "MCP Control" : "Astro-Agent";
 			const url = await this.ensureWebPanelServer(server, route, marker);
 			this.openEditorUrl(url);
 			this.showStatus(`${label} opened.`);
@@ -6310,7 +6313,7 @@ export class InteractiveMode {
 		const targets = [
 			path.join(getEngineDir(), "memory-signals.json"),
 			path.join(getEngineDir(), "learning-experience.json"),
-			path.join(os.homedir(), ".mooncode", "omega-memory.json"),
+			path.join(os.homedir(), ".astroagent", "omega-memory.json"),
 		];
 		let removed = 0;
 		for (const file of targets) {
@@ -6329,7 +6332,7 @@ export class InteractiveMode {
 			const server = await import("../../core/web-ui-server.js");
 			const url = await this.ensureAuthPanelServer(server, route);
 			this.openEditorUrl(url);
-			this.showStatus(`MoonCode account panel opened: ${url}`);
+			this.showStatus(`Astro-Agent account panel opened: ${url}`);
 		} catch (err: any) {
 			this.showError(`Account panel error: ${err.message}`);
 			if (route === "/login") {
@@ -6347,34 +6350,34 @@ export class InteractiveMode {
 			const url = await this.ensureEditorServer(server, "/videoedit");
 
 			const bridgeStatusText = bridgeStatus.running
-				? `BAGLI (${bridgeStatus.clients} eklenti aktif)`
-				: "BAĞLANTI BEKLENİYOR (Eklentiyi yükleyin)";
+				? `CONNECTED (${bridgeStatus.clients} extensions active)`
+				: "WAITING FOR CONNECTION (Install the extension)";
 
 			const videoWelcome = [
 				"┌────────────────────────────────────────────────────────┐",
-				"│       ✦  M O O N C O D E   V I D E O   S T U D I O  ✦  │",
+				"│        ✦  A S T R O   V I D E O   S T U D I O  ✦       │",
 				"├────────────────────────────────────────────────────────┤",
-				"│  MoonCode Pro Video Editor / Yapay Zeka Stüdyosu       │",
-				`│  Yerel Adres: ${url.padEnd(40)}│`,
+				"│  Astro Agent Video Editor                              │",
+				`│  Local Address: ${url.padEnd(39)}│`,
 				"│                                                        │",
-				"│  Özellikler:                                           │",
-				"│  • Çoklu Timeline (Kanallar), Split/Cut, Trim          │",
-				"│  • Efektler & Filtreler (AI, Vintage, Glitch, Cinematic)│",
-				"│  • Ses Ekleme, Background Music & Ses Efektleri         │",
-				"│  • Shorts/TikTok (9:16) ve YouTube (16:9) Formatlama    │",
-				"│  • Altyazı Ekleme, Metin Şablonları & Keyframe         │",
+				"│  Features:                                             │",
+				"│  • Multi-Timeline, Split/Cut, Trim                     │",
+				"│  • Effects & Filters (Vintage, Glitch, Cinematic)      │",
+				"│  • Audio Tracks, Background Music & SFX                │",
+				"│  • Shorts/TikTok (9:16) and YouTube (16:9) Formats     │",
+				"│  • Subtitles, Text Templates & Keyframes               │",
 				"│                                                        │",
-				`│  Browser Bridge Durumu: ${bridgeStatusText.padEnd(31)}│`,
+				`│  Browser Bridge Status: ${bridgeStatusText.padEnd(31)}│`,
 				"└────────────────────────────────────────────────────────┘",
 				"",
-				"🚀 MoonCode Video Studio varsayılan tarayıcınızda başlatılıyor...",
+				"🚀 Astro Video Studio is opening in your default browser...",
 			].join("\n");
 
 			this.chatContainer.addChild(new Text(videoWelcome, 1, 0));
 			this.ui.requestRender();
 			this.openEditorUrl(url);
 		} catch (err: any) {
-			this.showError(`MoonCode Video Studio açma hatası: ${err.message}`);
+			this.showError(`Astro Video Studio error: ${err.message}`);
 		}
 	}
 
@@ -6387,34 +6390,34 @@ export class InteractiveMode {
 			const url = await this.ensureEditorServer(server, "/photoedit");
 
 			const bridgeStatusText = bridgeStatus.running
-				? `BAGLI (${bridgeStatus.clients} eklenti aktif)`
-				: "BAĞLANTI BEKLENİYOR (Eklentiyi yükleyin)";
+				? `CONNECTED (${bridgeStatus.clients} extensions active)`
+				: "WAITING FOR CONNECTION (Install the extension)";
 
 			const photoWelcome = [
 				"┌────────────────────────────────────────────────────────┐",
-				"│       ✦  M O O N C O D E   P H O T O   S T U D I O  ✦  │",
+				"│        ✦  A S T R O   P H O T O   S T U D I O  ✦       │",
 				"├────────────────────────────────────────────────────────┤",
-				"│  MoonCode Pro Professional Photo/Graphic Suite         │",
-				`│  Yerel Adres: ${url.padEnd(40)}│`,
+				"│  Astro Agent Professional Photo/Graphic Suite          │",
+				`│  Local Address: ${url.padEnd(39)}│`,
 				"│                                                        │",
-				"│  Özellikler:                                           │",
-				"│  • Katman Yönetimi (Layers), Opacity & Blend Modes    │",
-				"│  • Smart Retouch, Renk Derecelendirme (LUTs/Curves)    │",
-				"│  • AI Arka Plan Silme & Obje Kaldırma                  │",
-				"│  • Profesyonel Filtreler, Işık & Kontrast Ayarları    │",
-				"│  • Metin Katmanları, Brush Tool & Canvas Boyutlandırma│",
+				"│  Features:                                             │",
+				"│  • Layer Management, Opacity & Blend Modes             │",
+				"│  • Smart Retouch, Color Grading (LUTs/Curves)          │",
+				"│  • Background Removal & Object Eraser                  │",
+				"│  • Pro Filters, Lighting & Contrast Adjustments        │",
+				"│  • Text Layers, Brush Tool & Canvas Resizing           │",
 				"│                                                        │",
-				`│  Browser Bridge Durumu: ${bridgeStatusText.padEnd(31)}│`,
+				`│  Browser Bridge Status: ${bridgeStatusText.padEnd(31)}│`,
 				"└────────────────────────────────────────────────────────┘",
 				"",
-				"🚀 MoonCode Photo Studio varsayılan tarayıcınızda başlatılıyor...",
+				"🚀 Astro Photo Studio is opening in your default browser...",
 			].join("\n");
 
 			this.chatContainer.addChild(new Text(photoWelcome, 1, 0));
 			this.ui.requestRender();
 			this.openEditorUrl(url);
 		} catch (err: any) {
-			this.showError(`MoonCode Photo Studio açma hatası: ${err.message}`);
+			this.showError(`Astro-Agent Photo Studio açma hatası: ${err.message}`);
 		}
 	}
 
@@ -6512,7 +6515,7 @@ export class InteractiveMode {
 			}
 		}
 
-		throw new Error("Çalışan MoonCode Web UI sunucusu bulunamadı. Web UI portlarını kontrol edin.");
+		throw new Error("Çalışan Astro-Agent Web UI sunucusu bulunamadı. Web UI portlarını kontrol edin.");
 	}
 
 	private handleMoodCommand(args: string): void {
@@ -6673,7 +6676,7 @@ export class InteractiveMode {
 	private renderAgentsHelp(): string {
 		return [
 			"Agent Sistemi",
-			"MoonCode kod islerini kucuk bir yazilim sirketi gibi organize eder.",
+			"Astro-Agent kod islerini kucuk bir yazilim sirketi gibi organize eder.",
 			"Patron kapsami belirler; Mimar, Backend, Frontend, QA, Security ve Integrator kendi alanindan kontrol eder.",
 			"",
 			"Komutlar:",
@@ -7018,7 +7021,7 @@ export class InteractiveMode {
 				this.upsertEnvFile(envPath, {
 					TELEGRAM_BOT_TOKEN: token,
 					TELEGRAM_ALLOWED_CHAT_IDS: chatId,
-					MOON_REMOTE_ROOT: path.dirname(rootDir),
+					ASTRO_REMOTE_ROOT: path.dirname(rootDir),
 				});
 				this.showStatus(`Telegram kaydedildi: @${me.result.username}, chat id ${chatId}`);
 				this.showStatus("Remote'u açmak için: /telegram start");
@@ -7174,9 +7177,9 @@ export class InteractiveMode {
 		try {
 			if (!cmd || cmd === "status") this.showStatus(await git.getGitStatus(cwd));
 			else if (cmd === "commit")
-				this.showStatus(await git.commitAll(cwd, rest.join(" ") || "chore: update via MoonCode"));
+				this.showStatus(await git.commitAll(cwd, rest.join(" ") || "chore: update via Astro-Agent"));
 			else if (cmd === "branch")
-				this.showStatus(`Branch: ${await git.createBranch(cwd, rest.join("-") || "mooncode/update")}`);
+				this.showStatus(`Branch: ${await git.createBranch(cwd, rest.join("-") || "Astro-Agent/update")}`);
 			else if (cmd === "push") this.showStatus(await git.pushBranch(cwd));
 			else this.showStatus("Kullanım: /git status | /git commit <mesaj> | /git branch <ad> | /git push");
 		} catch (err: any) {
@@ -7289,7 +7292,7 @@ export class InteractiveMode {
 	}
 
 	private handleHelpCommand(): void {
-		let info = `\n${theme.bold(theme.fg("accent", "╭─ MoonCode Premium Grouped Commands ──────────────────────╮"))}\n`;
+		let info = `\n${theme.bold(theme.fg("accent", "╭─ Astro-Agent Premium Grouped Commands ──────────────────────╮"))}\n`;
 
 		const categories = {
 			"Session & Context": [
@@ -7329,9 +7332,9 @@ export class InteractiveMode {
 				{ name: "/index", desc: "Index codebase for semantic search" },
 				{ name: "/browser", desc: "Chrome extension status and control" },
 				{ name: "/app", desc: "Open Web Studio and lock TUI" },
-				{ name: "/interface", desc: "Open MoonCode Special OpenClaw OS Interface" },
-				{ name: "/videoedit", desc: "Open MoonCode Pro Video Studio (Browser)" },
-				{ name: "/photoedit", desc: "Open MoonCode Pro Photo Editor (Browser)" },
+				{ name: "/interface", desc: "Open Astro-Agent Special OpenClaw OS Interface" },
+				{ name: "/videoedit", desc: "Open Astro-Agent Pro Video Studio (Browser)" },
+				{ name: "/photoedit", desc: "Open Astro-Agent Pro Photo Editor (Browser)" },
 				{ name: "/mcp", desc: "Open MCP control panel" },
 				{ name: "/swarm", desc: "Trigger Multi-Agent Swarm" },
 				{ name: "/fix", desc: "Run Autonomous Auto-Healer" },
@@ -7344,10 +7347,10 @@ export class InteractiveMode {
 			"Diagnostics & System": [
 				{ name: "/status", desc: "Show detailed runtime diagnostics panel" },
 				{ name: "/metrics", desc: "Show system metrics and token usage" },
-				{ name: "/update", desc: "Update MoonCode to latest version" },
+				{ name: "/update", desc: "Update Astro-Agent to latest version" },
 				{ name: "/reload", desc: "Reload system components" },
 				{ name: "/hotkeys", desc: "List keyboard shortcuts" },
-				{ name: "/quit", desc: "Quit MoonCode" },
+				{ name: "/quit", desc: "Quit Astro-Agent" },
 			],
 		};
 
@@ -7383,7 +7386,7 @@ export class InteractiveMode {
 			}
 		}
 
-		let info = `\n${theme.bold(theme.fg("accent", "✦ MOONCODE CONTROL CENTER"))}\n\n`;
+		let info = `\n${theme.bold(theme.fg("accent", "✦ Astro-Agent CONTROL CENTER"))}\n\n`;
 
 		info += `  ${theme.bold(theme.fg("success", "■ AGENT"))}\n`;
 		info += `    Apex Mode:          ${theme.fg("accent", "Active")}\n`;
@@ -7441,12 +7444,10 @@ export class InteractiveMode {
 		try {
 			this.ui.stop();
 			await handlePackageCommand(["update", ...parsedArgs]);
-			console.log("\nDevam etmek icin bir tusa basin...");
 			await this.ui.terminal.readKey();
 		} catch (err: any) {
 			const message = err instanceof Error ? err.message : String(err);
 			console.error(`\nError: Guncelleme basarisiz (${message})`);
-			console.log("Devam etmek icin bir tusa basin...");
 			await this.ui.terminal.readKey();
 		} finally {
 			this.ui.start();
@@ -7743,7 +7744,7 @@ export class InteractiveMode {
 	}
 
 	// -------------------------------------------------------------------------
-	// /hub — MoonCode Dashboard
+	// /hub — Astro-Agent Dashboard
 	// -------------------------------------------------------------------------
 	private handleHubCommand(): void {
 		const stats = this.session.getSessionStats();
@@ -7756,7 +7757,7 @@ export class InteractiveMode {
 		const branch = this.footerDataProvider.getGitBranch();
 
 		// Shadow-Git snapshot count
-		const shadowDir = path.join(cwd, ".mooncode", "shadow");
+		const shadowDir = path.join(cwd, ".astroagent", "shadow");
 		let shadowCount = 0;
 		try {
 			shadowCount = fs.readdirSync(shadowDir).filter((f) => f.endsWith(".bak")).length;
@@ -7773,7 +7774,7 @@ export class InteractiveMode {
 		const badge = (txt: string, c = "accent") => theme.bold(theme.fg(c as any, `[ ${txt} ]`));
 
 		const info = [
-			theme.bold(theme.fg("accent", "◆ MOONCODE HUB")),
+			theme.bold(theme.fg("accent", "◆ Astro-Agent HUB")),
 			sep,
 			`${lbl("Model")}${v(model ? `${model.provider}/${model.id}` : "—")}`,
 			`${lbl("Proje")}${v(path.basename(cwd))}`,
@@ -7955,10 +7956,10 @@ export class InteractiveMode {
 
 	private async handleInitCommand(): Promise<void> {
 		const cwd = this.sessionManager.getCwd();
-		const moonPath = path.join(cwd, "MOON.md");
+		const astroPath = path.join(cwd, "ASTRO.md");
 		const agentsPath = path.join(cwd, "AGENTS.md");
 
-		const targetPath = fs.existsSync(agentsPath) ? agentsPath : moonPath;
+		const targetPath = fs.existsSync(agentsPath) ? agentsPath : astroPath;
 		const fileName = path.basename(targetPath);
 
 		if (fs.existsSync(targetPath)) {
@@ -8447,7 +8448,7 @@ export class InteractiveMode {
 
 	private getScratchMcpConfig() {
 		const candidateRoots = [
-			process.env.MOON_SCRATCH_MCP_ROOT,
+			process.env.ASTRO_SCRATCH_MCP_ROOT,
 			path.join(process.cwd(), "scmcp"),
 			path.join(os.homedir(), "scmcp"),
 			path.join(getPackageDir(), "..", "..", "scmcp"),
@@ -8508,7 +8509,7 @@ export class InteractiveMode {
 					const config = this.getScratchMcpConfig();
 					if (!config) {
 						throw new Error(
-							"Scratch MCP not configured. Set MOON_SCRATCH_MCP_ROOT or place a scmcp folder next to the repo with server/scratch-mcp.js.",
+							"Scratch MCP not configured. Set ASTRO_SCRATCH_MCP_ROOT or place a scmcp folder next to the repo with server/scratch-mcp.js.",
 						);
 					}
 					await this.activateMcpServer("scratch", config);
@@ -8555,7 +8556,7 @@ export class InteractiveMode {
 
 		try {
 			// Dynamically import to avoid cyclic dependencies
-			const { SwarmManager } = await import("moon-engine");
+			const { SwarmManager } = await import("astro-engine");
 
 			const swarm = new SwarmManager(this.session.model, {
 				streamFn: this.session.engine.streamFn,
@@ -8582,7 +8583,7 @@ export class InteractiveMode {
 	private async handleFixCommand(arg?: string): Promise<void> {
 		this.showStatus("Auto-Healer başlatılıyor...");
 		try {
-			const { AutoHealer } = await import("moon-engine");
+			const { AutoHealer } = await import("astro-engine");
 			const healer = new AutoHealer(this.session);
 			await healer.run(arg);
 			this.showStatus("Auto-Healer tamamlandı.");
@@ -8594,7 +8595,7 @@ export class InteractiveMode {
 	private async handleEvolveCommand(): Promise<void> {
 		this.showStatus("🧬 Meta-Evolution Engine başlatılıyor...");
 		try {
-			const { MetaEvolver } = await import("moon-engine");
+			const { MetaEvolver } = await import("astro-engine");
 			const evolver = new MetaEvolver(this.session);
 			await evolver.evolve();
 			this.showStatus("🧬 Meta-Evolution döngüsü tetiklendi.");
@@ -8610,12 +8611,12 @@ export class InteractiveMode {
 		}
 		this.showStatus("🦈 Shark Mode (Learned Helplessness Buster) başlatılıyor...");
 		try {
-			const { SharkMode } = await import("moon-engine");
+			const { SharkMode } = await import("astro-engine");
 			const shark = new SharkMode(this.session);
 			await shark.unleash(idea);
-			this.showStatus("🦈 Shark Mode başlatıldı! Yapay zeka imkansızı deniyor...");
+			this.showStatus("🦈 Shark Mode initialized! Attempting complex reasoning...");
 		} catch (e: any) {
-			this.showError(`Shark Mode başlatılamadı: ${e.message}`);
+			this.showError(`Failed to initialize Shark Mode: ${e.message}`);
 		}
 	}
 

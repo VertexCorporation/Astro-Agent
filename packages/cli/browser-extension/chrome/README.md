@@ -1,15 +1,15 @@
-# MoonCode Browser Bridge
+# AstroAgent Browser Bridge
 
-Chrome extension for local MoonCode browser automation.
+Chrome extension for local AstroAgent browser automation.
 
 ## Install
 
-1. Run `mooncode browser-bridge`.
+1. Run `AstroAgent browser-bridge`.
 2. Open `chrome://extensions`.
 3. Enable **Developer mode**.
 4. Click **Load unpacked**.
 5. Select `packages/cli/browser-extension/chrome`.
-6. Run `/browser` in MoonCode. Badge `ON` means connected.
+6. Run `/browser` in AstroAgent. Badge `ON` means connected.
 
 ## Tools
 
@@ -31,7 +31,7 @@ Chrome extension for local MoonCode browser automation.
 
 ## Troubleshooting
 
-- If badge is `OFF`, start `mooncode browser-bridge` and click the extension icon once.
-- If Chrome was closed, MoonCode tries to open the browser before failing.
+- If badge is `OFF`, start `AstroAgent browser-bridge` and click the extension icon once.
+- If Chrome was closed, AstroAgent tries to open the browser before failing.
 - Use `browser_page clear_ui` to remove temporary labels/overlays.
 

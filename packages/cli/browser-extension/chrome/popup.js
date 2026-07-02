@@ -44,7 +44,7 @@ document.getElementById("dashboard-btn").addEventListener("click", () => {
 });
 
 document.getElementById("close-all-btn").addEventListener("click", () => {
-  if (confirm("Are you sure you want to terminate all active MoonCode bridge sessions?")) {
+  if (confirm("Are you sure you want to terminate all active Astro-Agent bridge sessions?")) {
     chrome.runtime.sendMessage({ type: "close_all_sessions" });
     setTimeout(updateUI, 250);
   }

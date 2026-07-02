@@ -1,10 +1,10 @@
 // @ts-nocheck
 import { basename, dirname, isAbsolute, relative, resolve as resolvePath, sep } from "node:path";
+import type { Api, ImageContent, Model, TextContent } from "astro-core";
+import type { EngineTool } from "astro-engine";
+import { Text } from "astro-tui";
 import { constants } from "fs";
 import { access as fsAccess, readFile as fsReadFile } from "fs/promises";
-import type { Api, ImageContent, Model, TextContent } from "moon-core";
-import type { EngineTool } from "moon-engine";
-import { Text } from "moon-tui";
 import { type Static, Type } from "typebox";
 import { getReadmePath } from "../../config.js";
 import { keyHint, keyText } from "../../modes/interactive/components/keybinding-hints.js";

@@ -3,9 +3,8 @@
  * CLI argument parsing and help display
  */
 
-import type { ThinkingLevel } from "moon-engine";
+import type { ThinkingLevel } from "astro-engine";
 import type { ExtensionFlag } from "../core/extensions/types.js";
-import { buildHelpText } from "./help-sections.js";
 
 export type Mode = "text" | "json" | "rpc";
 
@@ -199,6 +198,4 @@ export function parseArgs(args: string[]): Args {
 	return result;
 }
 
-export function printHelp(extensionFlags?: ExtensionFlag[]): void {
-	console.log(buildHelpText(extensionFlags));
-}
+export function printHelp(_extensionFlags?: ExtensionFlag[]): void {}

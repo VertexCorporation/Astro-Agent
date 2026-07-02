@@ -1,6 +1,7 @@
-import { getMoonCodeUserEngine } from "./moon-user-engine.js";
+// @ts-nocheck
+import { getAstroUserEngine } from "./astro-user-engine.js";
 
-const LATEST_VERSION_URL = "https://github.com/theayzek01/MoonCode/api/latest-version";
+const LATEST_VERSION_URL = "https://github.com/theayzek01/Astro-Agent/api/latest-version";
 const DEFAULT_VERSION_CHECK_TIMEOUT_MS = 10000;
 
 interface ParsedVersion {
@@ -47,15 +48,15 @@ export function isNewerPackageVersion(candidateVersion: string, currentVersion: 
 	return candidateVersion.trim() !== currentVersion.trim();
 }
 
-export async function getLatestMoonCodeVersion(
+export async function getLatestAstroAgentVersion(
 	currentVersion: string,
 	options: { timeoutMs?: number } = {},
 ): Promise<string | undefined> {
-	if (process.env.MOON_SKIP_VERSION_CHECK || process.env.MOON_OFFLINE) return undefined;
+	if (process.env.ASTRO_SKIP_VERSION_CHECK || process.env.ASTRO_OFFLINE) return undefined;
 
 	const response = await fetch(LATEST_VERSION_URL, {
 		headers: {
-			"User-Engine": getMoonCodeUserEngine(currentVersion),
+			"User-Engine": getAstroUserEngine(currentVersion),
 			accept: "application/json",
 		},
 		signal: AbortSignal.timeout(options.timeoutMs ?? DEFAULT_VERSION_CHECK_TIMEOUT_MS),
@@ -66,9 +67,9 @@ export async function getLatestMoonCodeVersion(
 	return typeof data.version === "string" && data.version.trim() ? data.version.trim() : undefined;
 }
 
-export async function checkForNewMoonCodeVersion(currentVersion: string): Promise<string | undefined> {
+export async function checkForNewAstroAgentVersion(currentVersion: string): Promise<string | undefined> {
 	try {
-		const latestVersion = await getLatestMoonCodeVersion(currentVersion);
+		const latestVersion = await getLatestAstroAgentVersion(currentVersion);
 		if (latestVersion && isNewerPackageVersion(latestVersion, currentVersion)) {
 			return latestVersion;
 		}

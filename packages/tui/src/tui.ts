@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Minimal TUI implementation with differential rendering
  */
@@ -113,7 +112,7 @@ function isTermuxSession(): boolean {
 }
 
 function resolveMinRenderIntervalMs(): number {
-	const configured = Number(process.env.MOON_TUI_RENDER_INTERVAL_MS ?? process.env.PI_TUI_RENDER_INTERVAL_MS);
+	const configured = Number(process.env.ASTRO_TUI_RENDER_INTERVAL_MS ?? process.env.PI_TUI_RENDER_INTERVAL_MS);
 	if (Number.isFinite(configured) && configured >= 0) {
 		return Math.min(configured, 250);
 	}

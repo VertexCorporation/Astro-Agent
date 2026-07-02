@@ -17,7 +17,7 @@ import {
 import { DefaultPackageManager } from "./core/package-manager.js";
 import { SettingsManager } from "./core/settings-manager.js";
 import { shouldUseWindowsShell } from "./utils/child-process.js";
-import { getLatestMoonCodeVersion, isNewerPackageVersion } from "./utils/version-check.js";
+import { getLatestAstroAgentVersion, isNewerPackageVersion } from "./utils/version-check.js";
 
 export type PackageCommand = "install" | "remove" | "update" | "list";
 
@@ -68,7 +68,7 @@ function printPackageCommandHelp(command: PackageCommand): void {
 Install a package and add it to settings.
 
 Options:
-  -l, --local    Install locally (.mooncode/settings.json)
+  -l, --local    Install locally (.Astro-Agent/settings.json)
 
 Examples:
   ${APP_NAME} install npm:@foo/bar
@@ -88,7 +88,7 @@ Remove a package and its source from settings.
 Alias: ${APP_NAME} uninstall <source> [-l]
 
 Options:
-  -l, --local    Remove from project settings (.mooncode/settings.json)
+  -l, --local    Remove from project settings (.Astro-Agent/settings.json)
 
 Examples:
   ${APP_NAME} remove npm:@foo/bar
@@ -278,13 +278,13 @@ function updateTargetIncludesExtensions(target: UpdateTarget): boolean {
 }
 
 function printSelfUpdateUnavailable(npmCommand?: string[]): void {
-	console.error("error: MoonCode cannot auto-update this installation with the package manager.");
+	console.error("error: Astro-Agent cannot auto-update this installation with the package manager.");
 	console.error(getSelfUpdateUnavailableInstruction(PACKAGE_NAME, npmCommand));
 
 	const entrypoint = process.argv[1];
 	if (entrypoint) {
 		console.error("");
-		console.error(`MoonCode executable location: ${entrypoint}`);
+		console.error(`Astro-Agent executable location: ${entrypoint}`);
 	}
 }
 
@@ -299,7 +299,7 @@ async function shouldRunSelfUpdate(force: boolean): Promise<boolean> {
 
 	let latestVersion: string | undefined;
 	try {
-		latestVersion = await getLatestMoonCodeVersion(VERSION);
+		latestVersion = await getLatestAstroAgentVersion(VERSION);
 	} catch {
 		return true;
 	}
@@ -308,7 +308,6 @@ async function shouldRunSelfUpdate(force: boolean): Promise<boolean> {
 		return true;
 	}
 
-	console.log(chalk.green(`${APP_NAME} is already up to date (v${VERSION})`));
 	return false;
 }
 
@@ -329,28 +328,26 @@ async function runCommand(command: string, args: string[], display: string, cwd?
 }
 
 async function runSelfUpdate(command: SelfUpdateCommand): Promise<void> {
-	console.log(chalk.dim(`Updating ${APP_NAME} via ${command.display}...`));
 	await runCommand(command.command, command.args, command.display);
 }
 
 async function runGitHubSelfUpdate(npmCommand?: string[]): Promise<void> {
 	const [npmBin = "npm", ...npmArgs] = npmCommand ?? [];
-	const dir = await mkdtemp(join(tmpdir(), "mooncode-update-"));
+	const dir = await mkdtemp(join(tmpdir(), "Astro-Agent-update-"));
 	try {
-		console.log(chalk.dim("Downloading MoonCode from GitHub..."));
 		await runCommand(
 			"git",
-			["clone", "--depth", "1", "https://github.com/theayzek01/MoonCode.git", dir],
+			["clone", "--depth", "1", "https://github.com/theayzek01/Astro-Agent.git", dir],
 			"git clone",
 		);
 		await runCommand(npmBin, [...npmArgs, "install"], `${npmBin} install`, dir);
 		await runCommand(npmBin, [...npmArgs, "run", "build"], `${npmBin} run build`, dir);
 		// Eski global paketleri temizle; hata verirse devam et.
 		try {
-			await runCommand(npmBin, [...npmArgs, "uninstall", "-g", "mooncli"], `${npmBin} uninstall -g mooncli`);
+			await runCommand(npmBin, [...npmArgs, "uninstall", "-g", "astrocli"], `${npmBin} uninstall -g astrocli`);
 		} catch {}
 		try {
-			await runCommand(npmBin, [...npmArgs, "uninstall", "-g", "mooncode"], `${npmBin} uninstall -g mooncode`);
+			await runCommand(npmBin, [...npmArgs, "uninstall", "-g", "Astro-Agent"], `${npmBin} uninstall -g Astro-Agent`);
 		} catch {}
 		await runCommand(
 			npmBin,
@@ -449,7 +446,6 @@ export async function handlePackageCommand(args: string[]): Promise<boolean> {
 		switch (options.command) {
 			case "install":
 				await packageManager.installAndPersist(source!, { local: options.local });
-				console.log(chalk.green(`${source} installed`));
 				return true;
 
 			case "remove": {
@@ -459,7 +455,6 @@ export async function handlePackageCommand(args: string[]): Promise<boolean> {
 					process.exitCode = 1;
 					return true;
 				}
-				console.log(chalk.green(`${source} removed`));
 				return true;
 			}
 
@@ -469,20 +464,16 @@ export async function handlePackageCommand(args: string[]): Promise<boolean> {
 				const projectPackages = configuredPackages.filter((pkg) => pkg.scope === "project");
 
 				if (configuredPackages.length === 0) {
-					console.log(chalk.dim("No packages installed."));
 					return true;
 				}
 
 				const formatPackage = (pkg: (typeof configuredPackages)[number]) => {
-					const display = pkg.filtered ? `${pkg.source} (filtrelendi)` : pkg.source;
-					console.log(`  ${display}`);
+					const _display = pkg.filtered ? `${pkg.source} (filtrelendi)` : pkg.source;
 					if (pkg.installedPath) {
-						console.log(chalk.dim(`    ${pkg.installedPath}`));
 					}
 				};
 
 				if (userPackages.length > 0) {
-					console.log(chalk.bold("User packages:"));
 					for (const pkg of userPackages) {
 						formatPackage(pkg);
 					}
@@ -490,7 +481,6 @@ export async function handlePackageCommand(args: string[]): Promise<boolean> {
 
 				if (projectPackages.length > 0) {
 					if (userPackages.length > 0) console.log();
-					console.log(chalk.bold("Project packages:"));
 					for (const pkg of projectPackages) {
 						formatPackage(pkg);
 					}
@@ -505,9 +495,7 @@ export async function handlePackageCommand(args: string[]): Promise<boolean> {
 					const updateSource = target.type === "extensions" ? target.source : undefined;
 					await packageManager.update(updateSource);
 					if (updateSource) {
-						console.log(chalk.green(`${updateSource} updated`));
 					} else {
-						console.log(chalk.green("Packages updated"));
 					}
 				}
 				if (updateTargetIncludesSelf(target)) {
@@ -526,7 +514,6 @@ export async function handlePackageCommand(args: string[]): Promise<boolean> {
 						process.exitCode = 1;
 						return true;
 					}
-					console.log(chalk.green(`${APP_NAME} updated. Run 'mooncode' or 'mooncli' in a new terminal.`));
 				}
 				return true;
 			}

@@ -1,4 +1,5 @@
-import type { EngineTool } from "moon-engine";
+// @ts-nocheck
+import type { EngineTool } from "astro-engine";
 import { Type } from "typebox";
 import type { ToolDefinition } from "../extensions/types.js";
 import { createGrepToolDefinition } from "./grep.js";

@@ -3,10 +3,9 @@
  * List available models with optional fuzzy search
  */
 
+import type { Api, Model } from "astro-core";
+import { fuzzyFilter } from "astro-tui";
 import chalk from "chalk";
-import type { Api, Model } from "moon-core";
-import { fuzzyFilter } from "moon-tui";
-import { formatNoModelsAvailableMessage } from "../core/auth-guidance.js";
 import type { ModelRegistry } from "../core/model-registry.js";
 
 /**
@@ -36,7 +35,6 @@ export async function listModels(modelRegistry: ModelRegistry, searchPattern?: s
 	const models = modelRegistry.getAvailable();
 
 	if (models.length === 0) {
-		console.log(formatNoModelsAvailableMessage());
 		return;
 	}
 
@@ -47,7 +45,6 @@ export async function listModels(modelRegistry: ModelRegistry, searchPattern?: s
 	}
 
 	if (filteredModels.length === 0) {
-		console.log(`No models matching "${searchPattern}"`);
 		return;
 	}
 
@@ -87,7 +84,7 @@ export async function listModels(modelRegistry: ModelRegistry, searchPattern?: s
 	};
 
 	// Print header
-	const headerLine = [
+	const _headerLine = [
 		headers.provider.padEnd(widths.provider),
 		headers.model.padEnd(widths.model),
 		headers.context.padEnd(widths.context),
@@ -95,11 +92,10 @@ export async function listModels(modelRegistry: ModelRegistry, searchPattern?: s
 		headers.thinking.padEnd(widths.thinking),
 		headers.images.padEnd(widths.images),
 	].join("  ");
-	console.log(headerLine);
 
 	// Print rows
 	for (const row of rows) {
-		const line = [
+		const _line = [
 			row.provider.padEnd(widths.provider),
 			row.model.padEnd(widths.model),
 			row.context.padEnd(widths.context),
@@ -107,6 +103,5 @@ export async function listModels(modelRegistry: ModelRegistry, searchPattern?: s
 			row.thinking.padEnd(widths.thinking),
 			row.images.padEnd(widths.images),
 		].join("  ");
-		console.log(line);
 	}
 }

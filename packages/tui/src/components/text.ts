@@ -1,4 +1,3 @@
-// @ts-nocheck
 import type { Component } from "../tui.js";
 import { applyBackgroundToLine, visibleWidth, wrapTextWithAnsi } from "../utils.js";
 

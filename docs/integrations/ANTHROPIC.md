@@ -1,9 +1,9 @@
 # Anthropic Entegrasyonu
 
 > [!NOTE]
-> **Anthropic (Claude Opus & Sonnet)**, MoonAgent'ın özellikle **sistem tasarımı**, **mimari kararlar** ve **insan-benzeri düşünme (Thinking)** yeteneğine ihtiyaç duyulan durumlarda başvurduğu üst düzey modeller bütünüdür.
+> **Anthropic (Claude Opus & Sonnet)**, AstroAgent'ın özellikle **sistem tasarımı**, **mimari kararlar** ve **insan-benzeri düşünme (Thinking)** yeteneğine ihtiyaç duyulan durumlarda başvurduğu üst düzey modeller bütünüdür.
 
-MoonAgent, Anthropic modellerini salt kod yazımından ziyade bir **"Baş Mühendis" (Lead Engineer)** gibi kullanacak şekilde entegre etmiştir.
+AstroAgent, Anthropic modellerini salt kod yazımından ziyade bir **"Baş Mühendis" (Lead Engineer)** gibi kullanacak şekilde entegre etmiştir.
 
 ## Anthropic Modelleri ve Özellikleri
 
@@ -16,7 +16,7 @@ MoonAgent, Anthropic modellerini salt kod yazımından ziyade bir **"Baş Mühen
 
 ## "Thinking" (Düşünme) Yeteneği
 
-MoonAgent üzerinden Anthropic modellerini kullandığınızda, model kodu yazmadan önce **adım adım bir iç düşünme süreci** yürütür:
+AstroAgent üzerinden Anthropic modellerini kullandığınızda, model kodu yazmadan önce **adım adım bir iç düşünme süreci** yürütür:
 
 1. **Bağlamı Analiz Eder:** Repo'nun genel mimarisini inceler (örn. Next.js mi kullanılıyor, Vite mi?).
 2. **Olası Hataları Önceden Görür:** "Eğer bu div'i silersem, mobil tasarımda taşma olabilir."
@@ -26,4 +26,4 @@ MoonAgent üzerinden Anthropic modellerini kullandığınızda, model kodu yazma
 > Anthropic Opus'u özellikle uzun ve karmaşık dokümantasyonları okutmak (örn. Stripe API dokümantasyonu) ve ardından bu API'yi projeye hatasız entegre etmek için kullanmanız şiddetle tavsiye edilir.
 
 ## Nasıl Kullanılır?
-MoonAgent ayarlarından model sağlayıcıyı "Anthropic" olarak seçtiğinizde, CLI araçları otomatik olarak Anthropic'in API kısıtlamalarına göre (rate limit, max output tokens) çalışma mantığını yeniden optimize eder.
+AstroAgent ayarlarından model sağlayıcıyı "Anthropic" olarak seçtiğinizde, CLI araçları otomatik olarak Anthropic'in API kısıtlamalarına göre (rate limit, max output tokens) çalışma mantığını yeniden optimize eder.

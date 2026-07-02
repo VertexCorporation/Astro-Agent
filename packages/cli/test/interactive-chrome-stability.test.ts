@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { AstroAgentHeaderComponent } from "../src/modes/interactive/components/Astro-Agent-header.js";
 import { buildIntroLines } from "../src/modes/interactive/components/intro.js";
-import { MoonCodeHeaderComponent } from "../src/modes/interactive/components/mooncode-header.js";
 
 describe("interactive chrome stability", () => {
 	it("intro renders one visual line per array entry", () => {
@@ -20,7 +20,7 @@ describe("interactive chrome stability", () => {
 	});
 
 	it("header height stays stable across renders", () => {
-		const header = new MoonCodeHeaderComponent();
+		const header = new AstroAgentHeaderComponent();
 		const first = header.render(120);
 		const second = header.render(120);
 		expect(first.length).toBe(2);

@@ -38,3 +38,9 @@ plans/
 .pi/hf-sessions/
 .pi/hf-sessions-backup/
 collect.sh
+
+# Astro Agent memory database — do not track
+.astroagent/
+*.db
+*.db-shm
+*.db-wal

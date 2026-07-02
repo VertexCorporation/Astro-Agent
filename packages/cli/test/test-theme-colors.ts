@@ -129,22 +129,16 @@ function cmdContrast(targetContrast: number): void {
 		red: "#af5f5f",
 	};
 
-	console.log(`\n=== Colors adjusted to ${targetContrast}:1 contrast ===\n`);
-
-	console.log("For LIGHT theme (vs white):");
-	for (const [name, hex] of Object.entries(baseColors)) {
+	for (const [_name, hex] of Object.entries(baseColors)) {
 		const adjusted = adjustColorToContrast(hex, targetContrast, true);
 		const rgb = hexToRgb(adjusted);
-		const contrast = getContrast(rgb, 1.0);
-		console.log(`  ${name.padEnd(8)} ${fgAnsi(adjusted)}Sample${reset}  ${adjusted}  (${contrast.toFixed(2)}:1)`);
+		const _contrast = getContrast(rgb, 1.0);
 	}
 
-	console.log("\nFor DARK theme (vs black):");
-	for (const [name, hex] of Object.entries(baseColors)) {
+	for (const [_name, hex] of Object.entries(baseColors)) {
 		const adjusted = adjustColorToContrast(hex, targetContrast, false);
 		const rgb = hexToRgb(adjusted);
-		const contrast = getContrast(rgb, 0.0);
-		console.log(`  ${name.padEnd(8)} ${fgAnsi(adjusted)}Sample${reset}  ${adjusted}  (${contrast.toFixed(2)}:1)`);
+		const _contrast = getContrast(rgb, 0.0);
 	}
 }
 
@@ -156,8 +150,6 @@ function cmdTest(filePath: string): void {
 
 	const data = JSON.parse(fs.readFileSync(filePath, "utf-8"));
 	const vars = data.vars || data;
-
-	console.log(`\n=== Testing ${filePath} ===\n`);
 
 	for (const [name, hex] of Object.entries(vars as Record<string, string>)) {
 		if (!hex.startsWith("#")) continue;
@@ -200,32 +192,18 @@ function cmdTheme(themeName: string): void {
 	};
 
 	const logColor = (name: string): void => {
-		const sample = theme.fg(name as Parameters<typeof theme.fg>[0], "Sample text");
-		const cw = getContrastVsWhite(name);
-		const cb = getContrastVsBlack(name);
-		console.log(`${name.padEnd(20)} ${sample}  white: ${cw.padEnd(12)} black: ${cb}`);
+		const _sample = theme.fg(name as Parameters<typeof theme.fg>[0], "Sample text");
+		const _cw = getContrastVsWhite(name);
+		const _cb = getContrastVsBlack(name);
 	};
 
-	console.log(`\n=== ${themeName} theme (WCAG AA = 4.5:1) ===`);
-
-	console.log("\n--- Core UI ---");
 	["accent", "border", "borderAccent", "borderMuted", "success", "error", "warning", "muted", "dim"].forEach(logColor);
 
-	console.log("\n--- Markdown ---");
 	["mdHeading", "mdLink", "mdCode", "mdCodeBlock", "mdCodeBlockBorder", "mdQuote", "mdListBullet"].forEach(logColor);
 
-	console.log("\n--- Diff ---");
 	["toolDiffAdded", "toolDiffRemoved", "toolDiffContext"].forEach(logColor);
 
-	console.log("\n--- Thinking ---");
 	["thinkingOff", "thinkingMinimal", "thinkingLow", "thinkingMedium", "thinkingHigh"].forEach(logColor);
-
-	console.log("\n--- Backgrounds ---");
-	console.log("userMessageBg:", theme.bg("userMessageBg", " Sample "));
-	console.log("toolPendingBg:", theme.bg("toolPendingBg", " Sample "));
-	console.log("toolSuccessBg:", theme.bg("toolSuccessBg", " Sample "));
-	console.log("toolErrorBg:", theme.bg("toolErrorBg", " Sample "));
-	console.log();
 }
 
 // --- Main ---
@@ -239,8 +217,4 @@ if (cmd === "contrast") {
 } else if (cmd === "light" || cmd === "dark") {
 	cmdTheme(cmd);
 } else {
-	console.log("Usage:");
-	console.log("  npx tsx test-theme-colors.ts light|dark     Test built-in theme");
-	console.log("  npx tsx test-theme-colors.ts contrast 4.5   Compute colors at ratio");
-	console.log("  npx tsx test-theme-colors.ts test file.json Test any JSON file");
 }

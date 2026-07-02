@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { spawn } from "child_process";
 import { readdirSync, statSync } from "fs";
 import { homedir } from "os";

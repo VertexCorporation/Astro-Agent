@@ -38,7 +38,7 @@ function envBoolean(name: string): boolean | undefined {
 }
 
 function resolveMode(): OllamaMode {
-	const mode = env("MOON_OLLAMA_MODE")?.toLowerCase();
+	const mode = env("ASTRO_OLLAMA_MODE")?.toLowerCase();
 	return mode === "turbo" || mode === "quality" || mode === "balanced" ? mode : "balanced";
 }
 
@@ -61,7 +61,7 @@ function compactModel(model: Model<"openai-completions">): Model<"openai-complet
 
 function buildOllamaOptions(maxTokens?: number): Record<string, unknown> {
 	const mode = resolveMode();
-	const threads = envNumber("MOON_OLLAMA_THREADS");
+	const threads = envNumber("ASTRO_OLLAMA_THREADS");
 	const profile: Record<OllamaMode, Record<string, unknown>> = {
 		turbo: {
 			num_ctx: 4096,
@@ -97,12 +97,12 @@ function buildOllamaOptions(maxTokens?: number): Record<string, unknown> {
 
 	return {
 		...profile[mode],
-		...(envNumber("MOON_OLLAMA_NUM_CTX") ? { num_ctx: envNumber("MOON_OLLAMA_NUM_CTX") } : {}),
-		...(envNumber("MOON_OLLAMA_NUM_PREDICT") ? { num_predict: envNumber("MOON_OLLAMA_NUM_PREDICT") } : {}),
-		...(envNumber("MOON_OLLAMA_NUM_BATCH") ? { num_batch: envNumber("MOON_OLLAMA_NUM_BATCH") } : {}),
-		...(envNumber("MOON_OLLAMA_NUM_THREAD") ? { num_thread: envNumber("MOON_OLLAMA_NUM_THREAD") } : {}),
-		...(envNumber("MOON_OLLAMA_NUM_GPU") ? { num_gpu: envNumber("MOON_OLLAMA_NUM_GPU") } : {}),
-		...(envBoolean("MOON_OLLAMA_LOW_VRAM") !== undefined ? { low_vram: envBoolean("MOON_OLLAMA_LOW_VRAM") } : {}),
+		...(envNumber("ASTRO_OLLAMA_NUM_CTX") ? { num_ctx: envNumber("ASTRO_OLLAMA_NUM_CTX") } : {}),
+		...(envNumber("ASTRO_OLLAMA_NUM_PREDICT") ? { num_predict: envNumber("ASTRO_OLLAMA_NUM_PREDICT") } : {}),
+		...(envNumber("ASTRO_OLLAMA_NUM_BATCH") ? { num_batch: envNumber("ASTRO_OLLAMA_NUM_BATCH") } : {}),
+		...(envNumber("ASTRO_OLLAMA_NUM_THREAD") ? { num_thread: envNumber("ASTRO_OLLAMA_NUM_THREAD") } : {}),
+		...(envNumber("ASTRO_OLLAMA_NUM_GPU") ? { num_gpu: envNumber("ASTRO_OLLAMA_NUM_GPU") } : {}),
+		...(envBoolean("ASTRO_OLLAMA_LOW_VRAM") !== undefined ? { low_vram: envBoolean("ASTRO_OLLAMA_LOW_VRAM") } : {}),
 	};
 }
 
@@ -112,7 +112,7 @@ function optimizePayload(payload: unknown, maxTokens?: number): OllamaPayload {
 	delete next.stream_options;
 
 	const desiredMaxTokens =
-		envNumber("MOON_OLLAMA_NUM_PREDICT") ?? maxTokens ?? next.max_tokens ?? next.max_completion_tokens;
+		envNumber("ASTRO_OLLAMA_NUM_PREDICT") ?? maxTokens ?? next.max_tokens ?? next.max_completion_tokens;
 	if (typeof desiredMaxTokens === "number") {
 		next.max_tokens = desiredMaxTokens;
 		delete next.max_completion_tokens;
@@ -122,7 +122,7 @@ function optimizePayload(payload: unknown, maxTokens?: number): OllamaPayload {
 		...buildOllamaOptions(typeof desiredMaxTokens === "number" ? desiredMaxTokens : undefined),
 		...(next.options ?? {}),
 	};
-	next.keep_alive = env("MOON_OLLAMA_KEEP_ALIVE") ?? next.keep_alive ?? DEFAULT_KEEP_ALIVE;
+	next.keep_alive = env("ASTRO_OLLAMA_KEEP_ALIVE") ?? next.keep_alive ?? DEFAULT_KEEP_ALIVE;
 	return next;
 }
 

@@ -23,7 +23,7 @@ for (const pkgPath of packages) {
         for (const depType of deps) {
             if (json[depType]) {
                 for (const key in json[depType]) {
-                    if (key.startsWith("moon-") || key === "mooncli") {
+                    if (key.startsWith("moon-") || key === "astrocli") {
                         json[depType][key] = version;
                     }
                 }

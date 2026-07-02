@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Keyboard input handling for terminal applications.
  *

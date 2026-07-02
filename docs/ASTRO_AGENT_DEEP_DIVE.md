@@ -1,12 +1,12 @@
-# MoonAgent Derinlemesine Teknik İnceleme ve Mimari Kılavuz
+# AstroAgent Derinlemesine Teknik İnceleme ve Mimari Kılavuz
 
-Bu belge; MoonAgent'un tasarım felsefesini, repo yapısını, çalışma modlarını, araç mimarisini, MCP entegrasyonlarını ve geliştirme akışlarını en detaylı şekilde bir araya getirir. Belge, projeye yeni dahil olan veya sistem üzerinde köklü değişiklikler yapmak isteyen kıdemli mühendisler için teknik bir referans olarak hazırlanmıştır.
+Bu belge; AstroAgent'un tasarım felsefesini, repo yapısını, çalışma modlarını, araç mimarisini, MCP entegrasyonlarını ve geliştirme akışlarını en detaylı şekilde bir araya getirir. Belge, projeye yeni dahil olan veya sistem üzerinde köklü değişiklikler yapmak isteyen kıdemli mühendisler için teknik bir referans olarak hazırlanmıştır.
 
 ---
 
-## 1. MoonAgent Nedir ve Hangi Problemleri Çözer?
+## 1. AstroAgent Nedir ve Hangi Problemleri Çözer?
 
-MoonAgent, terminal merkezli çalışmayı prensip edinmiş, yüksek odaklı bir otonom yazılım geliştirme ajanıdır. Geleneksel yapay zeka asistanlarının aksine, süslü açıklamalar veya gereksiz kod tekrarlarıyla token harcamak yerine, **en az kaynakla en doğru sonucu üretmeye** odaklanır.
+AstroAgent, terminal merkezli çalışmayı prensip edinmiş, yüksek odaklı bir otonom yazılım geliştirme ajanıdır. Geleneksel yapay zeka asistanlarının aksine, süslü açıklamalar veya gereksiz kod tekrarlarıyla token harcamak yerine, **en az kaynakla en doğru sonucu üretmeye** odaklanır.
 
 ### Temel Hedefler ve İlkeler
 *   **Token Verimliliği ve Bağlam Yönetimi**: Model bağlamını (context) gereksiz yere şişirmekten kaçınır. Otomatik sıkıştırma (compaction) algoritmalarıyla uzun oturumları yönetilebilir kılar.
@@ -18,13 +18,13 @@ MoonAgent, terminal merkezli çalışmayı prensip edinmiş, yüksek odaklı bir
 
 ## 2. Hızlı Kurulum ve Yol Ayarları
 
-MoonAgent, hızlıca ayağa kaldırılmak üzere tasarlanmıştır. Aşağıdaki adımları takip ederek projeyi derleyebilir ve yerel sisteminizde çalıştırabilirsiniz.
+AstroAgent, hızlıca ayağa kaldırılmak üzere tasarlanmıştır. Aşağıdaki adımları takip ederek projeyi derleyebilir ve yerel sisteminizde çalıştırabilirsiniz.
 
 ### Çekirdek Kurulum Adımları
 ```bash
 # 1. Depoyu yerel sisteminize klonlayın
-git clone https://github.com/theayzek01/mooncode.git
-cd mooncode
+git clone https://github.com/theayzek01/astroagent.git
+cd astroagent
 
 # 2. Monorepo bağımlılıklarını yükleyin
 npm install
@@ -37,11 +37,11 @@ npm install -g ./packages/cli
 ```
 
 ### Yol (Path) Yapılandırma Seçenekleri
-MoonAgent, varsayılan olarak kullanıcı ana dizinindeki yapılandırma dizinlerini kullanır. Ancak ortam değişkenleri üzerinden tam denetim sağlayabilirsiniz:
+AstroAgent, varsayılan olarak kullanıcı ana dizinindeki yapılandırma dizinlerini kullanır. Ancak ortam değişkenleri üzerinden tam denetim sağlayabilirsiniz:
 
-*   **`MOON_PACKAGE_DIR`**: CLI'ın temaları, şablonları ve `package.json` dosyasını arayacağı ana dizini tanımlar. Varsayılan olarak kendi dizinini çözümler.
-*   **`MOON_SHARE_VIEWER_URL`**: Paylaşılan oturum kayıtlarının görüntüleneceği web sunucu adresini belirler.
-*   **`MOON_CODING_AGENT_DIR`**: Kullanıcının özel temalarının, geçmiş modellerinin ve model ayarlarının tutulacağı ana dizindir. Varsayılan olarak `~/.mooncode/engine/` yoludur.
+*   **`ASTRO_PACKAGE_DIR`**: CLI'ın temaları, şablonları ve `package.json` dosyasını arayacağı ana dizini tanımlar. Varsayılan olarak kendi dizinini çözümler.
+*   **`ASTRO_SHARE_VIEWER_URL`**: Paylaşılan oturum kayıtlarının görüntüleneceği web sunucu adresini belirler.
+*   **`ASTRO_CODING_AGENT_DIR`**: Kullanıcının özel temalarının, geçmiş modellerinin ve model ayarlarının tutulacağı ana dizindir. Varsayılan olarak `~/.astroagent/engine/` yoludur.
 
 ---
 
@@ -51,7 +51,7 @@ Geliştirme esnasında karşılaşabileceğiniz olası sorunlar ve bunların kes
 
 ### Hata 1: UND_ERR_BODY_TIMEOUT (SSE Bağlantı Zaman Aşımı)
 *   **Nedeni**: Yerel sağlayıcılar (örneğin Ollama) veya Antigravity büyük kod blokları üretirken veya yavaş yanıt verirken Undici varsayılan 300s zaman aşımına takılır.
-*   **Çözüm**: MoonAgent, global Undici dispatcher ayarlarında zaman aşımını otomatik olarak devre dışı bırakır. Sorunun devam etmesi durumunda sağlayıcı zaman aşımı parametrelerini (`provider.timeoutMs`) kontrol edin.
+*   **Çözüm**: AstroAgent, global Undici dispatcher ayarlarında zaman aşımını otomatik olarak devre dışı bırakır. Sorunun devam etmesi durumunda sağlayıcı zaman aşımı parametrelerini (`provider.timeoutMs`) kontrol edin.
 
 ### Hata 2: Tarayıcı Köprüsü Bağlantı Hatası (Browser Bridge Offline)
 *   **Nedeni**: WebSocket sunucusunun arka planda başlatılamaması veya Chrome uzantısının izinsiz modda kalması.
@@ -65,7 +65,7 @@ Geliştirme esnasında karşılaşabileceğiniz olası sorunlar ve bunların kes
 
 ## 4. Monorepo Mimari Katmanları
 
-MoonAgent, sorumlulukların net şekilde ayrıldığı 4 ana monorepo katmanına sahiptir:
+AstroAgent, sorumlulukların net şekilde ayrıldığı 4 ana monorepo katmanına sahiptir:
 
 *   **`packages/tui`**: Terminal ekranına doğrudan çizim yapan, performans odaklı ve düşük seviyeli kullanıcı arayüzü kütüphanesidir.
 *   **`packages/core`**: Ortak veri tiplerini, model yapılandırmalarını (Registry) ve servis sağlayıcı (Provider) adaptörlerini barındıran temel katmandır.
@@ -76,9 +76,9 @@ MoonAgent, sorumlulukların net şekilde ayrıldığı 4 ana monorepo katmanına
 
 ## 5. Bootstrapping ve Çalışma Akışı
 
-Bir kullanıcı terminale `mooncode` yazdığında arka planda şu işlemler sırayla gerçekleşir:
+Bir kullanıcı terminale `astroagent` yazdığında arka planda şu işlemler sırayla gerçekleşir:
 
-1.  **Başlatma ve Yol Tespiti**: CLI çalıştırıldığında kurulum yöntemi (global npm, pnpm vb.) tespit edilir ve `.mooncode` yapılandırma dizini çözümlenir.
+1.  **Başlatma ve Yol Tespiti**: CLI çalıştırıldığında kurulum yöntemi (global npm, pnpm vb.) tespit edilir ve `.astroagent` yapılandırma dizini çözümlenir.
 2.  **Oturumun Kurulması (`EngineSession`)**: Aktif bir çalışma oturumu ayağa kaldırılır. Eğer devam eden bir oturum varsa `/resume` veya `--session` argümanı ile bu durum yüklenir.
 3.  **Sağlayıcı ve Model Eşleştirme**: `antigravity` veya diğer aktif sağlayıcıların model listesi taranır, geçerli model (`antigravity-claude-sonnet-4-6-thinking` gibi) yüklenir.
 4.  **Sistem Prompt Yapılandırması**: Seçili araçlar, aktif roller, tasarım rehberleri ve o anki oturum parametreleri taranarak dinamik bir sistem promptu inşa edilir.
@@ -88,7 +88,7 @@ Bir kullanıcı terminale `mooncode` yazdığında arka planda şu işlemler sı
 
 ## 6. Sıkıştırma (Compaction) ve Token Yönetimi
 
-MoonAgent'un token tüketimini düşürme sırrı, `packages/cli/src/core/compaction/` altındaki akıllı sıkıştırma algoritmalarıdır:
+AstroAgent'un token tüketimini düşürme sırrı, `packages/cli/src/core/compaction/` altındaki akıllı sıkıştırma algoritmalarıdır:
 
 *   **Context Limit Tespiti**: Gelen ve giden mesajların token sayısı sürekli olarak hesaplanır. Limit değerinin %85'ine ulaşıldığında otomatik bir `compaction` tetiklenir.
 *   **Semantik Haritalama**: Geçmiş sohbet adımları, anlamsal bir yapısal özete dönüştürülür. Detaylı loglar veya büyük kod blokları atılır, yalnızca yapılan değişikliklerin mantığı ve ulaşılan durum korunur.
@@ -98,7 +98,7 @@ MoonAgent'un token tüketimini düşürme sırrı, `packages/cli/src/core/compac
 
 ## 7. Tarayıcı Otomasyonu (Browser Bridge)
 
-Yerel web uygulamalarını test etmek ve görsel arayüz doğrulaması yapmak için MoonAgent, kendi Chrome uzantısını kullanır:
+Yerel web uygulamalarını test etmek ve görsel arayüz doğrulaması yapmak için AstroAgent, kendi Chrome uzantısını kullanır:
 
 *   **Çift Katmanlı Mimari**: `browser-bridge-server.ts` üzerinden yerel bir WebSocket sunucusu ayağa kaldırılır. Chrome uzantısı bu sunucuya bağlanarak sekmelerin kontrol edilmesini sağlar.
 *   **Güvenli DOM Kontrolü**: `browser_page read`, `click` ve `type` gibi yüksek hassasiyetli komutlar otonom olarak yürütülür.

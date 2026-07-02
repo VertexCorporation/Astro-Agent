@@ -1,6 +1,6 @@
-import type { ExtensionAPI } from "Mooncli";
-import { fauxAssistantMessage, fauxToolCall } from "moon-core";
-import type { EngineTool } from "moon-engine";
+import { fauxAssistantMessage, fauxToolCall } from "astro-core";
+import type { EngineTool } from "astro-engine";
+import type { ExtensionAPI } from "astrocli";
 import { Type } from "typebox";
 import { afterEach, describe, expect, it } from "vitest";
 import { createHarness, getAssistantTexts, getMessageText, getUserTexts, type Harness } from "./harness.js";
@@ -10,7 +10,7 @@ async function createWaitingHarness(
 		tools?: EngineTool[];
 		extensionFactories?: Harness["session"]["extensionRunner"] extends never
 			? never
-			: Array<(Mooncli: ExtensionAPI) => void>;
+			: Array<(AstroAgent: ExtensionAPI) => void>;
 	} = {},
 ): Promise<{
 	harness: Harness;
@@ -70,8 +70,8 @@ describe("EngineSession queue characterization", () => {
 		const commandRuns: string[] = [];
 		const harness = await createHarness({
 			extensionFactories: [
-				(Mooncli) => {
-					Mooncli.registerCommand("testcmd", {
+				(AstroAgent) => {
+					AstroAgent.registerCommand("testcmd", {
 						description: "Test command",
 						handler: async (args) => {
 							commandRuns.push(args);
@@ -93,8 +93,8 @@ describe("EngineSession queue characterization", () => {
 		let extensionApi: ExtensionAPI | undefined;
 		const waiting = await createWaitingHarness({
 			extensionFactories: [
-				(Mooncli) => {
-					extensionApi = Mooncli;
+				(AstroAgent) => {
+					extensionApi = AstroAgent;
 				},
 			],
 		});
@@ -387,8 +387,8 @@ describe("EngineSession queue characterization", () => {
 	it("throws when queueing an extension command with steer", async () => {
 		const harness = await createHarness({
 			extensionFactories: [
-				(Mooncli) => {
-					Mooncli.registerCommand("testcmd", {
+				(AstroAgent) => {
+					AstroAgent.registerCommand("testcmd", {
 						description: "Test command",
 						handler: async () => {},
 					});
@@ -405,8 +405,8 @@ describe("EngineSession queue characterization", () => {
 	it("throws when queueing an extension command with followUp", async () => {
 		const harness = await createHarness({
 			extensionFactories: [
-				(Mooncli) => {
-					Mooncli.registerCommand("testcmd", {
+				(AstroAgent) => {
+					AstroAgent.registerCommand("testcmd", {
 						description: "Test command",
 						handler: async () => {},
 					});

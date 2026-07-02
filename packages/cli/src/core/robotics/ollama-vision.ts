@@ -1,7 +1,7 @@
 // @ts-nocheck
 /**
  * Ollama Vision API wrapper.
- * /api/generate endpoint'i üzerinden görüntü + prompt gönderir.
+ * Sends image + prompt via the /api/generate endpoint.
  */
 
 export interface OllamaVisionOptions {
@@ -29,8 +29,8 @@ export class OllamaVision {
 	}
 
 	/**
-	 * Ollama'ya resim + prompt gönder, ham text dön.
-	 * Streaming'i bekliyoruz (done: true olana kadar).
+	 * Send an image + prompt to Ollama and return the raw response text.
+	 * Waits for the stream to complete (until done: true).
 	 */
 	async generate(prompt: string, imageBase64: string, options?: OllamaVisionOptions): Promise<string> {
 		const body: Record<string, unknown> = {
@@ -56,8 +56,8 @@ export class OllamaVision {
 		});
 
 		if (!response.ok) {
-			const errorText = await response.text().catch(() => "bilinmeyen hata");
-			throw new Error(`Ollama API hatasi (${response.status}): ${errorText}`);
+			const errorText = await response.text().catch(() => "unknown error");
+			throw new Error(`Ollama API error (${response.status}): ${errorText}`);
 		}
 
 		const data = (await response.json()) as OllamaGenerateResponse;
@@ -65,8 +65,8 @@ export class OllamaVision {
 	}
 
 	/**
-	 * JSON formatında çıktı al ve parse et.
-	 * Ollama bazen json'u markdown code block'a sarıyor, onu da handle ediyoruz.
+	 * Retrieve output in JSON format and parse it.
+	 * Handles cases where Ollama wraps the JSON in a markdown code block.
 	 */
 	async generateJSON<T = unknown>(
 		prompt: string,
@@ -78,7 +78,7 @@ export class OllamaVision {
 	}
 
 	/**
-	 * Modelin çalışıp çalışmadığını kontrol et.
+	 * Checks whether the model is running and available.
 	 */
 	async healthCheck(): Promise<boolean> {
 		try {
@@ -93,7 +93,7 @@ export class OllamaVision {
 	}
 
 	/**
-	 * Mevcut modeli değiştir.
+	 * Replaces the current active model.
 	 */
 	setModel(model: string): void {
 		this.model = model;
@@ -103,11 +103,11 @@ export class OllamaVision {
 		return this.model;
 	}
 
-	// json parse - bazen model ```json ... ``` şeklinde sarıyor
+	// JSON parse — the model sometimes wraps output in ```json ... ``` fences
 	private parseJSON<T>(raw: string): T {
 		let cleaned = raw.trim();
 
-		// markdown code block'u soy
+		// Strip the markdown code block wrapper
 		const codeBlockMatch = cleaned.match(/```(?:json)?\s*\n?([\s\S]*?)\n?\s*```/);
 		if (codeBlockMatch) {
 			cleaned = codeBlockMatch[1].trim();
@@ -116,7 +116,7 @@ export class OllamaVision {
 		try {
 			return JSON.parse(cleaned) as T;
 		} catch {
-			// son çare: ilk [ veya { ile başlayan yeri bul
+			// Last resort: find the first occurrence of [ or {
 			const startIdx = Math.min(
 				cleaned.indexOf("[") === -1 ? Infinity : cleaned.indexOf("["),
 				cleaned.indexOf("{") === -1 ? Infinity : cleaned.indexOf("{"),
@@ -129,7 +129,7 @@ export class OllamaVision {
 					return JSON.parse(cleaned.slice(startIdx, endIdx + 1)) as T;
 				}
 			}
-			throw new Error(`Ollama ciktisi JSON olarak parse edilemedi: ${raw.slice(0, 200)}`);
+			throw new Error(`Ollama output could not be parsed as JSON: ${raw.slice(0, 200)}`);
 		}
 	}
 }

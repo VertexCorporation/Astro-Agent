@@ -1,8 +1,8 @@
 // @ts-nocheck
 
+import { getOAuthProviders } from "astro-core/oauth";
+import { Container, type Focusable, getKeybindings, Input, Spacer, Text, type TUI } from "astro-tui";
 import { exec } from "child_process";
-import { getOAuthProviders } from "moon-core/oauth";
-import { Container, type Focusable, getKeybindings, Input, Spacer, Text, type TUI } from "moon-tui";
 import { theme } from "../theme/theme.js";
 import { DynamicBorder } from "./dynamic-border.js";
 import { keyHint } from "./keybinding-hints.js";

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { clearApiProviders, registerApiProvider } from "../api-registry.js";
 import type {
 	Api,

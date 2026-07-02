@@ -168,7 +168,6 @@ function getBedrockBaseUrl(modelId: string): string {
 
 async function fetchOpenRouterModels(): Promise<Model<any>[]> {
 	try {
-		console.log("Fetching models from OpenRouter API...");
 		const response = await fetch("https://openrouter.ai/api/v1/models");
 		const data = await response.json();
 
@@ -216,7 +215,6 @@ async function fetchOpenRouterModels(): Promise<Model<any>[]> {
 			models.push(normalizedModel);
 		}
 
-		console.log(`Fetched ${models.length} tool-capable models from OpenRouter`);
 		return models;
 	} catch (error) {
 		console.error("Failed to fetch OpenRouter models:", error);
@@ -226,7 +224,6 @@ async function fetchOpenRouterModels(): Promise<Model<any>[]> {
 
 async function fetchAiGatewayModels(): Promise<Model<any>[]> {
 	try {
-		console.log("Fetching models from Vercel Core Gateway API...");
 		const response = await fetch(`${Core_GATEWAY_MODELS_URL}/models`);
 		const data = await response.json();
 		const models: Model<any>[] = [];
@@ -274,7 +271,6 @@ async function fetchAiGatewayModels(): Promise<Model<any>[]> {
 			});
 		}
 
-		console.log(`Fetched ${models.length} tool-capable models from Vercel Core Gateway`);
 		return models;
 	} catch (error) {
 		console.error("Failed to fetch Vercel Core Gateway models:", error);
@@ -284,7 +280,6 @@ async function fetchAiGatewayModels(): Promise<Model<any>[]> {
 
 async function loadModelsDevData(): Promise<Model<any>[]> {
 	try {
-		console.log("Fetching models from models.dev API...");
 		const response = await fetch("https://models.dev/api.json");
 		const data = await response.json();
 
@@ -968,7 +963,6 @@ async function loadModelsDevData(): Promise<Model<any>[]> {
 			}
 		}
 
-		console.log(`Loaded ${models.length} tool-capable models from models.dev`);
 		return models;
 	} catch (error) {
 		console.error("Failed to load models.dev data:", error);
@@ -1845,18 +1839,13 @@ export const MODELS = {
 
 	// Write file
 	writeFileSync(join(packageRoot, "src/models.generated.ts"), output);
-	console.log("Generated src/models.generated.ts");
 
 	// Print statistics
 	const totalModels = allModels.length;
 	const reasoningModels = allModels.filter(m => m.reasoning).length;
 
-	console.log(`\nModel Statistics:`);
-	console.log(`  Total tool-capable models: ${totalModels}`);
-	console.log(`  Reasoning-capable models: ${reasoningModels}`);
 
 	for (const [provider, models] of Object.entries(providers)) {
-		console.log(`  ${provider}: ${Object.keys(models).length} models`);
 	}
 }
 

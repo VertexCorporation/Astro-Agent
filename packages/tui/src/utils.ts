@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { eastAsianWidth } from "get-east-asian-width";
 
 // Grapheme segmenter (shared instance)

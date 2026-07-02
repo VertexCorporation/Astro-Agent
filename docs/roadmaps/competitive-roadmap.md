@@ -1,6 +1,6 @@
-# MoonAgent Competitive Roadmap
+# AstroAgent Competitive Roadmap
 
-MoonAgent hedefi: terminalde çalışan, düşük token tüketen, browser automation yapabilen ve kurumsal kalite kapısından geçen en ciddi coding agent deneyimi.
+AstroAgent hedefi: terminalde çalışan, düşük token tüketen, browser automation yapabilen ve kurumsal kalite kapısından geçen en ciddi coding agent deneyimi.
 
 ## Rakiplerden öğrenilenler
 
@@ -9,7 +9,7 @@ MoonAgent hedefi: terminalde çalışan, düşük token tüketen, browser automa
 - **Windsurf**: Cascade agent, insan-AI akışı, preview/deploy, agent komuta merkezi.
 - **Codex CLI**: local-first agent, izin modları, multimodal input, kontrollü full-access.
 
-## MoonAgent farkı
+## AstroAgent farkı
 
 1. **Terminal-first premium TUI**
    - Tek kolon, yumuşak bordo/amber palet.
@@ -35,7 +35,7 @@ MoonAgent hedefi: terminalde çalışan, düşük token tüketen, browser automa
    - Çok adımlı app/browser/terminal görevleri için özel system prompt.
 
 5. **Release ergonomisi**
-   - `moonagent update` / `mooncli update` GitHub’dan son sürümü çekip global kurulumu yenileyebilir.
+   - `AstroAgent update` / `astrocli update` GitHub’dan son sürümü çekip global kurulumu yenileyebilir.
 
 ## Sonraki kurumsal backlog
 

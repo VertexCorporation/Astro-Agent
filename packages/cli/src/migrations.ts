@@ -9,9 +9,9 @@ import { dirname, join } from "path";
 import { CONFIG_DIR_NAME, getBinDir, getEngineDir } from "./config.js";
 import { migrateKeybindingsConfig } from "./core/keybindings.js";
 
-const MIGRATION_GUIDE_URL =
-	"https://github.com/badlogic/MoonCode-mono/blob/main/packages/cli/CHANGELOG.md#extensions-migration";
-const EXTENSIONS_DOC_URL = "https://github.com/badlogic/MoonCode-mono/blob/main/packages/cli/docs/extensions.md";
+const _MIGRATION_GUIDE_URL =
+	"https://github.com/badlogic/Astro-Agent/blob/main/packages/cli/CHANGELOG.md#extensions-migration";
+const _EXTENSIONS_DOC_URL = "https://github.com/badlogic/Astro-Agent/blob/main/packages/cli/docs/extensions.md";
 
 /**
  * Migrate legacy oauth.json and settings.json apiKeys to auth.json.
@@ -73,13 +73,13 @@ export function migrateAuthToAuthJson(): string[] {
 }
 
 /**
- * Migrate sessions from ~/.MoonCode/engine/*.jsonl to proper session directories.
+ * Migrate sessions from ~/.Astro-Agent/engine/*.jsonl to proper session directories.
  *
- * Bug in v0.30.0: Sessions were saved to ~/.MoonCode/engine/ instead of
- * ~/.MoonCode/engine/sessions/<encoded-cwd>/. This migration moves them
+ * Bug in v0.30.0: Sessions were saved to ~/.Astro-Agent/engine/ instead of
+ * ~/.Astro-Agent/engine/sessions/<encoded-cwd>/. This migration moves them
  * to the correct location based on the cwd in their session header.
  *
- * See: https://github.com/badlogic/MoonCode-mono/issues/320
+ * See: https://github.com/badlogic/Astro-Agent/issues/320
  */
 export function migrateSessionsFromEngineRoot(): void {
 	const engineDir = getEngineDir();
@@ -141,7 +141,6 @@ function migrateCommandsToPrompts(baseDir: string, label: string): boolean {
 	if (existsSync(commandsDir) && !existsSync(promptsDir)) {
 		try {
 			renameSync(commandsDir, promptsDir);
-			console.log(chalk.green(`Migrated ${label} commands/ → prompts/`));
 			return true;
 		} catch (err) {
 			console.log(
@@ -211,13 +210,12 @@ function migrateToolsToBin(): void {
 	}
 
 	if (movedAny) {
-		console.log(chalk.green(`Migrated managed binaries tools/ → bin/`));
 	}
 }
 
 /**
  * Check for deprecated hooks/ and tools/ directories.
- * Note: tools/ may contain fd/rg binaries extracted by MoonCode, so only warn if it has other files.
+ * Note: tools/ may contain fd/rg binaries extracted by Astro-Agent, so only warn if it has other files.
  */
 function checkDeprecatedExtensionDirs(baseDir: string, label: string): string[] {
 	const hooksDir = join(baseDir, "hooks");
@@ -277,13 +275,8 @@ function migrateExtensionSystem(cwd: string): string[] {
 export async function showDeprecationWarnings(warnings: string[]): Promise<void> {
 	if (warnings.length === 0) return;
 
-	for (const warning of warnings) {
-		console.log(chalk.yellow(`Warning: ${warning}`));
+	for (const _warning of warnings) {
 	}
-	console.log(chalk.yellow(`\nMove your extensions to the extensions/ directory.`));
-	console.log(chalk.yellow(`Migration guide: ${MIGRATION_GUIDE_URL}`));
-	console.log(chalk.yellow(`Documentation: ${EXTENSIONS_DOC_URL}`));
-	console.log(chalk.dim(`\nPress any key to continue...`));
 
 	await new Promise<void>((resolve) => {
 		process.stdin.setRawMode?.(true);
@@ -294,7 +287,6 @@ export async function showDeprecationWarnings(warnings: string[]): Promise<void>
 			resolve();
 		});
 	});
-	console.log();
 }
 
 /**

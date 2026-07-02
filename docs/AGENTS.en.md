@@ -1,4 +1,4 @@
-# MoonAgent Agent Rules
+# AstroAgent Agent Rules
 
 ## Mode of Operation
 
@@ -19,10 +19,10 @@
 
 ## Memory & Context Isolation
 
-- MoonAgent uses only explicitly loaded files, active session history, and the current repository context as its persistent "brain".
-- A new run of `mooncode` creates a new session by default, without invoking past memories.
-- If past remains are unwanted, `moonagent --clear-memory` purges saved session history.
-- For a completely clean run, `moonagent --no-session --no-context-files` can be used.
+- AstroAgent uses only explicitly loaded files, active session history, and the current repository context as its persistent "brain".
+- A new run of `astroagent` creates a new session by default, without invoking past memories.
+- If past remains are unwanted, `AstroAgent --clear-memory` purges saved session history.
+- For a completely clean run, `AstroAgent --no-session --no-context-files` can be used.
 - Authentication, model, and settings files are not memory; for security, `--clear-memory` does not delete them.
 
 ## Large Project / Low-Token Strategy
@@ -45,7 +45,7 @@
 
 ## Automation Mode
 
-Disabled by default. When enabled, MoonAgent can execute multi-step terminal/browser/app workflows. Explicit user intent and confirmation are required for high-impact external actions.
+Disabled by default. When enabled, AstroAgent can execute multi-step terminal/browser/app workflows. Explicit user intent and confirmation are required for high-impact external actions.
 
 ## Final Quality Gate
 

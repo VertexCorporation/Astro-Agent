@@ -1,6 +1,6 @@
 {
   "description": {
-    "message": "MoonCode WebBridge — browser extension for AI agents. AI can open pages, click, fill forms, extract info, and automate web tasks.",
+    "message": "Astro-Agent WebBridge — browser extension for AI agents. AI can open pages, click, fill forms, extract info, and automate web tasks.",
     "description": "Extension description shown in Chrome Web Store and extension management page."
   },
   "readyMessage": {
@@ -20,7 +20,7 @@
     "description": "Popup link label in connected state — links to docs site."
   },
   "docsLinkUrl": {
-    "message": "https://www.mooncode.com/features/webbridge",
+    "message": "https://www.Astro-Agent.com/features/webbridge",
     "description": "Locale-specific docs URL opened by the popup CTA / link."
   },
   "devClickHint": {

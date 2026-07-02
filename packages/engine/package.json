@@ -1,5 +1,5 @@
 {
-	"name": "moon-engine",
+	"name": "astro-engine",
 	"version": "49.0.0",
 	"description": "General-purpose state management engine",
 	"type": "module",
@@ -19,7 +19,7 @@
 	"dependencies": {
 		"@modelcontextprotocol/sdk": "^1.29.0",
 		"typebox": "^1.1.24",
-		"moon-core": "^49.0.0"
+		"astro-core": "^49.0.0"
 	},
 	"keywords": [
 		"engine",
@@ -30,7 +30,7 @@
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/theayzek01/MoonCode",
+		"url": "https://github.com/vertexcorporation/Astro-Agent",
 		"directory": "packages/engine"
 	},
 	"engines": {

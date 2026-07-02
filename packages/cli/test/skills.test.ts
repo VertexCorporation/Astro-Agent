@@ -373,11 +373,11 @@ describe("skills", () => {
 		});
 
 		it("should expand ~ in skillPaths", () => {
-			const homeSkillsDir = join(homedir(), ".mooncode/engine/skills");
+			const homeSkillsDir = join(homedir(), ".astroagent/engine/skills");
 			const { skills: withTilde } = loadSkills({
 				engineDir: emptyEngineDir,
 				cwd: emptyCwd,
-				skillPaths: ["~/.mooncode/engine/skills"],
+				skillPaths: ["~/.astroagent/engine/skills"],
 				includeDefaults: true,
 			});
 			const { skills: withoutTilde } = loadSkills({

@@ -1,6 +1,6 @@
 // @ts-nocheck
-import { type Model, modelsAreEqual } from "moon-core";
-import { Container, type Focusable, fuzzyFilter, getKeybindings, Input, Spacer, Text, type TUI } from "moon-tui";
+import { type Model, modelsAreEqual } from "astro-core";
+import { Container, type Focusable, fuzzyFilter, getKeybindings, Input, Spacer, Text, type TUI } from "astro-tui";
 import type { ModelRegistry } from "../../../core/model-registry.js";
 import { QuotaManager } from "../../../core/quota-manager.js";
 import type { SettingsManager } from "../../../core/settings-manager.js";

@@ -1,4 +1,5 @@
-import type { Component } from "moon-tui";
+// @ts-nocheck
+import type { Component } from "astro-tui";
 
 const dim = (s: string) => `\x1b[38;2;70;70;70m${s}\x1b[39m`;
 const muted = (s: string) => `\x1b[38;2;130;130;130m${s}\x1b[39m`;
@@ -9,7 +10,7 @@ export function buildIntroLines(width: number, _phase = 0): string[] {
 	return ["", indent + muted("ryuko"), indent + dim("type to begin"), ""];
 }
 
-export class MoonCodeIntroComponent implements Component {
+export class AstroAgentIntroComponent implements Component {
 	invalidate(): void {}
 	dispose(): void {}
 	render(width: number): string[] {

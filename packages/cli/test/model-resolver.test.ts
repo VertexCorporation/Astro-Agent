@@ -1,4 +1,4 @@
-import type { Model } from "moon-core";
+import type { Model } from "astro-core";
 import { describe, expect, test } from "vitest";
 import {
 	defaultModelPerProvider,

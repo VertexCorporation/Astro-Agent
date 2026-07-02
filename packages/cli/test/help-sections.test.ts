@@ -8,7 +8,7 @@ describe("buildHelpText", () => {
 		expect(help).toContain("Core");
 		expect(help).toContain("Local / Browser");
 		expect(help).toContain("Model");
-		expect(help).toContain("MOON_TUI_RENDER_INTERVAL_MS");
+		expect(help).toContain("ASTRO_TUI_RENDER_INTERVAL_MS");
 		expect(help).toContain("antigravity-claude-sonnet-4-6");
 	});
 });
