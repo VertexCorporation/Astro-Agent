@@ -35,7 +35,7 @@ export async function memoryMiddleware(
 	const queryText = lastUserMsg && typeof lastUserMsg.content === "string" ? lastUserMsg.content : "";
 
 	// 1. RFF Compression
-	const compression = compressMessages(messages, queryText);
+	const compression = compressMessages(messages as any, queryText);
 	const processedMessages = compression.messages;
 
 	// 2. Fetch Facts
