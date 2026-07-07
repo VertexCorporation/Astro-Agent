@@ -110,7 +110,7 @@ export function MessageInput({ onOpenModelSelect, onOpenReasoning }: Props) {
         </div>
         <div className="flex items-center gap-2">
           {input.length > 50 && <span className="text-2xs text-fg-subtle">{input.length}</span>}
-          <span className="text-2xs text-fg-subtle opacity-50">AI may make mistakes</span>
+          
         </div>
       </div>
     </div>

@@ -35,10 +35,6 @@ export function Header() {
         <button onClick={toggleTheme} className="btn-icon btn-ghost" title={`Switch to ${(settings?.theme ?? 'dark') === 'dark' ? 'light' : 'dark'} theme`}>
           {(settings?.theme ?? 'dark') === 'dark' ? <IconSun size={16} stroke={1.5} /> : <IconMoon size={16} stroke={1.5} />}
         </button>
-        <span className="status-pill text-2xs px-2 py-1">
-          <span className={cn('status-dot', status?.isGenerating ? 'yellow animate-pulse' : 'green')} />
-          {status?.isGenerating ? 'Active' : 'Ready'}
-        </span>
       </div>
     </div>
   );
