@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Simple text input component for extensions.
  */

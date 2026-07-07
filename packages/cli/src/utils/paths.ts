@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { realpathSync } from "node:fs";
 
 /**

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Text } from "astro-tui";
 import { theme } from "../theme/theme.js";
 

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Box, Markdown, type MarkdownTheme, Text } from "astro-tui";
 import type { ParsedSkillBlock } from "../../../core/engine-session.js";
 import { getMarkdownTheme, theme } from "../theme/theme.js";

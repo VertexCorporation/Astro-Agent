@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import type { EngineTool } from "astro-engine";
 import { type Static, Type } from "typebox";
 import type { ToolDefinition } from "../extensions/types.js";

@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Process @file CLI arguments into text content and image attachments
  */

@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * One-time migrations that run on startup.
  */

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { join } from "node:path";
 import type { Model } from "astro-core";
 import type { ThinkingLevel } from "astro-engine";

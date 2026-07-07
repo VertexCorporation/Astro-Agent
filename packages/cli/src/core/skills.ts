@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { existsSync, readdirSync, readFileSync, statSync } from "fs";
 import ignore from "ignore";
 import { homedir } from "os";

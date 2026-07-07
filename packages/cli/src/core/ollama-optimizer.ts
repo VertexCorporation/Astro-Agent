@@ -1,4 +1,3 @@
-// @ts-nocheck
 import chalk from "chalk";
 
 const DEFAULT_BASE_URL = "http://localhost:11434";

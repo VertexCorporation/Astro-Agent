@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { APP_NAME } from "../config.js";
 import type { SourceInfo } from "./source-info.js";
 

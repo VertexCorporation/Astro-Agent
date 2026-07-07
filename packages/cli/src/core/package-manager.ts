@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { type ChildProcess, type ChildProcessByStdio, spawn, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";

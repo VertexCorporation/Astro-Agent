@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-// @ts-nocheck
 /**
  * CLI entry point for the refactored coding engine.
  * Uses main.ts with EngineSession and new mode modules.

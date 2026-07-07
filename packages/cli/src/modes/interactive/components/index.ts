@@ -1,4 +1,3 @@
-// @ts-nocheck
 // UI Components for extensions
 export { AppLockComponent } from "./app-lock.js";
 export { ArminComponent } from "./armin.js";

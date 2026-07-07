@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { copyFileSync, existsSync, mkdirSync } from "node:fs";
 import { basename, join, resolve } from "node:path";
 import type { EngineSession } from "./engine-session.js";

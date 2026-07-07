@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * ToolBatchComponent - Groups consecutive tool calls into a single collapsible block.
  * Instead of showing each tool call separately (visual clutter), they're batched

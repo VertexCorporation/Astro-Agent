@@ -1,4 +1,3 @@
-// @ts-nocheck
 import type { Engine } from "astro-engine";
 import { Container, Text } from "astro-tui";
 

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { parentPort } from "node:worker_threads";
 import { Engine } from "astro-engine";
 import { createCodingTools } from "./index.js";

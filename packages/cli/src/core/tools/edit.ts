@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import type { EngineTool } from "astro-engine";
 import { Box, Container, Spacer, Text } from "astro-tui";
 import { constants } from "fs";

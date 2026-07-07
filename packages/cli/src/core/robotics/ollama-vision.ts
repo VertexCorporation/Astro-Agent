@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Ollama Vision API wrapper.
  * Sends image + prompt via the /api/generate endpoint.

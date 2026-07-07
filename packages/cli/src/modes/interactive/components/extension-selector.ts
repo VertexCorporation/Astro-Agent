@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Generic selector component for extensions.
  * Displays a list of string options with keyboard navigation.

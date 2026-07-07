@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Robotics module - barrel exports
  */

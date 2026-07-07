@@ -1,4 +1,3 @@
-// @ts-nocheck
 import vm from "node:vm";
 import type { EngineTool } from "astro-engine";
 import type { ToolDefinition } from "../extensions/types.js";

@@ -596,10 +596,7 @@ export class TUI extends Container {
 			this.previousLines = [];
 			this.previousWidth = -1; // -1 triggers widthChanged, forcing a full clear
 			this.previousHeight = -1; // -1 triggers heightChanged, forcing a full clear
-			this.cursorRow = 0;
 			this.hardwareCursorRow = 0;
-			this.maxLinesRendered = 0;
-			this.previousViewportTop = 0;
 			if (this.renderTimer) {
 				clearTimeout(this.renderTimer);
 				this.renderTimer = undefined;

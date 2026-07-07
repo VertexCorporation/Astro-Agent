@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Image capture utility - supports file paths, URLs, and webcams.
  */

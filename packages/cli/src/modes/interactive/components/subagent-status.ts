@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Container, Text } from "astro-tui";
 
 const bg = (s: string) => `\x1b[48;2;15;30;45m${s}\x1b[49m`;

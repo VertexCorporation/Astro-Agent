@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import type { EngineTool } from "astro-engine";
 import { ChannelType, Client, GatewayIntentBits, type TextChannel } from "discord.js";
 import type { ToolDefinition } from "../extensions/index.js";

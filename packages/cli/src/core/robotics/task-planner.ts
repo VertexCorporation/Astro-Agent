@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Task planning - translates natural language commands into robot function calls.
  */

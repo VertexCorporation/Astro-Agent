@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import type { EngineTool } from "astro-engine";
 import { Text } from "astro-tui";
 import { existsSync, readdirSync, statSync } from "fs";

@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import { createHash } from "node:crypto";
 import type { Stats } from "node:fs";
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";

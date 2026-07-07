@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Print mode (single-shot): Send prompts, output result, exit.
  *

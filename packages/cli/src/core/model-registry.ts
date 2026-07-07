@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Model registry - manages built-in and custom models, provides API key resolution.
  */

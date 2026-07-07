@@ -4846,9 +4846,9 @@ function renderTool(toolCallId, name, args, status, result) {
                     <span>${name} #${index + 1}</span>
                     ${previewBtnHtml}
                 </div>
-                ${fmtArgs ? `<div class="tool-section"><div class="tool-section-label" style="font-size:0.6rem;">Girdi</div><pre style="max-height:120px;color:${iconColor}aa;">${escapeHtml(fmtArgs)}</pre></div>` : ''}
+                ${fmtArgs ? `<div class="tool-section"><div class="tool-section-label" style="font-size:0.6rem; margin-bottom: 4px;">Girdi</div><div class="markdown-body" style="font-size:0.8rem; border-radius: 6px; padding-top: 0px;">${marked.parse('```json\n' + fmtArgs + '\n```')}</div></div>` : ''}
                 ${optionsHtml}
-                ${fmtResult ? `<div class="tool-section result"><div class="tool-section-label" style="font-size:0.6rem;">Çıktı</div><pre style="max-height:120px;${resultColor ? 'color:' + resultColor + ' !important;' : ''}">${escapeHtml(fmtResult)}</pre></div>` : ''}
+                ${fmtResult ? `<div class="tool-section result"><div class="tool-section-label" style="font-size:0.6rem; margin-bottom: 4px;">Çıktı</div><div class="markdown-body" style="font-size:0.8rem; border-radius: 6px; padding-top: 0px;">${marked.parse('```text\n' + fmtResult + '\n```')}</div></div>` : ''}
             </div>
         `;
 

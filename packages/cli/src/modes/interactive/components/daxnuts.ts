@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * POWERED BY DAXNUTS - Easter egg for OpenCode + Kimi K2.5
  *

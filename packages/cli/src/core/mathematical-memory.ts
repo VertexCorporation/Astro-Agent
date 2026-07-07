@@ -1,4 +1,3 @@
-// @ts-nocheck
 export interface MathematicalMessageFilterOptions {
 	messages: any[];
 	maxTokens: number;

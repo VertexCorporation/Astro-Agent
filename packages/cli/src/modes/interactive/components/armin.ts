@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Armin says hi! A fun easter egg with animated XBM art.
  */

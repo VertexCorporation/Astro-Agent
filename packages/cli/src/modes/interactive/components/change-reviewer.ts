@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Container, Text } from "astro-tui";
 import { theme } from "../theme/theme.js";
 import { DiffPreviewComponent } from "./diff-preview.js";

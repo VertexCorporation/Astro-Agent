@@ -1,4 +1,3 @@
-// @ts-nocheck
 import type { ThinkingLevel } from "astro-engine";
 import { Container, type SelectItem, SelectList, type SelectListLayoutOptions } from "astro-tui";
 import { getSelectListTheme } from "../theme/theme.js";

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import type { AssistantMessage } from "astro-core";
 
 export type AffectiveMode = "subtle" | "active";

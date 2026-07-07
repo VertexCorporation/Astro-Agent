@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * RPC mode: Headless operation with JSON stdin/stdout protocol.
  *

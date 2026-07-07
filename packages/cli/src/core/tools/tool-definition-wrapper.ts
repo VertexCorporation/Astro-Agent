@@ -1,4 +1,3 @@
-// @ts-nocheck
 import type { EngineTool } from "astro-engine";
 import type { ExtensionContext, ToolDefinition } from "../extensions/types.js";
 

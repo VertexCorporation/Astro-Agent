@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { existsSync, readFileSync } from "fs";
 
 export interface ChangelogEntry {

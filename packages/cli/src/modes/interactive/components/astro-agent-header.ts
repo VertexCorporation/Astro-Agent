@@ -1,4 +1,3 @@
-// @ts-nocheck
 import type { Component } from "astro-tui";
 import { VERSION } from "../../../config.js";
 import type { EngineSession } from "../../../core/engine-session.js";

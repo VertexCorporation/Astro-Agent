@@ -1,4 +1,3 @@
-// @ts-nocheck
 import type { Component } from "astro-tui";
 
 const dim = (s: string) => `\x1b[38;2;70;70;70m${s}\x1b[39m`;

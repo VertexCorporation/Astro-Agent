@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Shared command execution utilities for extensions and custom tools.
  */

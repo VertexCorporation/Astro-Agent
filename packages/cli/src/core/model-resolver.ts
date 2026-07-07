@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Model resolution, scoping, and initial selection
  */
@@ -30,8 +29,8 @@ export const defaultModelPerProvider: Record<KnownProvider, string> = {
 	cerebras: "zai-glm-4.7",
 	zai: "glm-5.1",
 	mistral: "devstral-medium-latest",
-	minimax: "MiniMax-M2.7",
-	"minimax-cn": "MiniMax-M2.7",
+	minimax: "minimax-m3:cloud",
+	"minimax-cn": "minimax-m3:cloud",
 	moonshotai: "kimi-k2.6",
 	"moonshotai-cn": "kimi-k2.6",
 	huggingface: "moonshotai/Kimi-K2.6",

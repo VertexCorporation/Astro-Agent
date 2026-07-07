@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import type { EngineTool } from "astro-engine";
 import { request } from "http";
 import { Type } from "typebox";

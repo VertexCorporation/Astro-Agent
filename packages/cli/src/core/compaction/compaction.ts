@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Context compaction for long sessions.
  *

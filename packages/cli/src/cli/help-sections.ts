@@ -1,4 +1,3 @@
-// @ts-nocheck
 import chalk from "chalk";
 import { APP_NAME, CONFIG_DIR_NAME } from "../config.js";
 import type { ExtensionFlag } from "../core/extensions/types.js";

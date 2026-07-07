@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { exec } from "node:child_process";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import os from "node:os";
@@ -225,18 +224,22 @@ export class StudioMode {
 
 	private buildMcpPanelState(): any {
 		const configured = this.runtime.services.settingsManager.getMcpServers();
-		const clients = this.runtime.session.mcpManager ? [...this.runtime.session.mcpManager.getClients().keys()] : [];
+		const clientNames = this.runtime.session.mcpManager
+			? [...this.runtime.session.mcpManager.getClients().keys()]
+			: [];
 		const servers = Object.entries(configured).map(([name, config]: [string, any]) => ({
 			name,
 			command: config.command,
 			args: config.args || [],
 			cwd: config.cwd,
-			connected: clients.includes(name),
+			connected: clientNames.includes(name),
+			tools: 0,
+			port: config.port || undefined,
 		}));
 		return {
 			servers,
-			clients,
-			tools: this.runtime.session.getActiveToolNames(),
+			clients: clientNames.length,
+			tools: this.runtime.session.getActiveToolNames().length,
 			market: ["https://mcp.so/?tab=latest", "https://mcpmarket.com/search"],
 		};
 	}
@@ -669,11 +672,16 @@ export class StudioMode {
 		res.setHeader("Access-Control-Allow-Origin", origin || "*");
 
 		if (method === "GET" && url.pathname === "/") {
-			res.setHeader("Content-Type", "text/html; charset=utf-8");
-			res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
-			res.setHeader("Pragma", "no-cache");
-			res.setHeader("Expires", "0");
-			res.end(this.getHtmlTemplate());
+			this.serveReactAsset("/", res);
+			return;
+		}
+
+		if (method === "GET" && url.pathname === "/favicon.ico") {
+			this.serveReactAsset("/favicon.ico", res);
+			return;
+		}
+
+		if (method === "GET" && url.pathname.startsWith("/assets/") && this.tryServeReactAsset(url.pathname, res)) {
 			return;
 		}
 
@@ -843,8 +851,10 @@ export class StudioMode {
 				JSON.stringify({
 					cwd: this.runtime.cwd,
 					model: this.runtime.session.model?.id || "Unknown Model",
-					usage: stats.tokens,
+					provider: this.runtime.session.model?.provider || "",
+					usage: { in: stats.tokens.input || 0, out: stats.tokens.output || 0 },
 					isGenerating: this.runtime.session.isStreaming,
+					thinking: false,
 					authUrl: this.webUiServerInstance ? this.webUiServerInstance.url : "http://127.0.0.1:3131",
 					tools: this.runtime.session.getActiveToolNames(),
 				}),
@@ -863,7 +873,7 @@ export class StudioMode {
 				return {
 					id: m.id,
 					role: m.role,
-					content: m.content, // Pass raw content array or string directly to frontend
+					content: m.content,
 					text: m.summary
 						? m.summary
 						: typeof m.content === "string"
@@ -872,14 +882,15 @@ export class StudioMode {
 								? m.content.map((c: any) => c.text || "").join("")
 								: "",
 					summary: m.summary,
+					timestamp: m.timestamp || Date.now(),
 					tools: (m.toolInvocations || []).map((t: any) => ({
 						id: t.toolCallId,
-						name: t.toolName,
-						status: t.state === "result" ? "success" : t.state === "error" ? "error" : "running",
+						tool: t.toolName,
+						status: t.state === "result" ? "done" : t.state === "error" ? "error" : "running",
 						input: typeof t.args === "string" ? t.args : JSON.stringify(t.args || {}),
 						output: typeof t.result === "string" ? t.result : JSON.stringify(t.result || ""),
 					})),
-					status: "complete",
+					status: "done",
 					pinned: this.pinnedMessageIds.has(m.id),
 					model: m.model,
 					provider: m.provider,
@@ -1086,8 +1097,29 @@ export class StudioMode {
 				// Sort by modified desc
 				sessions.sort((a, b) => b.modified.getTime() - a.modified.getTime());
 
+				const remapped = sessions.map((s: any) => ({
+					id: s.id,
+					name: s.name || s.firstMessage || "Untitled",
+					path: s.path,
+					cwd: s.cwd || "",
+					messageCount: s.messageCount || 0,
+					createdAt:
+						s.created instanceof Date
+							? s.created.getTime()
+							: typeof s.created === "number"
+								? s.created
+								: Date.now(),
+					updatedAt:
+						s.modified instanceof Date
+							? s.modified.getTime()
+							: typeof s.modified === "number"
+								? s.modified
+								: Date.now(),
+				}));
 				res.setHeader("Content-Type", "application/json");
-				res.end(JSON.stringify({ sessions, activeId: this.runtime.session.sessionManager.getSessionId() }));
+				res.end(
+					JSON.stringify({ sessions: remapped, activeId: this.runtime.session.sessionManager.getSessionId() }),
+				);
 			} catch (e: any) {
 				res.statusCode = 500;
 				res.end(JSON.stringify({ error: e.message }));
@@ -1599,6 +1631,7 @@ export class StudioMode {
 			res.setHeader("Content-Type", "application/json");
 
 			const sm = this.runtime.session.settingsManager;
+			const fusionState = sm.getFusionMode();
 			res.end(
 				JSON.stringify({
 					theme: sm.getTheme(),
@@ -1608,6 +1641,9 @@ export class StudioMode {
 					keepRecentTokens: sm.getCompactionKeepRecentTokens(),
 					thinkingLevel: sm.getDefaultThinkingLevel(),
 					permissionLevel: sm.getPermissionLevel(),
+					fusionEnabled: !!fusionState?.enabled,
+					aiName: sm.getAiName(),
+					extraInstructions: sm.getExtraInstructions(),
 				}),
 			);
 
@@ -1631,6 +1667,9 @@ export class StudioMode {
 						if (k === "keepRecentTokens") sm.setCompactionKeepRecentTokens(v ? Number(v) : undefined);
 						if (k === "permissionLevel" && ["ask", "safe", "full"].includes(v as string))
 							sm.setPermissionLevel(v as any);
+						if (k === "thinkingLevel") sm.setDefaultThinkingLevel(v as any);
+						if (k === "aiName") sm.setAiName(v as string);
+						if (k === "extraInstructions") sm.setExtraInstructions(v as string);
 					}
 					res.setHeader("Content-Type", "application/json");
 					res.end(JSON.stringify({ success: true }));
@@ -1926,7 +1965,8 @@ export class StudioMode {
 		if (url.pathname === "/api/todo") {
 			if (method === "GET") {
 				res.setHeader("Content-Type", "application/json");
-				res.end(JSON.stringify(getTodoSnapshot()));
+				const snap = getTodoSnapshot();
+				res.end(JSON.stringify({ ...snap, todos: snap.items }));
 				return;
 			}
 			if (method === "POST") {
@@ -1937,9 +1977,10 @@ export class StudioMode {
 				req.on("end", () => {
 					try {
 						const { action, id, text } = JSON.parse(body);
-						const result = applyTodoAction(action, { id, text });
+						const result = applyTodoAction(action, { id: id !== undefined ? Number(id) : undefined, text });
+						const snap = getTodoSnapshot();
 						res.setHeader("Content-Type", "application/json");
-						res.end(JSON.stringify({ ...result, ...getTodoSnapshot() }));
+						res.end(JSON.stringify({ ...result, ...snap, todos: snap.items }));
 					} catch (e: any) {
 						res.statusCode = 400;
 						res.end(JSON.stringify({ ok: false, error: e.message }));
@@ -1953,9 +1994,43 @@ export class StudioMode {
 		res.end("Not Found");
 	}
 
-	private getHtmlTemplate() {
+	private get uiDir(): string {
 		const _filename = fileURLToPath(import.meta.url);
 		const _dirname = dirname(_filename);
-		return fs.readFileSync(path.join(_dirname, "studio-ui.html"), "utf8");
+		return path.resolve(_dirname, "..", "..", "ui");
+	}
+
+	private tryServeReactAsset(pathname: string, res: ServerResponse): boolean {
+		const filePath = path.join(this.uiDir, pathname);
+		if (!fs.existsSync(filePath)) return false;
+		this.writeAssetResponse(filePath, "public, max-age=31536000, immutable", res);
+		return true;
+	}
+
+	private serveReactAsset(pathname: string, res: ServerResponse) {
+		const filePath = pathname === "/" ? path.join(this.uiDir, "index.html") : path.join(this.uiDir, pathname);
+		this.writeAssetResponse(filePath, pathname === "/" ? "no-store" : "public, max-age=31536000, immutable", res);
+	}
+
+	private writeAssetResponse(filePath: string, cacheControl: string, res: ServerResponse) {
+		if (!fs.existsSync(filePath)) {
+			res.statusCode = 404;
+			res.end("Not Found");
+			return;
+		}
+		const ext = path.extname(filePath).toLowerCase();
+		const mimeMap: Record<string, string> = {
+			".html": "text/html; charset=utf-8",
+			".js": "text/javascript; charset=utf-8",
+			".css": "text/css; charset=utf-8",
+			".svg": "image/svg+xml",
+			".png": "image/png",
+			".ico": "image/x-icon",
+			".woff2": "font/woff2",
+			".json": "application/json",
+		};
+		res.setHeader("Content-Type", mimeMap[ext] || "application/octet-stream");
+		res.setHeader("Cache-Control", cacheControl);
+		res.end(fs.readFileSync(filePath));
 	}
 }

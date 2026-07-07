@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { spawnSync } from "child_process";
 import { randomUUID } from "crypto";
 import { readFileSync, unlinkSync } from "fs";

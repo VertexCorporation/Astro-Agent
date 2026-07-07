@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Astro-Agent Ω Kernel (Omega Kernel)
  * Core mathematical engine for verified repo transformations.

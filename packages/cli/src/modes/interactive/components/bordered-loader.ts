@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Container, Text, type TUI } from "astro-tui";
 import type { Theme } from "../theme/theme.js";
 

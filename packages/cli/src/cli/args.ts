@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * CLI argument parsing and help display
  */

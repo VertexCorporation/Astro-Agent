@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Box, Markdown, type MarkdownTheme, Spacer, Text } from "astro-tui";
 import type { CompactionSummaryMessage } from "../../../core/messages.js";
 import { getMarkdownTheme, theme } from "../theme/theme.js";

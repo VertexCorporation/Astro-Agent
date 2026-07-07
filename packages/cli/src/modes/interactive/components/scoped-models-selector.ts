@@ -1,4 +1,3 @@
-// @ts-nocheck
 import type { Model } from "astro-core";
 import {
 	Container,

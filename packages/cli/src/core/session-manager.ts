@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import type { ImageContent, Message, TextContent } from "astro-core";
 import type { EngineMessage } from "astro-engine";
 import { randomUUID } from "crypto";

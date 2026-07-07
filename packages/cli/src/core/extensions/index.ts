@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Extension system for lifecycle events and custom tools.
  */

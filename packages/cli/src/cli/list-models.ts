@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * List available models with optional fuzzy search
  */

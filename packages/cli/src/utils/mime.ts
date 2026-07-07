@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { open } from "node:fs/promises";
 import { fileTypeFromBuffer } from "file-type";
 

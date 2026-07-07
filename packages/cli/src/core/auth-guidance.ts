@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { join } from "node:path";
 import { getDocsPath } from "../config.js";
 

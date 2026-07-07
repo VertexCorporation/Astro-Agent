@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import { VectorDB, type VectorDocument } from "astro-core";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { dirname, join } from "path";

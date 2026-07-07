@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Photon image processing wrapper.
  *

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { getAstroUserEngine } from "./astro-user-engine.js";
 
 const LATEST_VERSION_URL = "https://github.com/theayzek01/Astro-Agent/api/latest-version";

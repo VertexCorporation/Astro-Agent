@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * WizardSelectorComponent — multi-step tabbed option picker.
  * Model triggers via :::wizard blocks in its output.

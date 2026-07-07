@@ -1,4 +1,3 @@
-// @ts-nocheck
 import * as os from "node:os";
 import chalk from "chalk";
 

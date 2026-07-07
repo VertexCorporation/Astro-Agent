@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Central timing instrumentation for startup profiling.
  * Enable with PI_TIMING=1 environment variable.

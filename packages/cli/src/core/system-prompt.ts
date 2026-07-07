@@ -1,4 +1,3 @@
-// @ts-nocheck
 import os from "node:os";
 import { buildCodingAgentsPrompt, type CodingAgentsSettings } from "./agents.js";
 import { buildDesignPrompt } from "./design-system/index.js";

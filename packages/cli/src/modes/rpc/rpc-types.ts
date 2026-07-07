@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * RPC protocol types for headless operation.
  *

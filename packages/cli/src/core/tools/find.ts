@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { createInterface } from "node:readline";
 import type { EngineTool } from "astro-engine";
 import { Text } from "astro-tui";

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import * as os from "node:os";
 import type { ImageContent, TextContent } from "astro-core";
 import { getCapabilities, getImageDimensions, imageFallback } from "astro-tui";

@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * TUI config selector for `Astro-Agent config` command
  */

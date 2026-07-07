@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import { getOAuthProviders } from "astro-core/oauth";
 import { Container, type Focusable, getKeybindings, Input, Spacer, Text, type TUI } from "astro-tui";
 import { exec } from "child_process";

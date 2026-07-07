@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { fuzzyMatch } from "astro-tui";
 import type { SessionInfo } from "../../../core/session-manager.js";
 

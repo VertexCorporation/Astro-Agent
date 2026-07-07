@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { basename, dirname, isAbsolute, relative, resolve as resolvePath, sep } from "node:path";
 import type { Api, ImageContent, Model, TextContent } from "astro-core";
 import type { EngineTool } from "astro-engine";

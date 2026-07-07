@@ -1,4 +1,3 @@
-// @ts-nocheck
 import type { ImageContent } from "astro-core";
 import { applyExifOrientation } from "./exif-orientation.js";
 import { loadPhoton } from "./photon.js";

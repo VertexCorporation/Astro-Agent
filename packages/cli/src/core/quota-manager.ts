@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { getEngineDir } from "../config.js";

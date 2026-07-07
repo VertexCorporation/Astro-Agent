@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Utilities for formatting keybinding hints in the UI.
  */

@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Custom message types and transformers for the coding engine.
  *

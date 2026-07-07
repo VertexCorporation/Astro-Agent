@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { spawn } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import { createServer, request as httpRequest, type IncomingMessage, type Server } from "node:http";

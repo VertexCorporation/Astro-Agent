@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Image annotation overlay generator (bounding boxes, points, trajectories).
  * Uses sharp if available, otherwise falls back to SVG overlay.

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import type { Model } from "astro-core";
 import { modelsAreEqual } from "astro-core";
 import type { ModelRegistry } from "./model-registry.js";

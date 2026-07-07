@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { DEFAULT_UI_STYLE_GUIDELINE } from "./design-system/index.js";
 
 export type CodingAgentMode = "off" | "auto" | "always";

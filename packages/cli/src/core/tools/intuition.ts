@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { spawn } from "node:child_process";
 import * as path from "node:path";
 import { type Static, Type } from "typebox";

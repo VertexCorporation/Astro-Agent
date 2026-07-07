@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Robotics-specific prompt templates.
  * Standard formats to be sent to the Ollama VLM.

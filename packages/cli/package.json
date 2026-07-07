@@ -1,6 +1,6 @@
 {
 	"name": "astro-agent-cli",
-	"version": "1.0.0",
+	"version": "2.0.0",
 	"description": "Astro Agent Omniscient - AI Assistant",
 	"type": "module",
 	"astroConfig": {
@@ -32,9 +32,10 @@
 	"scripts": {
 		"clean": "shx rm -rf dist",
 		"dev": "tsc -p tsconfig.build.json --watch --preserveWatchOutput",
-		"build": "tsc -p tsconfig.build.json && shx chmod +x dist/cli.js && npm run copy-assets",
-		"build:binary": "npm --prefix ../tui run build && npm --prefix ../core run build && npm --prefix ../engine run build && npm run build && bun build --compile ./dist/bun/cli.js --outfile dist/AstroAgent && npm run copy-binary-assets",
-		"copy-assets": "shx mkdir -p dist/modes/interactive/theme && shx cp src/modes/interactive/theme/*.json dist/modes/interactive/theme/ && shx mkdir -p dist/modes/interactive/assets && shx cp src/modes/interactive/assets/*.png dist/modes/interactive/assets/ && shx mkdir -p dist/modes/studio && shx cp src/modes/studio/studio-ui.html dist/modes/studio/ && shx mkdir -p dist/core/export-html/vendor && shx cp src/core/export-html/template.html src/core/export-html/template.css src/core/export-html/template.js dist/core/export-html/ && shx cp src/core/export-html/vendor/*.js dist/core/export-html/vendor/ && shx cp src/core/videoedit.html src/core/photoedit.html dist/core/",
+		"build": "npm run build:ui && tsc -p tsconfig.build.json && shx chmod +x dist/cli.js && npm run copy-assets",
+		"build:ui": "npm --prefix ui run build",
+		"build:binary": "npm --prefix ../core run build && npm --prefix ../engine run build && npm run build && bun build --compile ./dist/bun/cli.js --outfile dist/AstroAgent && npm run copy-binary-assets",
+		"copy-assets": "shx mkdir -p dist/modes/interactive/theme && shx cp src/modes/interactive/theme/*.json dist/modes/interactive/theme/ && shx mkdir -p dist/modes/interactive/assets && shx cp src/modes/interactive/assets/*.png dist/modes/interactive/assets/ && shx mkdir -p dist/core/export-html/vendor && shx cp src/core/export-html/template.html src/core/export-html/template.css src/core/export-html/template.js dist/core/export-html/ && shx cp src/core/export-html/vendor/*.js dist/core/export-html/vendor/ && shx cp src/core/videoedit.html src/core/photoedit.html dist/core/",
 		"copy-binary-assets": "shx cp package.json dist/ && shx cp README.md dist/ && shx cp CHANGELOG.md dist/ && shx mkdir -p dist/theme && shx cp src/modes/interactive/theme/*.json dist/theme/ && shx mkdir -p dist/assets && shx cp src/modes/interactive/assets/*.png dist/assets/ && shx mkdir -p dist/export-html/vendor && shx cp src/core/export-html/template.html dist/export-html/ && shx cp src/core/export-html/vendor/*.js dist/export-html/vendor/ && shx cp -r docs dist/ && shx cp ../../node_modules/@silvia-odwyer/photon-node/photon_rs_bg.wasm dist/",
 		"test": "vitest run",
 		"prepublishOnly": "npm run clean && npm run build"
@@ -52,7 +53,6 @@
 		"glob": "^13.0.1",
 		"hosted-git-info": "^9.0.2",
 		"ignore": "^7.0.5",
-		"marked": "^15.0.12",
 		"minimatch": "^10.2.3",
 		"astro-core": "^49.0.0",
 		"astro-engine": "^49.0.0",
@@ -78,7 +78,6 @@
 	"devDependencies": {
 		"@types/diff": "^7.0.2",
 		"@types/hosted-git-info": "^3.0.5",
-		"@types/ms": "^2.1.0",
 		"@types/node": "^24.3.0",
 		"@types/proper-lockfile": "^4.1.4",
 		"shx": "^0.4.0",

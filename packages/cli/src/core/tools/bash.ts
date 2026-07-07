@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { randomBytes } from "node:crypto";
 import { createWriteStream, existsSync } from "node:fs";
 import { tmpdir } from "node:os";

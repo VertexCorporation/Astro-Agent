@@ -1,4 +1,3 @@
-// @ts-nocheck
 export function findPersonaLeak(_content: string): undefined {
 	return undefined;
 }

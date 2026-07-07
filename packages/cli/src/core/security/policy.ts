@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { relative, resolve } from "node:path";
 
 export type PolicyMode = "observe" | "prompt" | "enforce";

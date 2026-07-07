@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { EngineTool } from "astro-engine";

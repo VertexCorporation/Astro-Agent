@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Vision Pipeline - Main robotic image analysis orchestrator.
  * Sends images to the Ollama VLM, returning object detection, bounding boxes, and trajectories as JSON.

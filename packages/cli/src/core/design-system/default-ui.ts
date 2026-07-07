@@ -1,4 +1,3 @@
-// @ts-nocheck
 export const DEFAULT_UI_STYLE_GUIDELINE =
 	"Default UI taste: respect the existing project design first; otherwise use an avant-garde, marginal, vibrant, and unique design.";
 

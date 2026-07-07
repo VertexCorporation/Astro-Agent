@@ -150,7 +150,7 @@ function connectToPort(port) {
     connectingPorts.delete(port);
     connections.set(port, { socket, info: null });
     updateBadge();
-    console.log('[Moon] Connected ' + port);
+    console.log('[Astro] Connected ' + port);
     sendToSocket(socket, {
       type: 'hello',
       extensionId: chrome.runtime.id || 'N/A',
@@ -161,7 +161,7 @@ function connectToPort(port) {
   };
 
   socket.onclose = () => {
-    if (opened) console.log('[Moon] Disconnected ' + port);
+    if (opened) console.log('[Astro] Disconnected ' + port);
     cleanup();
   };
 

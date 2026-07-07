@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Branch summarization for tree navigation.
  *

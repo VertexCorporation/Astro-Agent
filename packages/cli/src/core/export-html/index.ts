@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import type { EngineState } from "astro-engine";
 import { existsSync, readFileSync, writeFileSync } from "fs";
 import { basename, join } from "path";

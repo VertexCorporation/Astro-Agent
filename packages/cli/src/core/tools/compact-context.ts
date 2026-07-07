@@ -1,4 +1,3 @@
-// @ts-nocheck
 import type { EngineTool } from "astro-engine";
 import { Type } from "typebox";
 import type { EngineSession } from "../engine-session.js";

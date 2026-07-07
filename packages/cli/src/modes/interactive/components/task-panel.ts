@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Container } from "astro-tui";
 
 export type TaskStatus = "pending" | "active" | "done";

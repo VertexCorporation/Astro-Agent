@@ -1,4 +1,3 @@
-// @ts-nocheck
 export interface TokenOptimizeResult {
 	optimizedText: string;
 	wasOptimized: boolean;

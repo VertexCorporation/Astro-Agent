@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Container, Text } from "astro-tui";
 import type { RegistryEntry } from "../../../core/marketplace.js";
 import { theme } from "../theme/theme.js";

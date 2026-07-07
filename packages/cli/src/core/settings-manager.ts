@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import type { Transport } from "astro-core";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { homedir } from "os";
@@ -152,6 +150,8 @@ export interface Settings {
 	robotics?: RoboticsSettings; // Robotics mode configuration
 	discordToken?: string; // Discord Bot Token
 	permissionLevel?: "ask" | "safe" | "full";
+	aiName?: string; // AI agent name
+	extraInstructions?: string; // Custom extra instructions for the AI
 	/** Fusion mode: use two models - one for thinking, one for coding */
 	fusionMode?: {
 		enabled: boolean;
@@ -698,6 +698,26 @@ export class SettingsManager {
 	setTheme(theme: string): void {
 		this.globalSettings.theme = theme;
 		this.markModified("theme");
+		this.save();
+	}
+
+	getAiName(): string {
+		return this.settings.aiName || "Astro";
+	}
+
+	setAiName(name: string): void {
+		this.globalSettings.aiName = name || "Astro";
+		this.markModified("aiName");
+		this.save();
+	}
+
+	getExtraInstructions(): string {
+		return this.settings.extraInstructions || "";
+	}
+
+	setExtraInstructions(instructions: string): void {
+		this.globalSettings.extraInstructions = instructions || "";
+		this.markModified("extraInstructions");
 		this.save();
 	}
 
