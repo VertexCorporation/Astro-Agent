@@ -152,10 +152,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setLoading(true);
       setStreamingContent('');
     },
-    message: (data: any) => {
+    message_update: (data: any) => {
       if (data.content !== undefined) {
         setStreamingContent(data.content);
       }
+    },
+    message_end: () => {
+      api.getHistory().then(setMessages).catch(() => {});
     },
     engine_end: () => {
       setLoading(false);

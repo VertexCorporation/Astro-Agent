@@ -1668,8 +1668,9 @@ export class StudioMode {
 					const { enabled, tier } = JSON.parse(body);
 					const sm = this.runtime.session.settingsManager;
 					sm.setFableModeEnabled(enabled);
-					if (tier && ["opus", "sonnet", "haiku"].includes(tier)) {
-						sm.setFableTier(tier);
+					if (tier && ["opus", "sonnet", "haiku", "xhight"].includes(tier)) {
+						// xhight maps to opus with highest validation
+						sm.setFableTier(tier === "xhight" ? "opus" : tier);
 					}
 					res.setHeader("Content-Type", "application/json");
 					res.end(JSON.stringify({ success: true }));

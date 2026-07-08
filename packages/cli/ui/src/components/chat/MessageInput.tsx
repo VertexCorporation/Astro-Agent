@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { IconSend, IconPlayerStop, IconPaperclip, IconBrain, IconX, IconWorld } from '@tabler/icons-react';
+import { IconSend, IconPlayerStop, IconPaperclip, IconBrain, IconX, IconWorld, IconRocket, IconBolt } from '@tabler/icons-react';
 import { useApp } from '../../context/AppContext';
 import { cn } from '../../lib/utils';
 import { toast } from '../../lib/toast';
@@ -13,7 +13,7 @@ interface Props {
 const MAX_FILE_SIZE = 20 * 1024 * 1024;
 
 export function MessageInput({ onOpenModelSelect, onOpenReasoning }: Props) {
-  const { sendMessage, interrupt, loading, status, settings, browserToolStatus } = useApp();
+  const { sendMessage, interrupt, loading, status, settings, browserToolStatus, refresh } = useApp();
   const [input, setInput] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -28,6 +28,26 @@ export function MessageInput({ onOpenModelSelect, onOpenReasoning }: Props) {
       await api.setThinking(next ? 3 : 0);
     } catch {}
   };
+
+  const fableConfig = settings?.fableEnabled
+    ? { enabled: true, tier: settings.fableTier || 'sonnet' }
+    : { enabled: false, tier: undefined as string | undefined };
+
+  const cycleFable = async () => {
+    const tiers = ['haiku', 'sonnet', 'opus', 'xhight'] as const;
+    if (!fableConfig.enabled) {
+      await api.setFable(true, 'haiku');
+    } else {
+      const idx = tiers.indexOf(fableConfig.tier as any);
+      if (idx === -1 || idx === tiers.length - 1) {
+        await api.setFable(false);
+      } else {
+        await api.setFable(true, tiers[idx + 1]);
+      }
+    }
+    refresh();
+  };
+
   const [attachedFiles, setAttachedFiles] = useState<{ name: string; data: string; type: string }[]>([]);
 
   const adjustHeight = useCallback(() => {
@@ -191,6 +211,19 @@ export function MessageInput({ onOpenModelSelect, onOpenReasoning }: Props) {
             className={cn('flex items-center gap-1 px-2 py-1 text-2xs rounded-md transition-colors',
               thinking ? 'text-fg-accent bg-accent-subtle' : 'text-fg-subtle hover:text-fg-muted hover:bg-base-3')}>
             <IconBrain size={13} stroke={1.5} /> Think
+          </button>
+          <button onClick={cycleFable}
+            className={cn('flex items-center gap-1 px-2 py-1 text-2xs rounded-md transition-colors font-medium',
+              !fableConfig.enabled ? 'text-fg-subtle hover:text-fg-muted hover:bg-base-3' :
+              fableConfig.tier === 'haiku' ? 'text-fg-info bg-info/10' :
+              fableConfig.tier === 'sonnet' ? 'text-fg-accent bg-accent-subtle' :
+              fableConfig.tier === 'opus' ? 'text-warning bg-warning/10' :
+              'text-danger bg-danger/10')}>
+            {fableConfig.enabled ? (
+              <><IconBolt size={13} stroke={1.5} /> Fable {fableConfig.tier === 'xhight' ? 'XHIGHT' : fableConfig.tier ? fableConfig.tier.charAt(0).toUpperCase() + fableConfig.tier.slice(1) : ''}</>
+            ) : (
+              <><IconRocket size={13} stroke={1.5} /> Fable</>
+            )}
           </button>
           <button onClick={onOpenModelSelect} className="status-pill text-2xs">
             {status?.model ? status.model : 'Model'}

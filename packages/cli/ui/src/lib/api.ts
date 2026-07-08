@@ -105,4 +105,8 @@ export const api = {
   // Browser Tool
   getBrowserToolStatus: (signal?: AbortSignal) => getJSON<BrowserToolStatus>('/api/browser-tool/status', signal),
   setBrowserToolEnabled: (enabled: boolean) => postJSON<{ success: boolean }>('/api/browser-tool/enabled', { enabled }),
+
+  // Fable
+  setFable: (enabled: boolean, tier?: 'haiku' | 'sonnet' | 'opus' | 'xhight') =>
+    postJSON<{ success: boolean }>('/api/set-fable', { enabled, tier }),
 };

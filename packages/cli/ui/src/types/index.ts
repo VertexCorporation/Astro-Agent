@@ -106,6 +106,8 @@ export interface AppSettings {
   aiName: string;
   extraInstructions: string;
   browserToolEnabled: boolean;
+  fableEnabled?: boolean;
+  fableTier?: 'haiku' | 'sonnet' | 'opus' | 'xhight';
 }
 
 export interface BrowserToolStatus {
