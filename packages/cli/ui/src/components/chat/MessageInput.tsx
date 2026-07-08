@@ -20,6 +20,14 @@ export function MessageInput({ onOpenModelSelect, onOpenReasoning }: Props) {
   const [showCommands, setShowCommands] = useState(false);
   const [commands, setCommands] = useState<{ cmd: string; desc: string }[]>([]);
   const [thinking, setThinking] = useState(settings?.thinkingLevel ? settings.thinkingLevel > 0 : false);
+
+  const toggleThinking = async () => {
+    const next = !thinking;
+    setThinking(next);
+    try {
+      await api.setThinking(next ? 3 : 0);
+    } catch {}
+  };
   const [attachedFiles, setAttachedFiles] = useState<{ name: string; data: string; type: string }[]>([]);
 
   const adjustHeight = useCallback(() => {
@@ -174,7 +182,7 @@ export function MessageInput({ onOpenModelSelect, onOpenReasoning }: Props) {
       </div>
       <div className="flex items-center justify-between mt-2 px-1">
         <div className="flex items-center gap-1">
-          <button onClick={() => setThinking(!thinking)}
+          <button onClick={toggleThinking}
             className={cn('flex items-center gap-1 px-2 py-1 text-2xs rounded-md transition-colors',
               thinking ? 'text-fg-accent bg-accent-subtle' : 'text-fg-subtle hover:text-fg-muted hover:bg-base-3')}>
             <IconBrain size={13} stroke={1.5} /> Think
