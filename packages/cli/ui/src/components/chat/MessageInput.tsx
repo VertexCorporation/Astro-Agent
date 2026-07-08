@@ -3,6 +3,7 @@ import { IconSend, IconPlayerStop, IconPaperclip, IconBrain, IconX } from '@tabl
 import { useApp } from '../../context/AppContext';
 import { cn } from '../../lib/utils';
 import { toast } from '../../lib/toast';
+import { api } from '../../lib/api';
 
 interface Props {
   onOpenModelSelect: () => void;
@@ -17,6 +18,7 @@ export function MessageInput({ onOpenModelSelect, onOpenReasoning }: Props) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showCommands, setShowCommands] = useState(false);
+  const [commands, setCommands] = useState<{ cmd: string; desc: string }[]>([]);
   const [thinking, setThinking] = useState(settings?.thinkingLevel ? settings.thinkingLevel > 0 : false);
   const [attachedFiles, setAttachedFiles] = useState<{ name: string; data: string; type: string }[]>([]);
 
@@ -26,6 +28,10 @@ export function MessageInput({ onOpenModelSelect, onOpenReasoning }: Props) {
   }, []);
 
   useEffect(() => { adjustHeight(); }, [input, adjustHeight]);
+
+  useEffect(() => {
+    api.getCommands().then(data => setCommands(data || [])).catch(() => {});
+  }, []);
 
   const handleSend = () => {
     const trimmed = input.trim();
@@ -87,16 +93,6 @@ export function MessageInput({ onOpenModelSelect, onOpenReasoning }: Props) {
   const removeFile = (index: number) => {
     setAttachedFiles(prev => prev.filter((_, i) => i !== index));
   };
-
-  const commands = [
-    { cmd: '/clear', desc: 'Clear conversation' },
-    { cmd: '/compact', desc: 'Compact token usage' },
-    { cmd: '/test', desc: 'Run tests' },
-    { cmd: '/build', desc: 'Build project' },
-    { cmd: '/lint', desc: 'Run linter' },
-    { cmd: '/ship', desc: 'Commit and push' },
-    { cmd: '/refresh', desc: 'Refresh browser' },
-  ];
 
   return (
     <div className="px-4 py-3 border-t border-border-default bg-chat-bg">

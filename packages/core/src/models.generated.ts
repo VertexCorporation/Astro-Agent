@@ -13648,6 +13648,23 @@ export const MODELS = {
 			contextWindow: 400000,
 			maxTokens: 128000,
 		} satisfies Model<"openai-completions">,
+		"~x-ai/grok-latest": {
+			id: "~x-ai/grok-latest",
+			name: "xAI: Grok Latest",
+			api: "openai-completions",
+			provider: "openrouter",
+			baseUrl: "https://openrouter.ai/api/v1",
+			reasoning: true,
+			input: ["text", "image"],
+			cost: {
+				input: 1.25,
+				output: 2.5,
+				cacheRead: 0.19999999999999998,
+				cacheWrite: 0,
+			},
+			contextWindow: 1000000,
+			maxTokens: 4096,
+		} satisfies Model<"openai-completions">,
 	},
 	"vercel-ai-gateway": {
 		"alibaba/qwen-3-14b": {
