@@ -1546,20 +1546,23 @@ export class StudioMode {
 					authenticated: availableSet.has(`${m.provider}:${m.id}`),
 				}));
 
-				// Inject minimax-m3:cloud as a known working cloud model
-				const hasMinimaxCloud = modelsWithAuth.some((m: any) => m.id === "minimax-m3:cloud");
-				if (!hasMinimaxCloud) {
-					modelsWithAuth.push({
-						id: "minimax-m3:cloud",
-						name: "MiniMax M3 Cloud",
-						provider: "opencode",
-						contextWindow: 204800,
-						authenticated: true,
-						api: "openai-completions",
-						baseUrl: "https://api.opencode.ai/v1",
-						reasoning: false,
-						input: ["text"],
-					} as any);
+				// Force inject minimax-m3:cloud in ollama section (always visible, always authenticated)
+				const mmIdx = modelsWithAuth.findIndex((m: any) => m.id === "minimax-m3:cloud");
+				const mmModel = {
+					id: "minimax-m3:cloud",
+					name: "MiniMax M3 Cloud",
+					provider: "ollama",
+					contextWindow: 204800,
+					authenticated: true,
+					api: "openai-completions",
+					baseUrl: "http://localhost:11434/v1",
+					reasoning: false,
+					input: ["text"],
+				};
+				if (mmIdx >= 0) {
+					modelsWithAuth[mmIdx] = { ...modelsWithAuth[mmIdx], ...mmModel, authenticated: true } as any;
+				} else {
+					modelsWithAuth.push(mmModel as any);
 				}
 
 				res.end(JSON.stringify(modelsWithAuth));
