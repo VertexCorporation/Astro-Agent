@@ -1,9 +1,10 @@
 import { useRef, useEffect } from 'react';
-import { IconCode, IconTestPipe, IconHammer, IconMinimize, IconRobot } from '@tabler/icons-react';
+import { IconCode, IconTestPipe, IconHammer, IconMinimize } from '@tabler/icons-react';
 import { MessageItem } from './MessageItem';
 import { MessageInput } from './MessageInput';
 import { useApp } from '../../context/AppContext';
 import { Logo } from '../Logo';
+import { CortexIcon } from '../CortexIcon';
 
 interface Props {
   onOpenModelSelect: () => void;
@@ -33,11 +34,11 @@ export function ChatArea({ onOpenModelSelect, onOpenReasoning }: Props) {
         <span className="w-px h-4 bg-border-default" />
         {status?.model ? (
           <button onClick={onOpenModelSelect} className="flex items-center gap-1 px-2 py-1 rounded-md hover:bg-base-3 hover:text-fg-default transition-colors">
-            <IconRobot size={14} stroke={1.5} className="text-fg-accent" /> {status.model}
+            <CortexIcon size={14} className="text-fg-accent" /> {status.model}
           </button>
         ) : (
           <button onClick={onOpenModelSelect} className="flex items-center gap-1 px-2 py-1 rounded-md hover:bg-base-3 hover:text-fg-default transition-colors">
-            <IconRobot size={14} stroke={1.5} /> Select model
+            <CortexIcon size={14} /> Select model
           </button>
         )}
         <span className="w-px h-4 bg-border-default" />

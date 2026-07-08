@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { IconUser, IconRobot, IconCopy, IconPin, IconPinFilled, IconTrash, IconPencil, IconChevronDown, IconChevronUp, IconCheck, IconX, IconLoader2 } from '@tabler/icons-react';
+import { IconUser, IconCopy, IconPin, IconPinFilled, IconTrash, IconPencil, IconChevronDown, IconChevronUp, IconCheck, IconX, IconLoader2 } from '@tabler/icons-react';
 import type { Message, ToolCall } from '../../types';
 import { cn } from '../../lib/utils';
 import { useApp } from '../../context/AppContext';
+import { CortexIcon } from '../CortexIcon';
 
 interface Props {
   message: Message;
@@ -88,7 +89,7 @@ export function MessageItem({ message }: Props) {
         'flex items-center justify-center w-8 h-8 rounded-lg shrink-0 mt-0.5',
         isUser ? 'bg-accent-subtle text-fg-accent' : 'bg-base-3 text-fg-info'
       )}>
-        {isUser ? <IconUser size={18} stroke={1.5} /> : <IconRobot size={18} stroke={1.5} />}
+        {isUser ? <IconUser size={18} stroke={1.5} /> : <CortexIcon size={18} />}
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1.5">
