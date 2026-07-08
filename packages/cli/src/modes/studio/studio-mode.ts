@@ -6,7 +6,7 @@ import fs, { promises as fsPromises } from "fs";
 import path, { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import { getEngineDir, getPackageDir, VERSION } from "../../config.js";
-import { getBrowserBridgeStatus } from "../../core/browser-bridge-server.js";
+import { getBrowserBridgeStatus, startBrowserBridgeServer } from "../../core/browser-bridge-server.js";
 import type { EngineSessionRuntime } from "../../core/engine-session-runtime.js";
 import { runFusionThink } from "../../core/fusion.js";
 import { buildSessionInfo, listSessionsFromDir, SessionManager } from "../../core/session-manager.js";
@@ -439,6 +439,8 @@ export class StudioMode {
 	async run() {
 		// Start realtime event bus (WebSocket + SSE)
 		realtimeBus.start(0);
+		// Start the browser bridge server so the extension can connect
+		startBrowserBridgeServer({ keepAlive: true });
 		this.server = createServer((req, res) => this.handleRequest(req, res));
 
 		await new Promise<void>((resolve) => {
