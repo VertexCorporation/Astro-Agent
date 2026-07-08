@@ -5,6 +5,7 @@ import { platform } from "node:os";
 import { dirname, resolve } from "node:path";
 import type { Duplex } from "node:stream";
 import { fileURLToPath } from "node:url";
+import { log } from "./logger.js";
 
 const __DIRNAME = dirname(fileURLToPath(import.meta.url));
 
@@ -162,9 +163,7 @@ function startClientPolling(targetPort: number, keepAlive?: boolean) {
 			isClientOnly = false;
 			masterStatus = undefined;
 			if (!process.env.PI_TUI_MODE) {
-				console.log(
-					`\n\x1b[33m[Moon] Master bridge on port ${targetPort} is down. Promoting local instance...\x1b[0m`,
-				);
+				log.warn("bridge", `Master bridge on port ${targetPort} is down. Promoting local instance...`);
 			}
 			startBrowserBridgeServer({ port: targetPort, keepAlive });
 		}
@@ -263,19 +262,17 @@ export function startBrowserBridgeServer(options: { port?: number; keepAlive?: b
 					masterStatus = status;
 					startClientPolling(preferredPort, options.keepAlive);
 					if (!process.env.PI_TUI_MODE) {
-						console.error(
-							`\n\x1b[33m[Moon] Ports ${preferredPort}-${p} in use. Running in CLIENT-ONLY mode proxying to master on port ${preferredPort}.\x1b[0m`,
-						);
+						log.warn("bridge", `Ports ${preferredPort}-${p} in use. Running in CLIENT-ONLY mode proxying to master on port ${preferredPort}.`);
 					}
 				} else {
 					startupError = `Ports ${preferredPort}-${p} are already in use by non-Astro-Agent processes or unresponsive servers.`;
 					isStarting = false;
-					console.error(`[Moon Bridge Error] ${startupError}`);
+					log.error("bridge", "Bridge startup failed", startupError);
 				}
 			} else {
 				startupError = error.message;
 				isStarting = false;
-				console.error(`[Moon Bridge Error] ${startupError}`);
+				log.error("bridge", "Bridge startup failed", startupError);
 			}
 		});
 
@@ -286,7 +283,7 @@ export function startBrowserBridgeServer(options: { port?: number; keepAlive?: b
 			isStarting = false;
 			masterStatus = undefined;
 			if (!process.env.PI_TUI_MODE) {
-				console.error(`\x1b[32m  Browser Bridge → ws://127.0.0.1:${p}\x1b[0m`);
+				log.info("bridge", `Browser Bridge → ws://127.0.0.1:${p}`);
 			}
 			if (!options.keepAlive) {
 				server.unref();

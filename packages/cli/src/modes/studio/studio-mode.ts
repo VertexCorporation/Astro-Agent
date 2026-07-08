@@ -1,5 +1,5 @@
 import { exec } from "node:child_process";
-import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import { createServer, request as httpRequest, type IncomingMessage, type ServerResponse } from "node:http";
 import os from "node:os";
 import { promisify } from "node:util";
 import fs, { promises as fsPromises } from "fs";
@@ -11,10 +11,13 @@ import type { EngineSessionRuntime } from "../../core/engine-session-runtime.js"
 import { runFusionThink } from "../../core/fusion.js";
 import { buildSessionInfo, listSessionsFromDir, SessionManager } from "../../core/session-manager.js";
 import { BUILTIN_SLASH_COMMANDS } from "../../core/slash-commands.js";
+import { runFable, type FablePlan } from "../../core/fable-mode-engine.js";
 import { subagentEventEmitter } from "../../core/tools/invoke_subagent.js";
 import { applyTodoAction, getTodoSnapshot } from "../../core/tools/todo.js";
 import { getMcpPanelState, setMcpPanelStateProvider, webUiMcpActionListeners } from "../../core/web-ui-server.js";
 import type { InteractiveModeOptions } from "../interactive/interactive-mode.js";
+import { realtimeBus } from "../../core/realtime-bus.js";
+import { log } from "../../core/logger.js";
 
 const execAsync = promisify(exec);
 
@@ -74,8 +77,6 @@ export class StudioMode {
 	private runtime: EngineSessionRuntime;
 	// biome-ignore lint/correctness/noUnusedPrivateClassMembers: reserved for future use
 	private _options: InteractiveModeOptions;
-	private clients: ServerResponse[] = [];
-	private mobileClients: Set<ServerResponse> = new Set();
 	private server: ReturnType<typeof createServer> | null = null;
 	private port: number = 0;
 	private pinnedMessageIds: Set<string> = new Set();
@@ -224,22 +225,27 @@ export class StudioMode {
 
 	private buildMcpPanelState(): any {
 		const configured = this.runtime.services.settingsManager.getMcpServers();
-		const clientNames = this.runtime.session.mcpManager
-			? [...this.runtime.session.mcpManager.getClients().keys()]
-			: [];
+		const mcpManager = this.runtime.session.mcpManager;
+		const clientNames = mcpManager ? [...mcpManager.getClients().keys()] : [];
+		const allToolNames = this.runtime.session.getActiveToolNames();
+		// Filter only MCP tools (those with underscore prefix matching a server name)
+		const mcpToolNames = allToolNames.filter((t) =>
+			Object.keys(configured).some((s) => t.startsWith(s + "_")),
+		);
 		const servers = Object.entries(configured).map(([name, config]: [string, any]) => ({
 			name,
 			command: config.command,
 			args: config.args || [],
 			cwd: config.cwd,
 			connected: clientNames.includes(name),
-			tools: 0,
+			tools: mcpToolNames.filter((t) => t.startsWith(name + "_")),
 			port: config.port || undefined,
 		}));
 		return {
 			servers,
-			clients: clientNames.length,
-			tools: this.runtime.session.getActiveToolNames().length,
+			clients: clientNames.map((c) => ({ name: c, version: "" })),
+			tools: mcpToolNames.length,
+			allMcpTools: mcpToolNames,
 			market: ["https://mcp.so/?tab=latest", "https://mcpmarket.com/search"],
 		};
 	}
@@ -276,11 +282,17 @@ export class StudioMode {
 				}
 				throw new Error("Unknown built-in MCP provider.");
 			}
-			if (action?.action === "connect") {
-				if (!name) throw new Error("Server name is required.");
-				await this.runtime.session.connectConfiguredMcpServers();
-				return;
+		if (action?.action === "connect") {
+			if (!name) throw new Error("Server name is required.");
+			const toolNames = await this.runtime.session.connectConfiguredMcpServers(name);
+			if (toolNames.length > 0) {
+				this.broadcastEvent({
+					type: "terminal_log",
+					data: `🔌 MCP tools connected: ${toolNames.join(", ")}\n`,
+				});
 			}
+			return;
+		}
 			if (action?.action === "restart") {
 				if (!this.runtime.session.mcpManager) throw new Error("MCP manager is not available.");
 				await this.runtime.session.mcpManager.restart();
@@ -293,16 +305,31 @@ export class StudioMode {
 				if (this.runtime.session.mcpManager) await this.runtime.session.mcpManager.restart();
 				return;
 			}
-			if (action?.action === "add_custom") {
-				const config = action.config || {};
-				const command = action.command || config.command;
-				const args = action.args || config.args;
-				const env = action.env || config.env;
-				const cwd = action.cwd || config.cwd;
-				if (!name || !command) throw new Error("Name and command are required.");
-				await this.activateMcpServer(name, { command, args, cwd, env });
-				return;
+		if (action?.action === "add_custom") {
+			const config = action.config || {};
+			const command = action.command || config.command;
+			const args = action.args || config.args;
+			const env = action.env || config.env;
+			const cwd = action.cwd || config.cwd;
+			const autoStart = config.autoStart !== false;
+			if (!name || !command) throw new Error("Name and command are required.");
+			this.runtime.services.settingsManager.setMcpServer(name, {
+				command,
+				args,
+				cwd,
+				env,
+				autoStart,
+			});
+			await this.runtime.services.settingsManager.flush();
+			const toolNames = await this.runtime.session.connectConfiguredMcpServers(name);
+			if (toolNames.length > 0) {
+				this.broadcastEvent({
+					type: "terminal_log",
+					data: `✅ MCP server "${name}" connected. Tools: ${toolNames.join(", ")}\n`,
+				});
 			}
+			return;
+		}
 			if (action?.action === "disconnect") {
 				throw new Error("Disconnect not supported via UI yet.");
 			}
@@ -355,8 +382,8 @@ export class StudioMode {
 						out: stats.tokens.output,
 					},
 					blenderMcp: isBlenderConnected ? { connected: true, port: blenderPort } : null,
-					mobileConnected: this.mobileClients.size > 0,
-					mobileCount: this.mobileClients.size,
+					mobileConnected: realtimeBus.getMobileClientCount() > 0,
+					mobileCount: realtimeBus.getMobileClientCount(),
 				},
 			};
 		} catch (_e) {
@@ -366,18 +393,18 @@ export class StudioMode {
 					model: this.runtime.session.model?.id || "Unknown Model",
 					cwd: this.runtime.cwd,
 					tokens: { in: 0, out: 0 },
-					mobileConnected: this.mobileClients.size > 0,
-					mobileCount: this.mobileClients.size,
+					mobileConnected: realtimeBus.getMobileClientCount() > 0,
+					mobileCount: realtimeBus.getMobileClientCount(),
 				},
 			};
 		}
 	}
 
 	private broadcastMobileStatus() {
-		this.broadcastEvent({
+		realtimeBus.broadcast({
 			type: "mobile_status",
-			mobileConnected: this.mobileClients.size > 0,
-			mobileCount: this.mobileClients.size,
+			mobileConnected: realtimeBus.getMobileClientCount() > 0,
+			mobileCount: realtimeBus.getMobileClientCount(),
 		});
 	}
 
@@ -401,21 +428,17 @@ export class StudioMode {
 			};
 
 			const safeEvent = removeCircular(event);
-			const dataStr = JSON.stringify(safeEvent);
-			const data = `data: ${dataStr}\n\n`;
-			for (const client of this.clients) {
-				try {
-					client.write(data);
-				} catch (_e) {}
-			}
+			realtimeBus.broadcast(safeEvent as any);
 		} catch (e) {
-			console.error("Broadcast stringify error:", e);
+			log.error("system", "Broadcast stringify error", e);
 		}
 	}
 
 	private webUiServerInstance: any = null;
 
 	async run() {
+		// Start realtime event bus (WebSocket + SSE)
+		realtimeBus.start(0);
 		this.server = createServer((req, res) => this.handleRequest(req, res));
 
 		await new Promise<void>((resolve) => {
@@ -436,7 +459,7 @@ export class StudioMode {
 					if (err.code === "EADDRINUSE") {
 						tryListen(port + 1);
 					} else {
-						console.error("Web UI server error:", err.message);
+						log.error("system", "Web UI server error", err);
 						clearTimeout(timer);
 						done();
 					}
@@ -550,7 +573,7 @@ export class StudioMode {
 			const bridgeStatus = getBrowserBridgeStatus();
 			printStartupBanner(`http://127.0.0.1:${this.port}`, this.webUiServerInstance.url, bridgeStatus.port || 3133);
 		} catch (e) {
-			console.error("Failed to start Web UI Auth Server:", e);
+			log.error("system", "Failed to start Web UI Auth Server", e);
 		}
 
 		// Keep the process alive indefinitely so it doesn't exit after setup
@@ -783,41 +806,52 @@ export class StudioMode {
 		}
 
 		if (method === "GET" && (url.pathname === "/api/stream" || url.pathname === "/events")) {
+			// Forward to realtime bus SSE handler
+			// Create a proxy request to the realtime bus HTTP server
+			const busPort = realtimeBus.httpPort;
+			if (busPort) {
+				const proxyPath = `/events${url.search}`;
+				const options = {
+					hostname: "127.0.0.1",
+					port: busPort,
+					path: proxyPath,
+					method: "GET",
+					headers: req.headers,
+				};
+				const proxyReq = httpRequest(options, (proxyRes: any) => {
+					res.writeHead(proxyRes.statusCode!, proxyRes.headers);
+					proxyRes.pipe(res);
+				});
+				proxyReq.on("error", () => {
+					res.statusCode = 502;
+					res.end("Bad Gateway");
+				});
+				proxyReq.end();
+				return;
+			}
+			// Fallback: direct SSE
 			res.setHeader("Content-Type", "text/event-stream");
 			res.setHeader("Cache-Control", "no-cache");
 			res.setHeader("Connection", "keep-alive");
 			const isMobile = url.searchParams.get("mobile") === "1";
-			this.clients.push(res);
-			if (isMobile) {
-				this.mobileClients.add(res);
-				this.broadcastMobileStatus();
-			}
+			// Use a temporary SSE client via bus
+			const clientId = `sse-direct-${Date.now()}-${Math.random().toString(36).substr(2, 8)}`;
+			// This fallback just keeps the connection open
+			res.write(`data: ${JSON.stringify({ type: "connected", clientId })}\n\n`);
 			try {
 				const stats = this.runtime.session.getSessionStats();
-				const initialState = {
-					type: "state_update",
-					state: {
-						model: this.runtime.session.model?.id || "Unknown Model",
-						cwd: this.runtime.cwd,
-						tokens: {
-							in: stats.tokens.input,
-							out: stats.tokens.output,
+				res.write(
+					`data: ${JSON.stringify({
+						type: "state_update",
+						state: {
+							model: this.runtime.session.model?.id || "Unknown Model",
+							cwd: this.runtime.cwd,
+							tokens: { in: stats.tokens.input, out: stats.tokens.output },
 						},
-					},
-				};
-				res.write(`data: ${JSON.stringify(initialState)}\n\n`);
-				for (const log of this.logBuffer) {
-					res.write(`data: ${JSON.stringify({ type: "terminal_log", data: log })}\n\n`);
-				}
+					})}\n\n`,
+				);
 			} catch (_e) {}
-
-			req.on("close", () => {
-				this.clients = this.clients.filter((client) => client !== res);
-				if (isMobile) {
-					this.mobileClients.delete(res);
-					this.broadcastMobileStatus();
-				}
-			});
+			req.on("close", () => {});
 			return;
 		}
 
@@ -947,9 +981,70 @@ export class StudioMode {
 					} else if (cmd === "/refresh") {
 						this.runtime.session.prompt("Refresh the application on the connected device/browser.");
 						handled = true;
+					} else if (cmd.startsWith("/fable")) {
+						const parts = cmd.split(/\s+/);
+						const tierArg = parts[1] as "opus" | "sonnet" | "haiku" | undefined;
+						const taskArg = parts.slice(2).join(" ");
+						const sm = this.runtime.session.settingsManager;
+						const fableSettings = sm.getFableMode();
+						if (cmd === "/fable off" || cmd === "/fable disable") {
+							sm.setFableModeEnabled(false);
+							this.broadcastEvent({ type: "terminal_log", data: "Fable mode disabled.\n" });
+							this.broadcastEvent({ type: "engine_end" });
+							handled = true;
+						} else {
+							sm.setFableModeEnabled(true);
+							if (tierArg && ["opus", "sonnet", "haiku"].includes(tierArg)) {
+								sm.setFableTier(tierArg);
+							}
+							const tier = sm.getFableMode().tier || "sonnet";
+							this.broadcastEvent({
+								type: "terminal_log",
+								data: `📋 Fable mode enabled (tier: ${tier}). Use /fable off to disable.\n`,
+							});
+							if (taskArg) {
+								effectivePrompt = taskArg;
+							}
+							// Continue to fable plan generation below
+							handled = true;
+						}
 					}
 
 					if (!handled) {
+						// --- FABLE MODE PLAN GENERATION ---
+						const fableSettings = this.runtime.session.settingsManager.getFableMode();
+						if (fableSettings.enabled && !cmd.startsWith("/fable")) {
+							const fableResult = await runFable(
+								{ task: effectivePrompt, tier: fableSettings.tier || "sonnet" },
+								{
+									modelRegistry: {
+										find: (p, id) => this.runtime.session.modelRegistry.find(p, id) as any,
+										authStorage: {
+											get: (p) => ({
+												key: (this.runtime.session.modelRegistry.authStorage.get(p) as any)?.key || "",
+											}),
+										},
+									},
+									onStatus: (msg) => this.broadcastEvent({ type: "terminal_log", data: `${msg}\n` }),
+									onPlan: (plan) => {
+										const stageList = plan.stages
+											.map(
+												(s) =>
+													`  ${s.number}. **${s.name}** → *${s.expectedOutput}* (verify: \`${s.failableCheck}\`)`,
+											)
+											.join("\n");
+										this.broadcastEvent({
+											type: "terminal_log",
+											data: `📋 Fable execution plan:\n${stageList}\n`,
+										});
+									},
+								},
+							);
+							if (fableResult) {
+								effectivePrompt = fableResult.prompt;
+							}
+						}
+
 						// --- FUSION MODE ---
 						const fusionState = this.runtime.session.settingsManager.getFusionMode();
 						const fusionResult = await runFusionThink(
@@ -978,7 +1073,7 @@ export class StudioMode {
 						this.runtime.session
 							.prompt(effectivePrompt, { images, streamingBehavior: "followUp" })
 							.catch((err: any) => {
-								console.error("Prompt error:", err);
+								log.error("session", "Prompt error", err);
 								this.broadcastEvent({
 									type: "message_start",
 									message: {
@@ -1563,6 +1658,29 @@ export class StudioMode {
 			return;
 		}
 
+		if (method === "POST" && url.pathname === "/api/set-fable") {
+			let body = "";
+			req.on("data", (chunk) => {
+				body += chunk;
+			});
+			req.on("end", async () => {
+				try {
+					const { enabled, tier } = JSON.parse(body);
+					const sm = this.runtime.session.settingsManager;
+					sm.setFableModeEnabled(enabled);
+					if (tier && ["opus", "sonnet", "haiku"].includes(tier)) {
+						sm.setFableTier(tier);
+					}
+					res.setHeader("Content-Type", "application/json");
+					res.end(JSON.stringify({ success: true }));
+				} catch (e: any) {
+					res.statusCode = 500;
+					res.end(JSON.stringify({ error: e.message }));
+				}
+			});
+			return;
+		}
+
 		if (method === "POST" && url.pathname === "/api/set-fusion") {
 			let body = "";
 			req.on("data", (chunk) => {
@@ -1632,6 +1750,7 @@ export class StudioMode {
 
 			const sm = this.runtime.session.settingsManager;
 			const fusionState = sm.getFusionMode();
+			const fableState = sm.getFableMode();
 			res.end(
 				JSON.stringify({
 					theme: sm.getTheme(),
@@ -1642,6 +1761,8 @@ export class StudioMode {
 					thinkingLevel: sm.getDefaultThinkingLevel(),
 					permissionLevel: sm.getPermissionLevel(),
 					fusionEnabled: !!fusionState?.enabled,
+					fableEnabled: !!fableState?.enabled,
+					fableTier: fableState?.tier || "sonnet",
 					aiName: sm.getAiName(),
 					extraInstructions: sm.getExtraInstructions(),
 				}),
@@ -1720,6 +1841,52 @@ export class StudioMode {
 				} catch (e: any) {
 					res.statusCode = 400;
 					res.end(JSON.stringify({ ok: false, error: e.message }));
+				}
+			});
+			return;
+		}
+
+		if (method === "GET" && url.pathname === "/api/skills") {
+			res.setHeader("Content-Type", "application/json");
+			try {
+				const skillsDir = path.join(this.runtime.cwd, ".opencode", "skills");
+				const skills: Array<{ name: string; description: string }> = [];
+				if (fs.existsSync(skillsDir)) {
+					const files = fs.readdirSync(skillsDir).filter((f) => f.endsWith(".md"));
+					for (const file of files) {
+						const content = fs.readFileSync(path.join(skillsDir, file), "utf-8");
+						const name = file.replace(/\.md$/i, "");
+						const descMatch = content.match(/^#\s+(.+)/m);
+						const description = descMatch ? descMatch[1] : name;
+						skills.push({ name, description });
+					}
+				}
+				res.end(JSON.stringify({ skills }));
+			} catch (e: any) {
+				res.statusCode = 500;
+				res.end(JSON.stringify({ error: e.message }));
+			}
+			return;
+		}
+
+		if (method === "POST" && url.pathname === "/api/skills/load") {
+			let body = "";
+			req.on("data", (chunk) => { body += chunk; });
+			req.on("end", async () => {
+				try {
+					const { name } = JSON.parse(body);
+					if (!name) throw new Error("Skill name required");
+					const skillsDir = path.join(this.runtime.cwd, ".opencode", "skills");
+					const filePath = path.join(skillsDir, name + ".md");
+					if (!fs.existsSync(filePath)) throw new Error(`Skill "${name}" not found`);
+					const content = fs.readFileSync(filePath, "utf-8");
+					// Send skill content to the AI as a system instruction
+					this.runtime.session.prompt(`[SYSTEM: Loading skill "${name}"...]\n\n${content}`);
+					res.setHeader("Content-Type", "application/json");
+					res.end(JSON.stringify({ success: true }));
+				} catch (e: any) {
+					res.statusCode = 500;
+					res.end(JSON.stringify({ error: e.message }));
 				}
 			});
 			return;

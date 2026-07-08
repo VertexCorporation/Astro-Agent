@@ -1146,6 +1146,33 @@ export class InteractiveMode {
 					promptInput = `[Sistem: Kullanıcının talebi üzerine Scratch/TurboWarp MCP entegrasyonu (scratch_*) otomatik olarak bağlandı/aktif edildi. Lütfen projedeki sprite'ları, sahneleri, blokları, değişkenleri ve listeleri scratch_* araçları ile kontrol et ve düzenlemeleri yap. Chrome extension'ın yüklü ve aktif olduğundan emin olun.]\n\n${userInput}`;
 				}
 
+				// --- FABLE MODE PLAN GENERATION ---
+				const fableSettings = this.settingsManager.getFableMode();
+				if (fableSettings.enabled) {
+					const { runFable } = await import("../../core/fable-mode-engine.js");
+					const fableResult = await runFable(
+						{ task: promptInput, tier: fableSettings.tier || "sonnet" },
+						{
+							modelRegistry: {
+								find: (p, id) => this.session.modelRegistry.find(p, id) as any,
+								authStorage: {
+									get: (p) => ({ key: (this.session.modelRegistry.authStorage.get(p) as any)?.key || "" }),
+								},
+							},
+							onStatus: (msg) => this.showStatus(msg),
+							onPlan: (plan) => {
+								const stageList = plan.stages
+									.map((s) => `  ${s.number}. ${s.name} → ${s.expectedOutput} (verify: ${s.failableCheck})`)
+									.join("\n");
+								this.showStatus(`Fable execution plan:\n${stageList}`);
+							},
+						},
+					);
+					if (fableResult) {
+						promptInput = fableResult.prompt;
+					}
+				}
+
 				// --- FUSION MODE ---
 				const fusionState = this.settingsManager.getFusionMode();
 				const fusionResult = await runFusionThink(
@@ -3124,6 +3151,25 @@ export class InteractiveMode {
 				if (text === "/fusion") {
 					this.editor.setText("");
 					this.showFusionModeSelector();
+					return;
+				}
+				if (text === "/fable" || text.startsWith("/fable ")) {
+					this.editor.setText("");
+					const parts = text.split(/\s+/);
+					const tier = parts[1] as "opus" | "sonnet" | "haiku" | undefined;
+					const fableSettings = this.settingsManager.getFableMode();
+					if (text === "/fable off" || text === "/fable disable") {
+						this.settingsManager.setFableModeEnabled(false);
+						this.showInfo("Fable mode disabled.");
+					} else {
+						this.settingsManager.setFableModeEnabled(true);
+						if (tier && ["opus", "sonnet", "haiku"].includes(tier)) {
+							this.settingsManager.setFableTier(tier);
+						}
+						const activeTier = this.settingsManager.getFableMode().tier || "sonnet";
+						this.showInfo(`Fable mode enabled (tier: ${activeTier}).`);
+					}
+					this.render();
 					return;
 				}
 				if (text === "/login") {

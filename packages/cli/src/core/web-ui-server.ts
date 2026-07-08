@@ -14,6 +14,7 @@ import { dirname, extname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { getEngineDir, getSessionsDir } from "../config.js";
 import { getTodoSnapshot } from "./tools/todo.js";
+import { log } from "./logger.js";
 
 const INDEX_HTML = `
 <!doctype html>
@@ -1392,7 +1393,7 @@ async function loadSessions() {
     sessionsList = sessions;
     renderSessions();
   } catch (err) {
-    console.error("Sessions load error:", err);
+    log.error("system", "Sessions load error", err);
   }
 }
 
@@ -1530,7 +1531,7 @@ async function loadSession(id, isPoll = false) {
     }
     if (window.lucide) lucide.createIcons();
   } catch (err) {
-    console.error("Session load error:", err);
+    log.error("session", "Session load error", err);
   }
 }
 
@@ -2385,7 +2386,7 @@ export function startWebUiServer(options: { port?: number; staticRoot?: string }
 						try {
 							listener({ type, action: actionName, params, state: params.state });
 						} catch (e) {
-							console.error("[TUI Action Listener Error]", e);
+							log.error("system", "TUI Action Listener Error", e);
 						}
 					}
 
@@ -2627,7 +2628,7 @@ export function startWebUiServer(options: { port?: number; staticRoot?: string }
 		if (err.code === "EADDRINUSE") {
 			server.listen(0, "127.0.0.1");
 		} else {
-			console.error(`\n\x1b[31m[Moon Web UI Error] ${err.message}\x1b[0m`);
+			log.error("system", "Web UI Server error", err);
 		}
 	});
 	server.listen(requestedPort, "127.0.0.1");

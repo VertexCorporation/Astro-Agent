@@ -158,6 +158,11 @@ export interface Settings {
 		thinkModel?: { provider: string; id: string };
 		codeModel?: { provider: string; id: string };
 	};
+	/** Fable mode: stage-planning execution discipline with tier routing */
+	fableMode?: {
+		enabled: boolean;
+		tier?: "opus" | "sonnet" | "haiku";
+	};
 }
 
 export interface McpServerConfig {
@@ -940,6 +945,35 @@ export class SettingsManager {
 
 	isFusionModeEnabled(): boolean {
 		return this.settings.fusionMode?.enabled ?? false;
+	}
+
+	// ── Fable Mode ──
+	getFableMode(): { enabled: boolean; tier?: "opus" | "sonnet" | "haiku" } {
+		return this.settings.fableMode ?? { enabled: false, tier: "sonnet" };
+	}
+
+	setFableModeEnabled(enabled: boolean): void {
+		if (!this.globalSettings.fableMode) {
+			this.globalSettings.fableMode = { enabled, tier: "sonnet" };
+		} else {
+			this.globalSettings.fableMode.enabled = enabled;
+		}
+		this.markModified("fableMode", "enabled");
+		this.save();
+	}
+
+	setFableTier(tier: "opus" | "sonnet" | "haiku"): void {
+		if (!this.globalSettings.fableMode) {
+			this.globalSettings.fableMode = { enabled: true, tier };
+		} else {
+			this.globalSettings.fableMode.tier = tier;
+		}
+		this.markModified("fableMode", "tier");
+		this.save();
+	}
+
+	isFableModeEnabled(): boolean {
+		return this.settings.fableMode?.enabled ?? false;
 	}
 
 	getRetryEnabled(): boolean {

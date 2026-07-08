@@ -41,6 +41,7 @@ export const BUILTIN_SLASH_COMMANDS: ReadonlyArray<BuiltinSlashCommand> = [
 
 	// === Modes ===
 	{ name: "plan", description: "Toggle plan mode" },
+	{ name: "fable", description: "Toggle Fable mode (stage-planning with tier: opus/sonnet/haiku)" },
 	{ name: "automation", description: "Toggle automation mode" },
 	{ name: "agentmode", description: "Toggle agent mode" },
 	{ name: "zen", description: "Toggle Zen mode (hide UI elements)" },

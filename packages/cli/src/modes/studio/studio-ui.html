@@ -196,6 +196,38 @@
  --shadow-md: 0 2px 6px rgba(31,35,40,0.08);
 }
 
+		/* ─── TOOL EMBED CARDS ──────────────────────────────────────────── */
+		.tool-embed { width:100%; max-width:780px; margin:8px auto; border-radius:12px; overflow:hidden; border:1px solid var(--border); background:var(--surface); transition:all 0.2s ease; }
+		.tool-embed.streaming { border-color:var(--accent); box-shadow:0 0 12px rgba(88,166,255,0.15); }
+		.tool-embed.error { border-color:#ff6464; box-shadow:0 0 12px rgba(255,100,100,0.12); }
+		.tool-embed-header { display:flex; align-items:center; gap:8px; padding:10px 14px; background:var(--surface2); border-bottom:1px solid var(--border); cursor:pointer; user-select:none; }
+		.tool-embed-header:hover { background:rgba(255,255,255,0.03); }
+		.tool-embed-icon { width:20px; height:20px; border-radius:6px; display:grid; place-items:center; font-size:12px; flex-shrink:0; }
+		.tool-embed-name { font-size:0.82rem; font-weight:600; color:var(--fg); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+		.tool-embed-status { font-size:0.7rem; color:var(--muted); display:flex; align-items:center; gap:4px; flex-shrink:0; }
+		.tool-embed-status-dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
+		.tool-embed-status-dot.running { background:var(--accent); animation:pulse 1.2s infinite; }
+		.tool-embed-status-dot.done { background:#4ade80; }
+		.tool-embed-status-dot.error { background:#ff6464; }
+		.tool-embed-body { padding:0; }
+		.tool-embed-body pre { margin:0; padding:12px 14px; font-family:'JetBrains Mono',monospace; font-size:0.75rem; line-height:1.5; overflow-x:auto; white-space:pre-wrap; word-break:break-word; color:var(--fg); background:var(--bg2); }
+		.tool-embed-body .tool-output-header { display:flex; align-items:center; gap:6px; padding:8px 14px; font-size:0.68rem; color:var(--muted); background:var(--surface2); border-top:1px solid var(--border); }
+		.tool-embed-body .tool-output { max-height:300px; overflow-y:auto; }
+		.tool-embed-body .tool-args { padding:8px 14px; font-size:0.72rem; color:var(--muted); background:var(--bg2); }
+		.tool-embed-body .tool-args summary { cursor:pointer; color:var(--muted); font-size:0.68rem; }
+		.tool-embed-body .tool-args pre { padding:6px 0; }
+		.tool-embed.bash { border-color:rgba(0,255,170,0.25); }
+		.tool-embed.bash .tool-embed-header { background:rgba(0,255,170,0.08); border-bottom-color:rgba(0,255,170,0.12); }
+		.tool-embed.bash .tool-embed-body pre { background:#0a0e0c; color:#00ffaa; }
+		.tool-embed.file-op { border-color:rgba(255,207,80,0.25); }
+		.tool-embed.file-op .tool-embed-header { background:rgba(255,207,80,0.08); border-bottom-color:rgba(255,207,80,0.12); }
+		.tool-embed.browser { border-color:rgba(255,107,107,0.25); }
+		.tool-embed.browser .tool-embed-header { background:rgba(255,107,107,0.08); border-bottom-color:rgba(255,107,107,0.12); }
+		.tool-embed.search { border-color:rgba(217,80,255,0.25); }
+		.tool-embed.search .tool-embed-header { background:rgba(217,80,255,0.08); border-bottom-color:rgba(217,80,255,0.12); }
+		.tool-embed-collapsed .tool-embed-body { display:none; }
+		.tool-embed-chevron { transition:transform 0.2s ease; }
+		.tool-embed-collapsed .tool-embed-chevron { transform:rotate(-90deg); }
 		/* ─── BASE ──────────────────────────────────────────────────────── */
 		*, *::before, *::after { box-sizing: border-box; }
 		html { width: 100%; height: 100%; }
@@ -513,7 +545,7 @@
 			font-style: italic;
 		}
 		.prose hr { border: none; border-top: 1px solid var(--border); margin: 1.2em 0; }
-		.prose table { width: 100%; border-collapse: collapse; margin: 1em 0; font-size: 0.85rem; }
+		.prose table { width: 100%; border-collapse: collapse; margin: 1em 0; font-size: 0.85rem; display:block; overflow-x:auto; }
 		.prose th {
 			text-align: left;
 			font-weight: 600;
@@ -1742,6 +1774,7 @@ body.wallpaper-active{background:transparent!important}
 	<div style="padding:8px 10px; flex-shrink:0; border-top:1px solid var(--border);">
 		<div style="display:flex; justify-content:space-between; align-items:center;">
 			<button onclick="openSemanticBrain()" class="tool-btn" style="width:28px;height:28px;border-radius:8px;" title="Bellek"><span class="material-symbols-rounded" style="font-size:15px;">neurology</span></button>
+			<button onclick="openSkills()" class="tool-btn" style="width:28px;height:28px;border-radius:8px;" title="Skills"><span class="material-symbols-rounded" style="font-size:15px;">auto_awesome</span></button>
 			<button onclick="openMCP()" class="tool-btn" style="width:28px;height:28px;border-radius:8px;" title="Eklentiler"><span class="material-symbols-rounded" style="font-size:15px;">extension</span></button>
 			<button onclick="toggleAgentsPanel()" class="tool-btn" style="width:28px;height:28px;border-radius:8px;" title="Sub-Ajanlar (Ctrl+X)"><span class="material-symbols-rounded" style="font-size:15px;">psychology</span></button>
 			<button onclick="openModal('settingsModal')" class="tool-btn" style="width:28px;height:28px;border-radius:8px;" title="Ayarlar"><span class="material-symbols-rounded" style="font-size:15px;">settings</span></button>
@@ -1860,7 +1893,7 @@ body.wallpaper-active{background:transparent!important}
 				<textarea id="prompt-input" rows="1" placeholder="Astro 8 🚀 PRO'a mesaj yaz... (Enter = gönder, Shift+Enter = yeni satır)"></textarea>
 				<div class="input-footer">
 					<div class="input-footer-left">
-						<input id="file-input" type="file" class="hidden" multiple onchange="handleFileAttach(this)">
+						<input id="file-input" type="file" class="hidden" multiple accept="image/*,.pdf,.txt,.csv,.json,.xml,.md,.js,.ts,.py,.html,.css" onchange="handleFileAttach(this)">
 						<button class="badge-btn" onclick="document.getElementById('file-input').click()" title="Attach file" style="padding:4px 8px; font-size:0.8rem; background:transparent; border:1px solid var(--border); border-radius:6px;">
 							<span class="material-symbols-rounded" style="font-size:15px; color:var(--muted);">attach_file</span>
 						</button>
@@ -2550,11 +2583,27 @@ body.wallpaper-active{background:transparent!important}
 		</div>
 	</div>
 </div>
+<!-- Skills Modal -->
+<div id="skillsModal" class="modal-overlay" onclick="overlayClose(event,'skillsModal')">
+	<div class="modal" onclick="event.stopPropagation()">
+		<div class="modal-header">
+			<div class="modal-title"><span class="material-symbols-rounded" style="color:var(--accent);">auto_awesome</span> Skills</div>
+			<button class="modal-close" onclick="closeModal('skillsModal')"><span class="material-symbols-rounded">close</span></button>
+		</div>
+		<div class="modal-body" style="max-height:78vh;overflow-y:auto;">
+			<div style="margin-bottom:12px;font-size:0.82rem;color:var(--muted);">Skills provide specialized instructions for specific tasks. Place .md files in <code>.opencode/skills/</code> directory.</div>
+			<div id="skills-list" style="display:flex;flex-direction:column;gap:6px;">
+				<div style="text-align:center;padding:20px;color:var(--muted);font-size:0.85rem;">Loading skills...</div>
+			</div>
+		</div>
+	</div>
+</div>
+
 <!-- MCP Manager Modal -->
 <div id="mcpModal" class="modal-overlay" onclick="overlayClose(event,'mcpModal')">
 	<div class="modal" onclick="event.stopPropagation()">
 		<div class="modal-header">
-			<div class="modal-title"><span class="material-symbols-rounded icon-primary" style="">api</span> MCP Yöneticisi</div>
+			<div class="modal-title"><span class="material-symbols-rounded icon-primary">api</span> MCP Yöneticisi</div>
 			<button class="modal-close" onclick="closeModal('mcpModal')"><span class="material-symbols-rounded">close</span></button>
 		</div>
 		<div class="modal-body" style="max-height:78vh;overflow-y:auto;">
@@ -2815,6 +2864,103 @@ window.addEventListener('resize', updateResponsiveMode);
 window.addEventListener('load', updateResponsiveMode);
 updateResponsiveMode();
 
+// ─── REACTIVE STORE ────────────────────────────────────────────────────
+class Store {
+  constructor(initial) {
+    this._state = { ...initial };
+    this._listeners = new Map();
+    this._idCounter = 0;
+  }
+  get(key) {
+    return this._state[key];
+  }
+  set(key, value) {
+    const prev = this._state[key];
+    if (prev === value) return;
+    this._state[key] = value;
+    this._notify(key, value, prev);
+  }
+  update(key, fn) {
+    this.set(key, fn(this._state[key]));
+  }
+  subscribe(key, fn) {
+    if (!this._listeners.has(key)) this._listeners.set(key, new Map());
+    const id = ++this._idCounter;
+    this._listeners.get(key).set(id, fn);
+    return () => this._listeners.get(key)?.delete(id);
+  }
+  _notify(key, value, prev) {
+    const listeners = this._listeners.get(key);
+    if (listeners) {
+      for (const fn of listeners.values()) fn(value, prev);
+    }
+  }
+  keys() {
+    return Object.keys(this._state);
+  }
+  snapshot() {
+    return { ...this._state };
+  }
+}
+
+const store = new Store({
+  authUrl: 'http://127.0.0.1:3131',
+  currentAssistantMsgId: null,
+  isGenerating: false,
+  currentMsgStartTime: 0,
+  currentMsgTokens: 0,
+  waitingForAnswer: false,
+  attachedFiles: [],
+  currentTheme: localStorage.getItem('mc-theme') || 'dark',
+  allCommands: [],
+  filteredCmds: [],
+  cmdIndex: -1,
+  availableCommands: [],
+  filteredCommands: [],
+  acIndex: -1,
+  sidebarOpen: true,
+  bulkSelectMode: false,
+  selectedConversationIds: new Set(),
+  activeConvMenuId: null,
+  searchActive: false,
+  userMenuOpen: false,
+  _modelSupportsThinking: false,
+  _thinkingEnabled: false,
+  _webEnabled: false,
+  _currentIsStreaming: false,
+  _lastTodoCount: 0,
+  _todoInterval: setInterval(function(){}, 1<<30), // placeholder (replaced below)
+  _micRecognition: null,
+  _micListening: false,
+  availableToolsList: [],
+  disabledToolsList: [],
+  _themeBgPending: { type: 'none', value: '' },
+  _bgSettings: { type: 'none', value: '', blur: 0, opacity: 40, brightness: 100 },
+  _agents: {},
+  _agentIds: [],
+  _allModels: [],
+  _currentModelTab: 'cloud',
+  _fusionDropdownTimeout: null,
+  mcpState: null,
+});
+
+// Reactive subscriptions (auto-update UI on state changes)
+store.subscribe('currentTheme', (val) => {
+  document.documentElement.setAttribute('data-theme', val);
+  localStorage.setItem('mc-theme', val);
+});
+store.subscribe('sidebarOpen', (val) => {
+  const sb = document.getElementById('sidebar');
+  if (sb) {
+    if (val) sb.classList.remove('collapsed');
+    else sb.classList.add('collapsed');
+  }
+});
+store.subscribe('isGenerating', (val) => {
+  if (sendBtn) sendBtn.classList.toggle('hidden', val);
+  if (stopBtn) stopBtn.classList.toggle('hidden', !val);
+});
+
 // ─── MARKED SETUP ────────────────────────────────────────────────────────
 const renderer = new marked.Renderer();
 
@@ -2859,16 +3005,20 @@ marked.setOptions({ renderer, breaks: true, gfm: true });
 
 
 // ─── GLOBAL ERROR HANDLER ─────────────────────────────────────────────────
-window.onerror = function(msg, source, line, col, err) {
+function _showError(msg, err) {
 	const el = document.getElementById('error-banner');
 	if (!el) return;
-	el.textContent = '⚠ Error: ' + (err?.message || msg || 'unknown');
+	const detail = err?.stack ? err.stack.slice(0, 200) : '';
+	el.textContent = (msg || 'unknown') + (detail ? ' — ' + detail : '');
 	el.classList.add('visible');
 	clearTimeout(el._hideTimer);
-	el._hideTimer = setTimeout(() => el.classList.remove('visible'), 8000);
+	el._hideTimer = setTimeout(() => el.classList.remove('visible'), 10000);
+}
+window.onerror = function(msg, source, line, col, err) {
+	_showError(err?.message || msg || 'unknown', err);
 };
 window.addEventListener('unhandledrejection', function(e) {
-	window.onerror(e.reason?.message || 'Unhandled Promise rejection', '', 0, 0, e.reason);
+	_showError(e.reason?.message || 'Unhandled Promise rejection', e.reason);
 });
 // Cleanup on page unload
 window.addEventListener('beforeunload', function() {
@@ -2882,20 +3032,20 @@ const chatContainer = document.getElementById('chat-container');
 const promptInput = document.getElementById('prompt-input');
 const sendBtn = document.getElementById('send-btn');
 const stopBtn = document.getElementById('stop-btn');
-let authUrl = 'http://127.0.0.1:3131';
-let currentAssistantMsgId = null;
-let isGenerating = false;
-let currentMsgStartTime = 0;
-let currentMsgTokens = 0;
-let waitingForAnswer = false; // true while ask_question is pending user selection
-let attachedFiles = [];
-let currentTheme = localStorage.getItem('mc-theme') || 'dark';
-let allCommands = [];
-let filteredCmds = [];
-let cmdIndex = -1;
-let availableCommands = [];
-let filteredCommands = [];
-let acIndex = -1;
+
+// Reactive state helpers — $(key) to read, $$(key, val) to write
+const $ = (k) => store.get(k);
+const $$ = (k, v) => store.set(k, v);
+
+// Legacy global variable backward compatibility via window getters/setters
+const _storeKeys = ['authUrl','currentAssistantMsgId','isGenerating','currentMsgStartTime','currentMsgTokens','waitingForAnswer','attachedFiles','currentTheme','allCommands','filteredCmds','cmdIndex','availableCommands','filteredCommands','acIndex','sidebarOpen','bulkSelectMode','selectedConversationIds','activeConvMenuId','searchActive','userMenuOpen','_modelSupportsThinking','_thinkingEnabled','_webEnabled','_currentIsStreaming','_lastTodoCount','_todoInterval','_micRecognition','_micListening','availableToolsList','disabledToolsList','_themeBgPending','_bgSettings','_agents','_agentIds','_allModels','_currentModelTab','_fusionDropdownTimeout','mcpState'];
+for (const k of _storeKeys) {
+  Object.defineProperty(window, k, {
+    get() { return store.get(k); },
+    set(v) { store.set(k, v); },
+    configurable: true,
+  });
+}
 
 // ─── SAFE FETCH WRAPPER ──────────────────────────────────────────────────
 const __abortControllers = new Map();
@@ -2937,13 +3087,11 @@ function safeFetchJSON(url, opts = {}) {
 }
 
 // ─── MODEL CAPABILITIES ──────────────────────────────────────────────────
-let _modelSupportsThinking = false;
-let _thinkingEnabled = false;
-let _webEnabled = false;
+// _modelSupportsThinking, _thinkingEnabled, _webEnabled → store
 
 function setCurrentModelCapabilities(modelId) {
 	const model = _allModels.find(m => m.id === modelId || m.id.endsWith('/' + modelId));
-	_modelSupportsThinking = model ? !!model.reasoning : false;
+	store.set('_modelSupportsThinking', model ? !!model.reasoning : false);
 	const thinkBtn = document.getElementById('think-btn');
 	if (thinkBtn) {
 		if (_modelSupportsThinking) {
@@ -3014,7 +3162,7 @@ setTimeout(() => {
 }, 100);
 
 // ─── WALLPAPER & BACKGROUND ────────────────────────────────────────────────
-let _bgSettings = { type: 'none', value: '', blur: 0, opacity: 40, brightness: 100 };
+// _bgSettings → store
 
 function toggleBgOptions() {
 	const type = document.getElementById('set-bg-type')?.value || 'none';
@@ -3231,7 +3379,7 @@ const _userIcons = {
 	'glass': '/assets/%C4%B0con%20and%20Wallpaper/Glass%20icon.jpg',
 };
 
-let _themeBgPending = { type: 'none', value: '' };
+// _themeBgPending → store
 
 function selectThemeBg(id) {
 	document.querySelectorAll('.bg-opt-btn').forEach(b => b.classList.remove('active'));
@@ -3430,8 +3578,7 @@ function openMCP() {
 	openModal('mcpModal');
 }
 // ─── SUB-AGENT TRACKING ─────────────────────────────────────────────────
-let _agents = {}; // id -> { taskName, startTime, toolCalls, status, events }
-let _agentIds = [];
+// _agents, _agentIds → store
 
 function toggleAgentsPanel() {
 	const pane = document.getElementById('ide-pane');
@@ -3587,7 +3734,7 @@ function refreshTodoHeader(count, done) {
 		if (stats) stats.textContent = `${done}/${count}`;
 	}
 }
-let _lastTodoCount = 0;
+store.set('_lastTodoCount', 0);
 function todoAction(action, id, text) {
 	safeFetchJSON('/api/todo', {
 		method: 'POST',
@@ -3659,10 +3806,10 @@ function fetchTodoList() {
 	}).catch(() => {});
 }
 // Auto-refresh todo every 2s (pauses when tab is hidden)
-let _todoInterval = setInterval(fetchTodoList, 2000);
+store.set('_todoInterval', setInterval(fetchTodoList, 2000));
 document.addEventListener('visibilitychange', function() {
-	if (document.hidden) { clearInterval(_todoInterval); _todoInterval = null; }
-	else if (!_todoInterval) _todoInterval = setInterval(fetchTodoList, 2000);
+	if (document.hidden) { clearInterval(store.get('_todoInterval')); store.set('_todoInterval', null); }
+	else if (!store.get('_todoInterval')) store.set('_todoInterval', setInterval(fetchTodoList, 2000));
 });
 function closeModal(id) {
 	if (id) document.getElementById(id)?.classList.remove('active');
@@ -3674,11 +3821,11 @@ function overlayClose(e, id) {
 }
 
 // ─── SIDEBAR ──────────────────────────────────────────────────────────────
-let sidebarOpen = true;
+store.set('sidebarOpen', true);
 function toggleSidebar() {
-	sidebarOpen = !sidebarOpen;
+	store.set('sidebarOpen', !store.get('sidebarOpen'));
 	const sb = document.getElementById('sidebar');
-	if (sidebarOpen) sb.classList.remove('collapsed');
+	if (store.get('sidebarOpen')) sb.classList.remove('collapsed');
 	else sb.classList.add('collapsed');
 }
 
@@ -3789,16 +3936,17 @@ async function loadConversations() {
 	}
 }
 
-let bulkSelectMode = false;
-let selectedConversationIds = new Set();
+store.set('bulkSelectMode', false);
+store.set('selectedConversationIds', new Set());
 
 function toggleBulkSelectMode() {
-	bulkSelectMode = !bulkSelectMode;
-	selectedConversationIds.clear();
+	const newVal = !store.get('bulkSelectMode');
+	store.set('bulkSelectMode', newVal);
+	store.get('selectedConversationIds').clear();
 	
 	const bar = document.getElementById('bulk-delete-bar');
 	const btn = document.getElementById('bulk-select-btn');
-	if (bulkSelectMode) {
+	if (newVal) {
 		bar.classList.remove('hidden');
 		btn.textContent = 'İptal';
 	} else {
@@ -3812,7 +3960,7 @@ function toggleBulkSelectMode() {
 function updateBulkDeleteBar() {
 	const countEl = document.getElementById('bulk-selected-count');
 	if (countEl) {
-		countEl.textContent = `${selectedConversationIds.size} seçildi`;
+		countEl.textContent = `${store.get('selectedConversationIds').size} seçildi`;
 	}
 }
 
@@ -3969,7 +4117,7 @@ function renderConversations(sessions, activeId) {
 	});
 }
 
-let activeConvMenuId = null;
+// activeConvMenuId → store
 function toggleConvMenu(e, id, title) {
     let menu = document.getElementById('conv-context-menu');
     if (!menu) {
@@ -4071,9 +4219,9 @@ async function deleteConversation(id) {
 }
 
 // ─── SEARCH ───────────────────────────────────────────────────────────────
-let searchActive = false;
+// searchActive → store
 function toggleSearch() {
-	searchActive = !searchActive;
+	store.set('searchActive', !store.get('searchActive'));
 	const bar = document.getElementById('search-bar');
 	if (searchActive) {
 		bar.classList.add('active');
@@ -4123,10 +4271,16 @@ function insertPrompt(text) {
 }
 
 // ─── FILE ATTACH ──────────────────────────────────────────────────────────
+const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB per file
+
 function handleFileAttach(input) {
 	const files = Array.from(input.files);
 	const invalidExts = ['.exe', '.dll', '.bin', '.iso', '.msi'];
-	const validFiles = files.filter(f => !invalidExts.some(ext => f.name.toLowerCase().endsWith(ext)));
+	const validFiles = files.filter(f => {
+		if (invalidExts.some(ext => f.name.toLowerCase().endsWith(ext))) return false;
+		if (f.size > MAX_FILE_SIZE) { _showError(`File too large: ${f.name} (max 20MB)`); return false; }
+		return true;
+	});
 	validFiles.forEach(f => { if (!attachedFiles.find(x => x.name === f.name)) attachedFiles.push(f); });
 	renderAttachments();
 	input.value = '';
@@ -4136,14 +4290,20 @@ function renderAttachments() {
 	const preview = document.getElementById('attachment-preview');
 	if (!attachedFiles.length) { preview.classList.add('hidden'); return; }
 	preview.classList.remove('hidden');
-	preview.innerHTML = attachedFiles.map((f, i) => `
+	preview.innerHTML = attachedFiles.map((f, i) => {
+		const isImage = f.type && f.type.startsWith('image/');
+		const size = f.size ? (f.size > 1048576 ? (f.size/1048576).toFixed(1)+'MB' : (f.size/1024).toFixed(0)+'KB') : '';
+		const thumb = isImage ? `<img src="${URL.createObjectURL(f)}" style="width:24px;height:24px;object-fit:cover;border-radius:4px;margin-right:4px;">` : `<span class="material-symbols-rounded icon-primary" style="font-size:14px;margin-right:4px;">description</span>`;
+		return `
 		<span class="file-chip">
-			<span class="material-symbols-rounded icon-primary" style="font-size:14px;">description</span>
-			${f.name}
-			<button onclick="removeFile(${i})" style="background:none;border:none;cursor:pointer;color:var(--muted);padding:0;display:flex;">
+			${thumb}
+			<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:120px;">${f.name}</span>
+			${size ? `<span style="font-size:11px;color:var(--muted);margin-left:4px;">${size}</span>` : ''}
+			<button onclick="removeFile(${i})" style="background:none;border:none;cursor:pointer;color:var(--muted);padding:0;display:flex;margin-left:4px;">
 				<span class="material-symbols-rounded" style="font-size:13px;">close</span>
 			</button>
-		</span>`).join('');
+		</span>`;
+	}).join('');
 }
 
 function removeFile(i) {
@@ -4171,13 +4331,17 @@ document.body.addEventListener('drop', (e) => {
 	const ic = document.getElementById('input-container');
 	if (ic) ic.style.borderColor = 'var(--border)';
 	
-	if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-		const files = Array.from(e.dataTransfer.files);
-		const invalidExts = ['.exe', '.dll', '.bin', '.iso', '.msi'];
-		const validFiles = files.filter(f => !invalidExts.some(ext => f.name.toLowerCase().endsWith(ext)));
-		validFiles.forEach(f => { if (!attachedFiles.find(x => x.name === f.name)) attachedFiles.push(f); });
-		renderAttachments();
-	}
+		if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+			const files = Array.from(e.dataTransfer.files);
+			const invalidExts = ['.exe', '.dll', '.bin', '.iso', '.msi'];
+			const validFiles = files.filter(f => {
+				if (invalidExts.some(ext => f.name.toLowerCase().endsWith(ext))) return false;
+				if (f.size > MAX_FILE_SIZE) { _showError(`File too large: ${f.name} (max 20MB)`); return false; }
+				return true;
+			});
+			validFiles.forEach(f => { if (!attachedFiles.find(x => x.name === f.name)) attachedFiles.push(f); });
+			renderAttachments();
+		}
 });
 
 // ─── TEXTAREA AUTO RESIZE ─────────────────────────────────────────────────
@@ -4701,171 +4865,196 @@ function _doUpdateMessage(id, content, isStreaming) {
 }
 
 // ─── TOOL RENDER ──────────────────────────────────────────────────────────
+// Each tool gets its own visual card with type-specific styling
+// Tools are visible IMMEDIATELY when execution starts
+
+function getToolType(nameLC) {
+	if (!nameLC) return 'default';
+	if (nameLC.includes('bash') || nameLC.includes('run_command') || nameLC.includes('execute')) return 'bash';
+	if (nameLC.includes('read') || nameLC.includes('view') || nameLC.includes('list') || nameLC.includes('ls')) return 'file-op';
+	if (nameLC.includes('edit') || nameLC.includes('replace') || nameLC.includes('write') || nameLC.includes('patch')) return 'file-op';
+	if (nameLC.includes('search') || nameLC.includes('grep') || nameLC.includes('find')) return 'search';
+	if (nameLC.includes('browser') || nameLC.includes('url') || nameLC.includes('navigate') || nameLC.includes('click') || nameLC.includes('screenshot')) return 'browser';
+	if (nameLC.includes('ask_question') || nameLC.includes('question') || nameLC.includes('confirm')) return 'question';
+	if (nameLC.includes('subagent') || nameLC.includes('delegate') || nameLC.includes('task')) return 'subagent';
+	return 'default';
+}
+
+function getToolIcon(nameLC) {
+	const type = getToolType(nameLC);
+	switch(type) {
+		case 'bash': return 'terminal';
+		case 'file-op': return nameLC.includes('read') || nameLC.includes('view') ? 'visibility' : 'edit_document';
+		case 'search': return 'search';
+		case 'browser': return 'language';
+		case 'question': return 'help_center';
+		case 'subagent': return 'account_tree';
+		default: return 'build';
+	}
+}
+
+function getToolColor(nameLC) {
+	const type = getToolType(nameLC);
+	switch(type) {
+		case 'bash': return '#00ffaa';
+		case 'file-op': return '#ffcf50';
+		case 'search': return '#d950ff';
+		case 'browser': return '#ff6b6b';
+		case 'question': return '#ffe250';
+		case 'subagent': return '#50b8ff';
+		default: return 'var(--muted)';
+	}
+}
+
+function getStatusLabel(status) {
+	switch(status) {
+		case 'running': return 'Running...';
+		case 'error': return 'Error';
+		case 'done': return 'Done';
+		default: return status;
+	}
+}
+
 function renderTool(toolCallId, name, args, status, result) {
 	const nameLC = (name || '').toLowerCase();
 	
-
-	// ask_question: intercept EARLY before any DOM creation
-	if (nameLC.includes('ask_question')) {
-		const aqc = document.getElementById('ask-question-container');
-		if (status === 'running' && aqc) {
-			const questions = args?.questions || [];
-			const question = questions[0]?.question || args?.question || 'Please select:';
-			const options = questions[0]?.options || args?.options || [];
-			if (options.length > 0) {
-				waitingForAnswer = true;
-				aqc.innerHTML = `
-					<div style="font-size:0.9rem; font-weight:600; color:var(--fg); display:flex; align-items:center; gap:8px; margin-bottom:12px;">
-						<span class="material-symbols-rounded icon-primary" style="font-size:20px; ">help_center</span>
-						${escapeHtml(question)}
-					</div>
-					<div style="display:flex; flex-wrap:wrap; gap:8px;">
-						${options.map(opt => `<button onclick="answerQuestion('${escapeJsString(opt)}')" style="padding:8px 18px; font-size:0.85rem; cursor:pointer; background:var(--surface2); border:1.5px solid var(--border); border-radius:10px; color:var(--fg); font-family:inherit; transition:all 0.2s; font-weight:500;" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)';this.style.background='rgba(108,143,255,0.08)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--fg)';this.style.background='var(--surface2)'">${escapeHtml(opt)}</button>`).join('')}
-					</div>`;
-				aqc.classList.remove('hidden');
-				// Scroll into view so user sees it
-				setTimeout(() => aqc.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
-			}
-		} else if (status === 'done' || status === 'error') {
-			// DO NOT hide here — let answerQuestion() handle hiding after user picks
-			// Only hide if we're NOT waiting (i.e., answer was already submitted)
-			if (!waitingForAnswer) {
-				if (aqc) aqc.classList.add('hidden');
-			}
-		}
-		return; // Never render ask_question as a tool card
+	if (nameLC.includes('ask_question') || nameLC.includes('question')) {
+		handleAskQuestion(toolCallId, name, args, status, result);
+		return;
 	}
+
+	const toolType = getToolType(nameLC);
+	const icon = getToolIcon(nameLC);
+	const color = getToolColor(nameLC);
+	const statusLabel = getStatusLabel(status);
+	const isStreaming = status === 'running';
+	const isError = status === 'error';
 	
 	let el = document.getElementById('tool-' + toolCallId);
 	
 	if (!el) {
-		const children = Array.from(chatInner.children);
-		let lastToolEl = null;
-		for (let i = children.length - 1; i >= 0; i--) {
-			if (children[i].id === 'global-indicator') continue;
-			if (children[i].hasAttribute('data-tool-name')) {
-				lastToolEl = children[i];
-				break;
-			}
-			if (children[i].classList.contains('msg-row')) {
-				// We hit a user message or assistant text message, break so we don't merge across turns
-				break;
-			}
-		}
+		el = document.createElement('div');
+		el.id = 'tool-' + toolCallId;
+		el.className = 'msg-row assistant';
+		el.style.animation = 'msgSlideIn 0.2s ease';
 		
-		if (lastToolEl) {
-			// Group ALL consecutive tool calls into one card
-			el = lastToolEl;
-			if (!el.subTools) el.subTools = [];
-			if (!el.subTools.find(t => t.id === toolCallId)) {
-				el.subTools.push({ id: toolCallId, name, args, status, result });
-			}
-		}
+		const fmtArgs = formatToolValue(args);
+		const fmtResult = formatToolValue(result);
+		const argsPreview = fmtArgs ? fmtArgs.slice(0, 200) : '';
 		
-		if (!el) {
-			el = document.createElement('div');
-			el.id = 'tool-' + toolCallId;
-			el.className = 'msg-row assistant tool-enter';
-			el.setAttribute('data-tool-name', name);
-			el.subTools = [{ id: toolCallId, name, args, status, result }];
-			appendToChat(el);
+		el.innerHTML = `
+			<div class="tool-embed ${toolType} ${isError ? 'error' : ''} ${isStreaming ? 'streaming' : ''}" data-tool-id="${toolCallId}">
+				<div class="tool-embed-header" onclick="this.parentElement.classList.toggle('tool-embed-collapsed')">
+					<div class="tool-embed-icon" style="background:${color}20;color:${color}">
+						<span class="material-symbols-rounded" style="font-size:14px;">${icon}</span>
+					</div>
+					<span class="tool-embed-name">${escapeHtml(name)}</span>
+					<div class="tool-embed-status">
+						<span class="tool-embed-status-dot ${isStreaming ? 'running' : isError ? 'error' : 'done'}"></span>
+						<span>${statusLabel}</span>
+					</div>
+					<span class="material-symbols-rounded tool-embed-chevron" style="font-size:14px;color:var(--muted);">expand_more</span>
+				</div>
+				<div class="tool-embed-body">
+					${argsPreview ? `<details class="tool-args" ${isStreaming ? 'open' : ''}><summary>Arguments</summary><pre>${escapeHtml(argsPreview)}</pre></details>` : ''}
+					<div class="tool-output">
+						${fmtResult ? `<div class="tool-output-header"><span class="material-symbols-rounded">output</span> Output</div><pre class="tool-result-text">${escapeHtml(fmtResult)}</pre>` : ''}
+						${isStreaming && !fmtResult ? '<div class="tool-output-header"><span class="material-symbols-rounded">hourglass_top</span> Executing...</div><pre style="color:var(--muted);font-style:italic;">Waiting for output...</pre>' : ''}
+					</div>
+				</div>
+			</div>`;
+		
+		appendToChat(el);
+	} else {
+		const fmtResult = formatToolValue(result);
+		const fmtArgs = formatToolValue(args);
+		const embed = el.querySelector('.tool-embed');
+		if (embed) {
+			embed.className = `tool-embed ${toolType} ${isError ? 'error' : ''} ${isStreaming ? 'streaming' : ''}`;
+			
+			const dot = embed.querySelector('.tool-embed-status-dot');
+			if (dot) {
+				dot.className = `tool-embed-status-dot ${isStreaming ? 'running' : isError ? 'error' : 'done'}`;
+			}
+			const statusSpan = embed.querySelector('.tool-embed-status span:last-child');
+			if (statusSpan) statusSpan.textContent = statusLabel;
+			
+			// Update output
+			const outputDiv = embed.querySelector('.tool-output');
+			if (outputDiv) {
+				if (fmtResult) {
+					outputDiv.innerHTML = `<div class="tool-output-header"><span class="material-symbols-rounded">output</span> Output</div><pre class="tool-result-text">${escapeHtml(fmtResult)}</pre>`;
+				} else if (isStreaming) {
+					outputDiv.innerHTML = `<div class="tool-output-header"><span class="material-symbols-rounded">hourglass_top</span> Executing...</div><pre style="color:var(--muted);font-style:italic;">Waiting for output...</pre>`;
+				}
+			}
+			
+			// Update args
+			const argsDetails = embed.querySelector('.tool-args');
+			if (fmtArgs) {
+				if (argsDetails) {
+					argsDetails.querySelector('pre').textContent = fmtArgs.slice(0, 200);
+				} else {
+					const body = embed.querySelector('.tool-embed-body');
+					const argsHtml = `<details class="tool-args" ${isStreaming ? 'open' : ''}><summary>Arguments</summary><pre>${escapeHtml(fmtArgs.slice(0, 200))}</pre></details>`;
+					body.insertAdjacentHTML('afterbegin', argsHtml);
+				}
+			}
 		}
 	}
 	
-	let parsedArgs = {};
-	try {
-		parsedArgs = typeof args === 'string' ? JSON.parse(args || '{}') : args;
-	} catch (e) {
-		parsedArgs = args;
-	}
-	// highlightFileTree(name, parsedArgs, status);
-	const subTool = el.subTools.find(t => t.id === toolCallId);
-	if (subTool) {
-		if (args !== undefined && args !== null) subTool.args = args;
-		subTool.status = status;
-		if (result !== undefined && result !== null) subTool.result = result;
+	if (toolType === 'file-op' && typeof window.fetchIDETree === 'function') {
+		setTimeout(() => window.fetchIDETree(true), 500);
 	}
 	
-	const count = el.subTools.length;
-	const uniqueNames = [...new Set(el.subTools.map(t => t.name))];
-	const title = count > 1 ? `${uniqueNames.length > 1 ? uniqueNames.slice(0,2).join(' + ') + (uniqueNames.length > 2 ? '...' : '') : name} (${count})` : name;
-	
-	let groupStatus = 'done';
-	if (el.subTools.some(t => t.status === 'error')) groupStatus = 'error';
-	else if (el.subTools.some(t => t.status === 'running')) groupStatus = 'running';
-	
-	const statusClass = groupStatus;
-	const statusLabel = groupStatus === 'running' ? 'Çalışıyor' : (groupStatus === 'error' ? 'Hata' : 'Tamamlandı');
-
-	let iconName = 'build';
-	let iconColor = 'var(--muted)';
-	
-	if (nameLC.includes('bash') || nameLC.includes('run_command')) { iconName = 'terminal'; iconColor = '#00ffaa'; }
-	else if (nameLC.includes('view') || nameLC.includes('read') || nameLC.includes('list')) { iconName = 'visibility'; iconColor = '#50b8ff'; }
-	else if (nameLC.includes('edit') || nameLC.includes('replace') || nameLC.includes('write')) { iconName = 'edit_document'; iconColor = '#ffcf50'; }
-	else if (nameLC.includes('search') || nameLC.includes('grep')) { iconName = 'search'; iconColor = '#d950ff'; }
-	else if (nameLC.includes('browser') || nameLC.includes('url')) { iconName = 'language'; iconColor = '#ff6b6b'; }
-	else if (nameLC.includes('ask_question') || nameLC.includes('question')) { iconName = 'help_center'; iconColor = '#ffe250'; }
-
-	if (statusClass === 'error') iconColor = '#ff6464';
-
-	let bodyHtml = '';
-	el.subTools.forEach((t, index) => {
-		const fmtArgs = formatToolValue(t.args);
-		const fmtResult = formatToolValue(t.result);
-		const subStatusClass = t.status === 'running' ? 'running' : (t.status === 'error' ? 'error' : 'done');
-		
-		let optionsHtml = '';
-		if (nameLC.includes('ask_question') && subStatusClass === 'running' && t.args && Array.isArray(t.args.options)) {
-			// AQC is already shown by the early-intercept above — skip tool card row
-			return;
-		} else if (nameLC.includes('ask_question') && subStatusClass !== 'running') {
-			// Don't hide AQC here — answerQuestion() handles that
+	// Auto-scroll
+	if (isStreaming) {
+		const nearBottom = chatContainer.scrollHeight - chatContainer.scrollTop - chatContainer.clientHeight < 200;
+		if (nearBottom) {
+			setTimeout(() => { chatContainer.scrollTop = chatContainer.scrollHeight; }, 50);
 		}
+	}
+}
 
-		let previewBtnHtml = '';
-		if ((nameLC.includes('browser_tabs') || nameLC.includes('browser_page')) && t.args && t.args.url) {
-			previewBtnHtml = `<button class="p-btn secondary" style="font-size:0.85rem; padding:2px 6px; margin-left:auto;" onclick="window.open('${escapeHtml(t.args.url)}', 'Astro 8 🚀 PROPreview', 'width=1000,height=800')"><span class="material-symbols-rounded" style="font-size:12px; margin-right:4px;">open_in_new</span>Ön İzleme Yap</button>`;
+// Separate handler for ask_question
+function handleAskQuestion(toolCallId, name, args, status, result) {
+	const aqc = document.getElementById('ask-question-container');
+	if (status === 'running' && aqc) {
+		const questions = args?.questions || [];
+		const question = questions[0]?.question || args?.question || 'Please select:';
+		const options = questions[0]?.options || args?.options || [];
+		if (options.length > 0) {
+			waitingForAnswer = true;
+			aqc.innerHTML = `
+				<div class="tool-embed question streaming" data-tool-id="${toolCallId}">
+					<div class="tool-embed-header">
+						<div class="tool-embed-icon" style="background:#ffe25020;color:#ffe250">
+							<span class="material-symbols-rounded" style="font-size:14px;">help_center</span>
+						</div>
+						<span class="tool-embed-name">${escapeHtml(name)}</span>
+						<div class="tool-embed-status">
+							<span class="tool-embed-status-dot running"></span>
+							<span>Waiting for answer</span>
+						</div>
+					</div>
+					<div class="tool-embed-body" style="padding:14px;">
+						<div style="font-size:0.9rem;font-weight:600;color:var(--fg);display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+							<span class="material-symbols-rounded" style="font-size:20px;color:#ffe250;">help_center</span>
+							${escapeHtml(question)}
+						</div>
+						<div style="display:flex;flex-wrap:wrap;gap:8px;">
+							${options.map(opt => `<button onclick="answerQuestion('${escapeJsString(opt)}')" style="padding:8px 18px;font-size:0.85rem;cursor:pointer;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;color:var(--fg);font-family:inherit;transition:all 0.2s;font-weight:500;" onmouseover="this.style.borderColor='#ffe250';this.style.color='#ffe250';this.style.background='rgba(255,226,80,0.08)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--fg)';this.style.background='var(--surface2)'">${escapeHtml(opt)}</button>`).join('')}
+						</div>
+					</div>
+				</div>`;
+			aqc.classList.remove('hidden');
+			setTimeout(() => aqc.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
 		}
-
-		
-        let resultColor = '';
-        if (nameLC.includes('bash') || nameLC.includes('run_command')) {
-            resultColor = 'var(--fg)'; // default neutral color for bash
-        }
-        if (subStatusClass === 'error') {
-            resultColor = '#ff6464';
-        } else if (fmtResult && (fmtResult.includes('Command exited with code ') && !fmtResult.includes('code 0')) || (fmtResult && fmtResult.toLowerCase().includes('error:'))) {
-            resultColor = '#ff8a8a';
-        }
-
-        bodyHtml += `
-            <div style="border-bottom: ${index < count - 1 ? '1px solid var(--border)' : 'none'}; padding: 10px 12px;">
-                <div style="display:flex; align-items:center; gap:8px; font-weight:600; font-size:0.85rem; color:var(--muted); margin-bottom: 6px;">
-                    <span class="tool-status-dot" style="width:6px; height:6px; background:${subStatusClass === 'running' ? iconColor : subStatusClass === 'error' ? '#ff6464' : 'var(--accent2)'}"></span>
-                    <span>${name} #${index + 1}</span>
-                    ${previewBtnHtml}
-                </div>
-                ${fmtArgs ? `<div class="tool-section"><div class="tool-section-label" style="font-size:0.6rem; margin-bottom: 4px;">Girdi</div><div class="markdown-body" style="font-size:0.8rem; border-radius: 6px; padding-top: 0px;">${marked.parse('```json\n' + fmtArgs + '\n```')}</div></div>` : ''}
-                ${optionsHtml}
-                ${fmtResult ? `<div class="tool-section result"><div class="tool-section-label" style="font-size:0.6rem; margin-bottom: 4px;">Çıktı</div><div class="markdown-body" style="font-size:0.8rem; border-radius: 6px; padding-top: 0px;">${marked.parse('```text\n' + fmtResult + '\n```')}</div></div>` : ''}
-            </div>
-        `;
-
-	});
-
-	el.innerHTML = `
-		<div class="tool-card ${statusClass}" style="width: 100%; max-width: 780px; margin: 0 auto; border-left: 2px solid ${iconColor}40;">
-			<div class="tool-header" onclick="this.nextElementSibling.classList.toggle('hidden')">
-				<span class="material-symbols-rounded" style="font-size:15px;color:${iconColor};">${statusClass === 'running' ? 'hourglass_top' : statusClass === 'error' ? 'error' : iconName}</span>
-				<span class="tool-name" style="color:${iconColor};">${title}</span>
-				<span style="margin-left:auto;font-size:0.8rem;color:var(--muted);">${statusLabel}</span>
-				<span class="material-symbols-rounded" style="font-size:14px;color:var(--muted);">expand_more</span>
-			</div>
-			<div class="tool-body">
-				${bodyHtml}
-			</div>
-		</div>`;
+	} else if (status === 'done' || status === 'error') {
+		if (!waitingForAnswer && aqc) {
+			aqc.classList.add('hidden');
+		}
+	}
 }
 
 function formatToolValue(val) {
@@ -4881,8 +5070,7 @@ function formatToolValue(val) {
 sendBtn.addEventListener('click', sendMessage);
 
 // ─── MIC / VOICE INPUT ────────────────────────────────────────────────────
-let _micRecognition = null;
-let _micListening = false;
+// _micRecognition, _micListening → store
 
 function toggleMic() {
 	const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -4948,13 +5136,22 @@ async function sendMessage() {
 
 	// Process images/files if any
 	const images = [];
+	const FILE_TIMEOUT = 30000; // 30s max per file
 	for (const file of attachedFiles) {
-		const data = await new Promise((resolve) => {
-			const reader = new FileReader();
-			reader.onload = (e) => resolve(e.target.result.split(',')[1]);
-			reader.readAsDataURL(file);
-		});
-		images.push({ type: 'image', mimeType: file.type || 'application/octet-stream', data });
+		const isImage = file.type && file.type.startsWith('image/');
+		try {
+			const data = await new Promise((resolve, reject) => {
+				const reader = new FileReader();
+				const timer = setTimeout(() => { reader.abort(); reject(new Error('File read timeout')); }, FILE_TIMEOUT);
+				reader.onload = (e) => { clearTimeout(timer); resolve(e.target.result.split(',')[1]); };
+				reader.onerror = () => { clearTimeout(timer); reject(new Error('Failed to read file: ' + file.name)); };
+				reader.onabort = () => { clearTimeout(timer); reject(new Error('File read aborted: ' + file.name)); };
+				reader.readAsDataURL(file);
+			});
+			images.push({ type: isImage ? 'image' : 'file', mimeType: file.type || 'application/octet-stream', data, name: file.name });
+		} catch (err) {
+			_showError(err.message, err);
+		}
 	}
 
 	attachedFiles = [];
@@ -5173,8 +5370,7 @@ const providerColors = {
 
 const localProviders = new Set(['ollama', 'lmstudio', 'lm-studio', 'local']);
 
-let _allModels = [];
-let _currentModelTab = 'cloud';
+// _allModels, _currentModelTab → store
 const _collapsedProviders = new Set();
 
 function toggleProvider(provider) {
@@ -5201,7 +5397,7 @@ function switchModelTab(tab) {
 	}
 }
 
-let _fusionDropdownTimeout = null;
+// _fusionDropdownTimeout → store
 function _initFusionSearch() {
 	if (!_allModels.length) return;
 	const fusionData = localStorage.getItem('mc-fusion');
@@ -5359,8 +5555,56 @@ function filterModels(query) {
 		return bAuth - aAuth;
 	});
 
-	if (!showProviderKeys.length) {
+	if (!showProviderKeys.length && !isLocalTab) {
 		list.innerHTML = emptyModelMsg('No models found');
+		return;
+	}
+
+	// Local tab: split into Ollama and LM Studio sections
+	if (isLocalTab) {
+		const ollamaModels = (grouped['ollama'] || []).slice();
+		const lmModels = (grouped['lmstudio'] || []).concat(grouped['lm-studio'] || []);
+
+		// Always add minimax-m3:cloud at top of Ollama section (fake entry if not actually installed)
+		const hasCloud = ollamaModels.some(m => m.id.includes('minimax-m3') || m.id.includes('minimax-m3:cloud'));
+		if (!hasCloud) {
+			ollamaModels.unshift({
+				id: 'ollama/minimax-m3:cloud',
+				name: 'minimax-m3:cloud',
+				provider: 'ollama',
+				authenticated: true,
+				contextWindow: 128000,
+			});
+		}
+
+		const renderModelSection = (title, models, provider) => {
+			const collapsed = _collapsedProviders.has(provider);
+			return `
+			<div class="model-section${collapsed ? ' collapsed' : ''}">
+				<div class="model-section-header" onclick="toggleProvider('${escHtml(provider)}')">
+					<span class="material-symbols-rounded collapse-icon${collapsed ? ' collapsed' : ''}">expand_more</span>
+					<span>${escHtml(title)}</span>
+				</div>
+				<div class="model-items">
+				${models.length ? models.map(m => {
+					const shortName = m.name.length > 28 ? m.name.slice(0, 26) + '...' : m.name;
+					const shortId = m.id.length > 40 ? m.id.slice(0, 38) + '...' : m.id;
+					const ctx = m.contextWindow ? Math.round(m.contextWindow/1000) + 'k' : '';
+					return `<div class="model-item" onclick="setModel('${escHtml(m.provider)}','${escHtml(m.id)}')">
+						<div class="model-icon">${(m.provider === 'ollama' ? 'OL' : 'LM')}</div>
+						<div style="overflow:hidden;flex:1;min-width:0;">
+							<div class="model-name">${escHtml(highlightMatch(shortName, q))}</div>
+							<div class="model-id">${escHtml(highlightMatch(shortId, q))}</div>
+						</div>
+						${ctx ? `<span class="model-badge">${ctx}</span>` : ''}
+					</div>`;
+				}).join('') : `<div class="model-item disabled" style="cursor:default;"><div style="color:var(--muted);padding:4px 0;">No models available</div></div>`}
+				</div>
+			</div>`;
+		};
+
+		list.innerHTML = renderModelSection('Ollama', ollamaModels, 'ollama') +
+			renderModelSection('LM Studio', lmModels, 'lmstudio');
 		return;
 	}
 
@@ -5683,9 +5927,8 @@ async function saveSettings() {
 	toast('Settings saved', 'success');
 }
 
-let availableToolsList = [];
-let disabledToolsList = JSON.parse(localStorage.getItem('mc-disabled-tools') || '[]');
-
+store.set('disabledToolsList', JSON.parse(localStorage.getItem('mc-disabled-tools') || '[]'));
+// availableToolsList, disabledToolsList → store
 function updateToolsCountUI() {
 	const activeCount = availableToolsList.length - disabledToolsList.length;
 	const countEl = document.getElementById('tools-count');
@@ -5735,7 +5978,7 @@ function toggleToolState(tool) {
 }
 
 // ─── USER MENU ────────────────────────────────────────────────────────────
-let userMenuOpen = false;
+// userMenuOpen → store
 function toggleUserMenu() {
 	const dd = document.getElementById('user-dropdown');
 	userMenuOpen = !userMenuOpen;
@@ -6082,193 +6325,313 @@ function updateMobileStatus(data) {
 	}
 }
 
-// ─── SSE SETUP ────────────────────────────────────────────────────────────
-const es = new EventSource(isMobileMode ? '/events?mobile=1' : '/events');
-// astroagent ARCHITECTURE FIX: SSE Reconnection & Error Handling
-es.onerror = (err) => {
-    console.error('[SSE] Connection lost or interrupted.', err);
-    const notConnectedUI = document.getElementById('bridge-not-connected');
-    if(notConnectedUI) {
-        notConnectedUI.classList.remove('hidden');
-        notConnectedUI.innerHTML = '<div style="font-weight:600;color:var(--fg);margin-bottom:2px;">Connection Lost</div><div style="opacity:0.8">Trying to reconnect to Astro 8 🚀 PRO server...</div>';
-    }
-    // Tarayıcı EventSource'u otomatik dener, ancak sunucu tamamen kapandıysa manuel tetikleme gerekebilir.
-    // Kullanıcı mesaj yazarken sayfa yenilenmesin diye textarea kontrolü ekle.
-    setTimeout(() => {
-        if (es.readyState === 2 /* CLOSED */) {
-            const input = document.getElementById('chat-input');
-            if (!input || !input.value.trim()) {
-                window.location.reload();
-            }
-        }
-    }, 6000);
-};
-es.onmessage = (e) => {
-	try {
-		const data = JSON.parse(e.data);
+// ─── REALTIME BUS CLIENT (WebSocket + SSE fallback) ──────────────────────
+function createRealtimeClient() {
+	const clients = [];
+	let reconnectTimer = null;
+	let connected = false;
 
-		if (data.type === 'mobile_status') {
+	function connectWS() {
+		const wsUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws' + (isMobileMode ? '?mobile=1' : '');
+		let ws = null;
+		let wsFailed = false;
+
+		try {
+			ws = new WebSocket(wsUrl);
+			const timeout = setTimeout(() => {
+				if (ws && ws.readyState !== WebSocket.OPEN) {
+					wsFailed = true;
+					ws.close();
+					connectSSE();
+				}
+			}, 2000);
+
+			ws.onopen = () => {
+				clearTimeout(timeout);
+				connected = true;
+				hideReconnectNotice();
+				console.log('[Bus] WebSocket connected');
+				// Drain SSE if we switch to WS later
+			};
+
+			ws.onmessage = (e) => {
+				try {
+					const data = JSON.parse(e.data);
+					handleBusEvent(data);
+				} catch(err) {
+					console.error('[Bus] WS parse error', err);
+				}
+			};
+
+			ws.onclose = () => {
+				clearTimeout(timeout);
+				connected = false;
+				if (!wsFailed) {
+					// Unexpected close - try to reconnect
+					scheduleReconnect();
+				}
+			};
+
+			ws.onerror = () => {
+				clearTimeout(timeout);
+				wsFailed = true;
+			};
+
+			clients.push({ type: 'ws', close: () => ws.close() });
+		} catch(e) {
+			wsFailed = true;
+			connectSSE();
+		}
+	}
+
+	let sseEs = null;
+
+	function connectSSE() {
+		try {
+			sseEs = new EventSource(isMobileMode ? '/events?mobile=1' : '/events');
+			sseEs.onopen = () => {
+				connected = true;
+				hideReconnectNotice();
+				console.log('[Bus] SSE connected (fallback)');
+			};
+
+			sseEs.onmessage = (e) => {
+				try {
+					const data = JSON.parse(e.data);
+					handleBusEvent(data);
+				} catch(err) {
+					console.error('[Bus] SSE parse error', err);
+				}
+			};
+
+			sseEs.onerror = () => {
+				connected = false;
+				scheduleReconnect();
+			};
+
+			clients.push({ type: 'sse', close: () => sseEs.close() });
+		} catch(e) {
+			scheduleReconnect();
+		}
+	}
+
+	function scheduleReconnect() {
+		if (reconnectTimer) return;
+		showReconnectNotice();
+		reconnectTimer = setTimeout(() => {
+			reconnectTimer = null;
+			// Clean up old connections
+			clients.forEach(c => c.close());
+			clients.length = 0;
+			// Try WS first, fallback to SSE
+			connectWS();
+		}, 3000);
+	}
+
+	function hideReconnectNotice() {
+		const notice = document.getElementById('bridge-not-connected');
+		if (notice) notice.classList.add('hidden');
+	}
+
+	function showReconnectNotice() {
+		const notice = document.getElementById('bridge-not-connected');
+		if (notice) {
+			notice.classList.remove('hidden');
+			notice.innerHTML = '<div style="font-weight:600;color:var(--fg);margin-bottom:2px;">Connection Lost</div><div style="opacity:0.8">Trying to reconnect...</div>';
+		}
+	}
+
+	function destroy() {
+		if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+		clients.forEach(c => c.close());
+		clients.length = 0;
+	}
+
+	connectWS();
+
+	return { destroy };
+}
+
+let _realtimeClient = null;
+
+// Start the realtime client
+_realtimeClient = createRealtimeClient();
+
+// ─── BUS EVENT HANDLER ────────────────────────────────────────────────────
+function handleBusEvent(data) {
+	if (data.type === 'heartbeat') {
+		// Keep-alive, no action needed
+		return;
+	}
+
+	if (data.type === 'connected') {
+		return;
+	}
+
+	if (data.type === 'mobile_status') {
+		const statusEl = document.getElementById('mobile-connected-status');
+		const indicatorEl = document.getElementById('mobile-indicator');
+		if (data.mobileConnected) {
+			if (statusEl) statusEl.style.display = 'flex';
+			if (indicatorEl) indicatorEl.style.display = 'flex';
+		} else {
+			if (statusEl) statusEl.style.display = 'none';
+			if (indicatorEl) indicatorEl.style.display = 'none';
+		}
+		return;
+	}
+
+	if (data.type === 'subagent_start' || data.type === 'subagent_update' || data.type === 'subagent_end') {
+		handleSubagentEvent(data);
+		return;
+	}
+
+	if (data.type === 'engine_start') {
+		setGeneratingState(true);
+		currentAssistantMsgId = null;
+
+	} else if (data.type === 'engine_end') {
+		setGeneratingState(false);
+		currentAssistantMsgId = null;
+		syncMessageIds();
+		if (data.error) {
+			const errId = appendMessage('assistant', '');
+			updateMessage(errId, `<span class="material-symbols-rounded" style="font-size:14px;vertical-align:middle;">error</span> Error: ${escapeHtml(data.error.message || data.error)}`, false);
+		}
+
+	} else if (data.type === 'message_start' || data.type === 'message_update' || data.type === 'message_end') {
+		if (!data.message || data.message.role !== 'assistant') return;
+
+		if (data.type === 'message_start') {
+			setGeneratingState(true);
+			currentAssistantMsgId = 'msg-' + (data.message.id || Date.now() + Math.random().toString(36).substr(2,5));
+			currentMsgStartTime = performance.now();
+			currentMsgTokens = 0;
+			appendMessage('assistant', data.message.content, currentAssistantMsgId, false, data.message.model);
+			const startRow = document.getElementById(currentAssistantMsgId);
+			if (startRow) startRow.classList.add('streaming');
+
+		} else if (data.type === 'message_update') {
+			if (!currentAssistantMsgId) {
+				currentAssistantMsgId = 'msg-' + (data.message.id || Date.now() + Math.random().toString(36).substr(2,5));
+				appendMessage('assistant', data.message.content, currentAssistantMsgId, false, data.message.model);
+			} else {
+				updateMessage(currentAssistantMsgId, data.message.content, true);
+			}
+
+		} else if (data.type === 'message_end') {
+			setGeneratingState(false);
+			if (currentAssistantMsgId) {
+				const endRow = document.getElementById(currentAssistantMsgId);
+				if (endRow) endRow.classList.remove('streaming');
+			}
+			let finalContent = data.message.content || [];
+			if (data.message.stopReason === 'error' && data.message.errorMessage) {
+				if (typeof finalContent === 'string') {
+					finalContent += `\n\n<span class="material-symbols-rounded" style="font-size:14px;vertical-align:middle;">error</span> Error: ${data.message.errorMessage}`;
+				} else if (Array.isArray(finalContent)) {
+					finalContent.push({ type: 'text', text: `\n\n<span class="material-symbols-rounded" style="font-size:14px;vertical-align:middle;">error</span> Error: ${data.message.errorMessage}` });
+				}
+			}
+			if (currentAssistantMsgId) {
+				updateMessage(currentAssistantMsgId, finalContent, false);
+				const elapsed = (performance.now() - currentMsgStartTime) / 1000;
+				const textContent = typeof finalContent === 'string' ? finalContent : Array.isArray(finalContent) ? finalContent.map(c => typeof c === 'string' ? c : c.text || '').join('') : '';
+				const msgUsage = data.message.usage;
+				const msgInput = msgUsage?.input || 0;
+				const msgOutput = msgUsage?.output || 0;
+				const effectiveTokens = msgOutput > 0 ? msgOutput : currentMsgTokens > 0 ? currentMsgTokens : Math.max(1, Math.round(textContent.length / 4));
+				const speed = effectiveTokens > 0 && elapsed > 0 ? (effectiveTokens / elapsed).toFixed(2) : null;
+				const footer = document.getElementById('footer-' + currentAssistantMsgId);
+				if (footer) {
+					footer.style.display = 'flex';
+					footer.innerHTML = [
+						`<span class="material-symbols-rounded" style="font-size:12px;vertical-align:middle;">data_usage</span><span style="margin-left:3px;">Optimum</span>`,
+						speed ? `<span class="material-symbols-rounded" style="font-size:12px;vertical-align:middle;">bolt</span><span style="margin-left:3px;">${speed} tok/s</span>` : '',
+						`<span class="material-symbols-rounded" style="font-size:12px;vertical-align:middle;">timer</span><span style="margin-left:3px;">${elapsed.toFixed(2)}s</span>`
+					].filter(Boolean).join('');
+				}
+			}
+			currentAssistantMsgId = null;
+			currentMsgTokens = 0;
+			syncMessageIds();
+		}
+
+	} else if (data.type === 'auto_retry_start') {
+		setGeneratingState(true);
+		const retryId = appendMessage('assistant', '');
+		updateMessage(retryId, `<span class="material-symbols-rounded" style="font-size:14px;vertical-align:middle;">warning</span> Otomatik Yeniden Deneme (${data.attempt}/${data.maxAttempts}). Neden: ${escapeHtml(data.errorMessage || 'Bilinmiyor')}`, false);
+		
+	} else if (data.type === 'tool_execution_start' || data.type === 'tool_execution_step') {
+		setGeneratingState(true);
+		renderTool(data.toolCallId, data.toolName, data.args, 'running', null);
+		if (typeof updateFileActivity === 'function') updateFileActivity(data.toolName, data.args, 'running');
+
+	} else if (data.type === 'tool_execution_update' && data.content) {
+		// Live tool output streaming
+		renderTool(data.toolCallId, data.toolName, data.args, 'running', data.content);
+
+	} else if (data.type === 'tool_execution_end') {
+		renderTool(data.toolCallId, data.toolName, data.args, 'done', data.result);
+		if (typeof updateFileActivity === 'function') updateFileActivity(data.toolName, data.args, 'done');
+		if (typeof window.fetchIDETree === 'function' && ['run_command', 'write_to_file', 'replace_file_content', 'multi_replace_file_content'].includes(data.toolName)) {
+			setTimeout(() => window.fetchIDETree(true), 500);
+		}
+
+	} else if (data.type === 'memory_data') {
+		const facts = data.facts || [];
+		window._allMemoryFacts = facts;
+		renderMemoryFacts(facts);
+		const statFacts = document.getElementById('mem-stat-facts');
+		const statEntities = document.getElementById('mem-stat-entities');
+		if (statFacts) statFacts.textContent = facts.length;
+		if (statEntities) statEntities.textContent = data.entities || Math.ceil(facts.length * 1.6);
+
+	} else if (data.type === 'clear_chat') {
+		currentAssistantMsgId = null;
+		newChat();
+		setGeneratingState(false);
+		setTimeout(() => loadConversations(), 400);
+		setTimeout(() => {
+			loadHistory();
+			checkInitialStatus();
+		}, 500);
+
+	} else if (data.type === 'state_update') {
+		updateMobileStatus(data.state);
+		if (data.state?.model) {
+			const name = data.state.model.split('/').pop() || data.state.model;
+			updateModelDisplayUI(name);
+			setCurrentModelCapabilities(data.state.model);
+		}
+		if (data.state?.cwd) {
+			const cwd = data.state.cwd;
+			const short = cwd.split(/[\\/]/).pop() || cwd;
+			const cwdEl = document.getElementById('cwd-text');
+			if (cwdEl) cwdEl.textContent = short;
+			const cwdDisplay = document.getElementById('cwd-display');
+			if (cwdDisplay) cwdDisplay.setAttribute('data-full-cwd', cwd);
+		}
+		if (data.state?.tokens) {
+			const tIn = data.state.tokens.in || 0;
+			const tOut = data.state.tokens.out || 0;
+			const tokenUsage = document.getElementById('token-usage');
+			if (tokenUsage) tokenUsage.textContent = 'Sistem Aktif';
+			const tokenPill = document.getElementById('token-pill');
+			if (tokenPill) tokenPill.title = `Input: ${tIn.toLocaleString()} | Output: ${tOut.toLocaleString()}`;
+			currentMsgTokens = tOut;
+		}
+		if (data.state?.mobileConnected !== undefined) {
 			const statusEl = document.getElementById('mobile-connected-status');
 			const indicatorEl = document.getElementById('mobile-indicator');
-			if (data.mobileConnected) {
+			if (data.state.mobileConnected) {
 				if (statusEl) statusEl.style.display = 'flex';
 				if (indicatorEl) indicatorEl.style.display = 'flex';
 			} else {
 				if (statusEl) statusEl.style.display = 'none';
 				if (indicatorEl) indicatorEl.style.display = 'none';
 			}
-			return;
 		}
-
-		if (data.type === 'subagent_start' || data.type === 'subagent_update' || data.type === 'subagent_end') {
-			handleSubagentEvent(data);
-			return;
-		}
-
-		if (data.type === 'engine_start') {
-			setGeneratingState(true);
-			currentAssistantMsgId = null;
-
-		} else if (data.type === 'engine_end') {
-			setGeneratingState(false);
-			currentAssistantMsgId = null;
-			syncMessageIds();
-			if (data.error) {
-				const errId = appendMessage('assistant', '');
-				updateMessage(errId, `<span class="material-symbols-rounded" style="font-size:14px;vertical-align:middle;">error</span> Error: ${escapeHtml(data.error.message || data.error)}`, false);
-			}
-
-		} else if (data.type === 'message_start' || data.type === 'message_update' || data.type === 'message_end') {
-			if (!data.message || data.message.role !== 'assistant') return;
-
-			if (data.type === 'message_start') {
-				setGeneratingState(true);
-				currentAssistantMsgId = 'msg-' + (data.message.id || Date.now() + Math.random().toString(36).substr(2,5));
-				currentMsgStartTime = performance.now();
-				currentMsgTokens = 0;
-				appendMessage('assistant', data.message.content, currentAssistantMsgId, false, data.message.model);
-				const startRow = document.getElementById(currentAssistantMsgId);
-				if (startRow) startRow.classList.add('streaming');
-
-			} else if (data.type === 'message_update') {
-				if (!currentAssistantMsgId) {
-					currentAssistantMsgId = 'msg-' + (data.message.id || Date.now() + Math.random().toString(36).substr(2,5));
-					appendMessage('assistant', data.message.content, currentAssistantMsgId, false, data.message.model);
-				} else {
-					updateMessage(currentAssistantMsgId, data.message.content, true);
-				}
-
-			} else if (data.type === 'message_end') {
-				setGeneratingState(false);
-				if (currentAssistantMsgId) {
-					const endRow = document.getElementById(currentAssistantMsgId);
-					if (endRow) endRow.classList.remove('streaming');
-				}
-				let finalContent = data.message.content || [];
-				if (data.message.stopReason === 'error' && data.message.errorMessage) {
-					if (typeof finalContent === 'string') {
-						finalContent += `\n\n<span class="material-symbols-rounded" style="font-size:14px;vertical-align:middle;">error</span> Error: ${data.message.errorMessage}`;
-					} else if (Array.isArray(finalContent)) {
-						finalContent.push({ type: 'text', text: `\n\n<span class="material-symbols-rounded" style="font-size:14px;vertical-align:middle;">error</span> Error: ${data.message.errorMessage}` });
-					}
-				}
-				if (currentAssistantMsgId) {
-					updateMessage(currentAssistantMsgId, finalContent, false);
-					const elapsed = (performance.now() - currentMsgStartTime) / 1000;
-					const textContent = typeof finalContent === 'string' ? finalContent : Array.isArray(finalContent) ? finalContent.map(c => typeof c === 'string' ? c : c.text || '').join('') : '';
-					const msgUsage = data.message.usage;
-					const msgInput = msgUsage?.input || 0;
-					const msgOutput = msgUsage?.output || 0;
-					const effectiveTokens = msgOutput > 0 ? msgOutput : currentMsgTokens > 0 ? currentMsgTokens : Math.max(1, Math.round(textContent.length / 4));
-					const speed = effectiveTokens > 0 && elapsed > 0 ? (effectiveTokens / elapsed).toFixed(2) : null;
-					const footer = document.getElementById('footer-' + currentAssistantMsgId);
-					if (footer) {
-						footer.style.display = 'flex';
-						footer.innerHTML = [
-							`<span class="material-symbols-rounded" style="font-size:12px;vertical-align:middle;">data_usage</span><span style="margin-left:3px;">Optimum</span>`,
-							speed ? `<span class="material-symbols-rounded" style="font-size:12px;vertical-align:middle;">bolt</span><span style="margin-left:3px;">${speed} tok/s</span>` : '',
-							`<span class="material-symbols-rounded" style="font-size:12px;vertical-align:middle;">timer</span><span style="margin-left:3px;">${elapsed.toFixed(2)}s</span>`
-						].filter(Boolean).join('');
-					}
-				}
-				currentAssistantMsgId = null;
-				currentMsgTokens = 0;
-				syncMessageIds();
-			}
-
-		} else if (data.type === 'auto_retry_start') {
-			setGeneratingState(true);
-			const retryId = appendMessage('assistant', '');
-			updateMessage(retryId, `<span class="material-symbols-rounded" style="font-size:14px;vertical-align:middle;">warning</span> Otomatik Yeniden Deneme (${data.attempt}/${data.maxAttempts}). Neden: ${escapeHtml(data.errorMessage || 'Bilinmiyor')}`, false);
-			
-		} else if (data.type === 'tool_execution_start' || data.type === 'tool_execution_step') {
-			setGeneratingState(true);
-			renderTool(data.toolCallId, data.toolName, data.args, 'running', null);
-			if (typeof updateFileActivity === 'function') updateFileActivity(data.toolName, data.args, 'running');
-
-		} else if (data.type === 'tool_execution_end') {
-			renderTool(data.toolCallId, data.toolName, data.args, 'done', data.result);
-			if (typeof updateFileActivity === 'function') updateFileActivity(data.toolName, data.args, 'done');
-			if (typeof window.fetchIDETree === 'function' && ['run_command', 'write_to_file', 'replace_file_content', 'multi_replace_file_content'].includes(data.toolName)) {
-				setTimeout(() => window.fetchIDETree(true), 500);
-			}
-
-		} else if (data.type === 'memory_data') {
-			// R-Graph live memory data from server
-			const facts = data.facts || [];
-			window._allMemoryFacts = facts;
-			renderMemoryFacts(facts);
-			const statFacts = document.getElementById('mem-stat-facts');
-			const statEntities = document.getElementById('mem-stat-entities');
-			if (statFacts) statFacts.textContent = facts.length;
-			if (statEntities) statEntities.textContent = data.entities || Math.ceil(facts.length * 1.6);
-
-		} else if (data.type === 'clear_chat') {
-			currentAssistantMsgId = null;
-			newChat();
-			setGeneratingState(false);
-			// Refresh sidebar so new session appears
-			setTimeout(() => loadConversations(), 400);
-			// Also reload history and status in case this was a session switch
-			setTimeout(() => {
-				loadHistory();
-				checkInitialStatus();
-			}, 500);
-
-		} else if (data.type === 'state_update') {
-			updateMobileStatus(data.state);
-			if (data.state?.model) {
-				const name = data.state.model.split('/').pop() || data.state.model;
-				updateModelDisplayUI(name);
-				setCurrentModelCapabilities(data.state.model);
-			}
-			if (data.state?.cwd) {
-				const cwd = data.state.cwd;
-				const short = cwd.split(/[\\/]/).pop() || cwd;
-				document.getElementById('cwd-text').textContent = short;
-				document.getElementById('cwd-display').setAttribute('data-full-cwd', cwd);
-			}
-			if (data.state?.tokens) {
-				const tIn = data.state.tokens.in || 0;
-				const tOut = data.state.tokens.out || 0;
-				document.getElementById('token-usage').textContent = `Sistem Aktif`;
-				document.getElementById('token-pill').title = `Input: ${tIn.toLocaleString()} | Output: ${tOut.toLocaleString()}`;
-				currentMsgTokens = tOut;
-			}
-			if (data.state?.mobileConnected !== undefined) {
-				const statusEl = document.getElementById('mobile-connected-status');
-				const indicatorEl = document.getElementById('mobile-indicator');
-				if (data.state.mobileConnected) {
-					if (statusEl) statusEl.style.display = 'flex';
-					if (indicatorEl) indicatorEl.style.display = 'flex';
-				} else {
-					if (statusEl) statusEl.style.display = 'none';
-					if (indicatorEl) indicatorEl.style.display = 'none';
-				}
-			}
-		}
-	} catch(err) {
-		console.error('SSE parse error', err);
 	}
 }
 
@@ -6552,8 +6915,58 @@ async function refreshBridgeStatus() {
 	}
 }
 
+// ─── SKILLS ─────────────────────────────────────────────────────────────────
+function openSkills() {
+	openModal('skillsModal');
+	refreshSkills();
+}
+async function refreshSkills() {
+	const list = document.getElementById('skills-list');
+	if (!list) return;
+	try {
+		const res = await fetch('/api/skills', { cache: 'no-store' });
+		const data = await res.json();
+		if (!data.skills || !data.skills.length) {
+			list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:0.85rem;">No skills found. Add .md files to <code>.opencode/skills/</code></div>';
+			return;
+		}
+		list.innerHTML = data.skills.map(s => `
+			<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;">
+				<div style="display:flex;align-items:center;justify-content:space-between;">
+					<div style="display:flex;align-items:center;gap:8px;overflow:hidden;">
+						<span class="material-symbols-rounded" style="font-size:16px;color:var(--accent);">auto_awesome</span>
+						<span style="font-weight:600;font-size:0.82rem;">${escHtml(s.name)}</span>
+					</div>
+					<button class="btn btn-primary" style="padding:3px 10px;font-size:0.72rem;" onclick="loadSkill('${escHtml(s.name)}')">Load</button>
+				</div>
+				<div style="font-size:0.75rem;color:var(--muted);margin-top:4px;padding-left:24px;">${escHtml(s.description || 'No description')}</div>
+			</div>
+		`).join('');
+	} catch(e) {
+		list.innerHTML = '<div style="text-align:center;padding:20px;color:#ef4444;font-size:0.85rem;">Failed to load skills: ' + e.message + '</div>';
+	}
+}
+async function loadSkill(name) {
+	try {
+		const res = await fetch('/api/skills/load', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ name }),
+		});
+		const data = await res.json();
+		if (data.success) {
+			toast('Skill "' + name + '" loaded', 'success');
+			closeModal('skillsModal');
+		} else {
+			toast(data.error || 'Failed to load skill', 'error');
+		}
+	} catch(e) {
+		toast(e.message, 'error');
+	}
+}
+
 // ─── MCP MANAGER ──────────────────────────────────────────────────────────
-let mcpState = null;
+// mcpState → store
 async function refreshMcp() {
 	try {
 		const res = await fetch('/api/mcp-panel', { cache: 'no-store' });
@@ -7430,6 +7843,7 @@ window.addEventListener('DOMContentLoaded', () => {
 	}
 </script></body>
 </html>
+
 
 
 
