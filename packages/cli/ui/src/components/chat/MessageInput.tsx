@@ -20,6 +20,7 @@ export function MessageInput({ onOpenModelSelect, onOpenReasoning }: Props) {
   const [showCommands, setShowCommands] = useState(false);
   const [commands, setCommands] = useState<{ cmd: string; desc: string }[]>([]);
   const [thinking, setThinking] = useState(settings?.thinkingLevel ? settings.thinkingLevel > 0 : false);
+  const [fableOpen, setFableOpen] = useState(false);
 
   const toggleThinking = async () => {
     const next = !thinking;
@@ -202,27 +203,40 @@ export function MessageInput({ onOpenModelSelect, onOpenReasoning }: Props) {
               thinking ? 'text-fg-accent bg-accent-subtle' : 'text-fg-subtle hover:text-fg-muted hover:bg-base-3')}>
             <IconBrain size={13} stroke={1.5} /> Think
           </button>
-          <button onClick={() => setFable(!fableConfig.enabled, !fableConfig.enabled ? 'haiku' : undefined)}
-            className={cn('flex items-center gap-1 px-2 py-1 text-2xs rounded-md transition-colors font-medium',
-              fableConfig.enabled ? 'text-accent bg-accent-subtle' : 'text-fg-subtle hover:text-fg-muted hover:bg-base-3')}>
-            <IconRocket size={13} stroke={1.5} /> Fable
-          </button>
-          {fableConfig.enabled && (
-            <>
-              {(['haiku', 'sonnet', 'opus', 'xhight'] as const).map(t => (
-                <button key={t} onClick={() => setFable(true, t)}
-                  className={cn('flex items-center gap-1 px-1.5 py-0.5 text-2xs rounded-md transition-colors font-medium',
-                    fableConfig.tier === t ? (
-                      t === 'haiku' ? 'text-fg-info bg-info/10' :
-                      t === 'sonnet' ? 'text-fg-accent bg-accent-subtle' :
-                      t === 'opus' ? 'text-warning bg-warning/10' :
-                      'text-danger bg-danger/10'
-                    ) : 'text-fg-subtle hover:text-fg-muted hover:bg-base-3')}>
-                  {t === 'xhight' ? 'XH' : t.charAt(0).toUpperCase() + t.slice(1)}
-                </button>
-              ))}
-            </>
-          )}
+          <div className="relative">
+            <button onClick={() => setFableOpen(!fableOpen)}
+              className={cn('flex items-center gap-1 px-2 py-1 text-2xs rounded-md transition-colors font-medium',
+                fableConfig.enabled ? (
+                  fableConfig.tier === 'haiku' ? 'text-fg-info bg-info/10' :
+                  fableConfig.tier === 'sonnet' ? 'text-fg-accent bg-accent-subtle' :
+                  fableConfig.tier === 'opus' ? 'text-warning bg-warning/10' :
+                  'text-danger bg-danger/10'
+                ) : 'text-fg-subtle hover:text-fg-muted hover:bg-base-3')}>
+              <IconRocket size={13} stroke={1.5} />
+              {fableConfig.enabled && fableConfig.tier
+                ? `Fable ${fableConfig.tier === 'xhight' ? 'XHIGHT' : fableConfig.tier.charAt(0).toUpperCase() + fableConfig.tier.slice(1)}`
+                : 'Fable'}
+            </button>
+            {fableOpen && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setFableOpen(false)} />
+                <div className="absolute bottom-full left-0 mb-1 z-20 bg-base-2 border border-border-default rounded-lg shadow-xl overflow-hidden min-w-[120px]">
+                  <button onClick={() => { setFable(false); setFableOpen(false); }}
+                    className={cn('w-full text-left px-3 py-1.5 text-2xs transition-colors',
+                      !fableConfig.enabled ? 'text-fg-accent bg-accent-subtle' : 'text-fg-subtle hover:bg-base-3')}>
+                    Off
+                  </button>
+                  {(['haiku', 'sonnet', 'opus', 'xhight'] as const).map(t => (
+                    <button key={t} onClick={() => { setFable(true, t); setFableOpen(false); }}
+                      className={cn('w-full text-left px-3 py-1.5 text-2xs transition-colors',
+                        fableConfig.enabled && fableConfig.tier === t ? 'text-fg-accent bg-accent-subtle' : 'text-fg-subtle hover:bg-base-3')}>
+                      {t === 'haiku' ? '🍃 Haiku' : t === 'sonnet' ? '📜 Sonnet' : t === 'opus' ? '💎 Opus' : '🔥 XHIGHT'}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
           <button onClick={onOpenModelSelect} className="status-pill text-2xs">
             {status?.model ? status.model : 'Model'}
           </button>

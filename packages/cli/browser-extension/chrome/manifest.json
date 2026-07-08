@@ -3,6 +3,7 @@
   "name": "Astro-Agent Browser Bridge",
   "version": "2026.11.1",
   "version_name": "2026-pre20",
+  "default_locale": "en",
   "description": "Connects Chrome tabs to the local Astro-Agent terminal session.",
   "permissions": [
     "tabs",
