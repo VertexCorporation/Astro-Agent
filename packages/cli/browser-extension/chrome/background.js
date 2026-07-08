@@ -162,6 +162,8 @@ function connectToPort(port) {
 
   socket.onclose = () => {
     if (opened) console.log('[Astro] Disconnected ' + port);
+    connections.delete(port);
+    updateBadge();
     cleanup();
   };
 
@@ -206,6 +208,7 @@ function updateBadge() {
   if (activeCount > 0) {
     chrome.action.setBadgeText({ text: String(activeCount) });
     chrome.action.setBadgeBackgroundColor({ color: "#22c55e" });
+    chrome.action.setBadgeTextColor({ color: "#ffffff" });
     chrome.action.setTitle({ title: `Astro-Agent: ${activeCount} session(s) active` });
   } else {
     chrome.action.setBadgeText({ text: isConnecting ? "..." : "OFF" });

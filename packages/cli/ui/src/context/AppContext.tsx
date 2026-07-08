@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
-import type { Message, Conversation, StatusInfo, ModelInfo, AuthStatus, McpPanelState, TodoItem, AppSettings, SubAgent } from '../types';
+import type { Message, Conversation, StatusInfo, ModelInfo, AuthStatus, McpPanelState, TodoItem, AppSettings, SubAgent, BrowserToolStatus } from '../types';
 import { api } from '../lib/api';
 import { useSSE } from '../hooks/useSSE';
 
@@ -23,6 +23,7 @@ interface AppState {
   ideTab: string;
   openFiles: { path: string; name: string; content?: string; loading?: boolean; error?: string }[];
   activeFilePath: string | null;
+  browserToolStatus: BrowserToolStatus | null;
 }
 
 interface AppActions {
@@ -60,6 +61,7 @@ const defaultSettings: AppSettings = {
   fusionEnabled: false,
   aiName: 'Astro',
   extraInstructions: '',
+  browserToolEnabled: false,
 };
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -87,6 +89,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [ideTab, setIdeTab] = useState('files');
   const [openFiles, setOpenFiles] = useState<{ path: string; name: string; content?: string; loading?: boolean; error?: string }[]>([]);
   const [activeFilePath, setActiveFilePath] = useState<string | null>(null);
+  const [browserToolStatus, setBrowserToolStatus] = useState<BrowserToolStatus | null>(null);
   const [lastFetch, setLastFetch] = useState(0);
 
   const refresh = useCallback(async () => {
@@ -95,7 +98,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setLastFetch(now);
 
     try {
-      const [convData, statusData, modelsData, authData, mcpData, todoData, settingsData] = await Promise.all([
+      const [convData, statusData, modelsData, authData, mcpData, todoData, settingsData, browserToolData] = await Promise.all([
         api.getConversations(),
         api.getStatus(),
         api.getModels(),
@@ -103,6 +106,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         api.getMcpPanel(),
         api.getTodo(),
         api.getSettings(),
+        api.getBrowserToolStatus().catch(() => null),
       ]);
       setConversations(convData.sessions || []);
       setActiveConversationId(convData.activeId || null);
@@ -112,6 +116,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setMcp(mcpData);
       setTodos(todoData?.todos || []);
       if (settingsData) setSettings(prev => ({ ...prev, ...settingsData }));
+      if (browserToolData) setBrowserToolStatus(browserToolData);
     } catch (e: any) {
       if (e.name !== 'AbortError') {
         setError(e.message);
@@ -334,7 +339,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   return (
     <AppContext.Provider value={{
       messages, conversations, activeConversationId, status, models, auth, mcp, todos, settings,
-      subAgents, loading, streamingContent, error, sidebarOpen, activeTab, ideOpen, ideTab, openFiles, activeFilePath,
+      subAgents, loading, streamingContent, error, sidebarOpen, activeTab, ideOpen, ideTab, openFiles, activeFilePath, browserToolStatus,
       sendMessage, interrupt, switchConversation, newConversation, deleteConversation,
       renameConversation, deleteMessage, editMessage, togglePin, setModel: setModelAction,
       setThinking: setThinkingAction, logout, refresh, toggleSidebar, toggleIde, setActiveTab,

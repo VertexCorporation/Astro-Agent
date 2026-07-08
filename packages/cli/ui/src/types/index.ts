@@ -105,6 +105,16 @@ export interface AppSettings {
   fusionEnabled: boolean;
   aiName: string;
   extraInstructions: string;
+  browserToolEnabled: boolean;
+}
+
+export interface BrowserToolStatus {
+  enabled: boolean;
+  port: number;
+  connected: boolean;
+  clients: number;
+  extensionPath: string;
+  sharedPortFile: string;
 }
 
 export interface SubAgent {

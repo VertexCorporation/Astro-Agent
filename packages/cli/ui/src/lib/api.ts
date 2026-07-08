@@ -1,4 +1,4 @@
-import type { Message, Conversation, StatusInfo, ModelInfo, AuthStatus, FileNode, McpPanelState, TodoItem, AppSettings } from '../types';
+import type { Message, Conversation, StatusInfo, ModelInfo, AuthStatus, FileNode, McpPanelState, TodoItem, AppSettings, BrowserToolStatus } from '../types';
 
 const BASE = '';
 
@@ -101,4 +101,8 @@ export const api = {
 
   // Memory
   getMemoryExperiences: (signal?: AbortSignal) => getJSON<{ success: boolean; experiences: any[] }>('/api/memory/experiences', signal),
+
+  // Browser Tool
+  getBrowserToolStatus: (signal?: AbortSignal) => getJSON<BrowserToolStatus>('/api/browser-tool/status', signal),
+  setBrowserToolEnabled: (enabled: boolean) => postJSON<{ success: boolean }>('/api/browser-tool/enabled', { enabled }),
 };

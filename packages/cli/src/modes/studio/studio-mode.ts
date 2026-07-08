@@ -1751,6 +1751,14 @@ export class StudioMode {
 			const sm = this.runtime.session.settingsManager;
 			const fusionState = sm.getFusionMode();
 			const fableState = sm.getFableMode();
+			let browserToolEnabled = false;
+			try {
+				const configPath = path.join(os.homedir(), ".astro-agent", "browser-tool.json");
+				if (fs.existsSync(configPath)) {
+					const cfg = JSON.parse(fs.readFileSync(configPath, "utf-8"));
+					browserToolEnabled = !!cfg.enabled;
+				}
+			} catch {}
 			res.end(
 				JSON.stringify({
 					theme: sm.getTheme(),
@@ -1765,6 +1773,7 @@ export class StudioMode {
 					fableTier: fableState?.tier || "sonnet",
 					aiName: sm.getAiName(),
 					extraInstructions: sm.getExtraInstructions(),
+					browserToolEnabled,
 				}),
 			);
 
@@ -1805,6 +1814,50 @@ export class StudioMode {
 		if (method === "GET" && url.pathname === "/api/browser/status") {
 			res.setHeader("Content-Type", "application/json");
 			res.end(JSON.stringify(getBrowserBridgeStatus()));
+			return;
+		}
+
+		if (method === "GET" && url.pathname === "/api/browser-tool/status") {
+			res.setHeader("Content-Type", "application/json");
+			const bridgeStatus = getBrowserBridgeStatus();
+			const astroAgentDir = path.join(os.homedir(), ".astro-agent");
+			const extDir = path.join(getPackageDir(), "browser-extension", "chrome");
+			const sharedPortFile = path.join(astroAgentDir, "bridge-port");
+			let enabled = false;
+			try {
+				const configPath = path.join(astroAgentDir, "browser-tool.json");
+				if (fs.existsSync(configPath)) {
+					const cfg = JSON.parse(fs.readFileSync(configPath, "utf-8"));
+					enabled = !!cfg.enabled;
+				}
+			} catch {}
+			res.end(JSON.stringify({
+				enabled,
+				port: bridgeStatus.port,
+				connected: bridgeStatus.running && bridgeStatus.clients > 0,
+				clients: bridgeStatus.clients,
+				extensionPath: extDir,
+				sharedPortFile,
+			}));
+			return;
+		}
+
+		if (method === "POST" && url.pathname === "/api/browser-tool/enabled") {
+			let body = "";
+			req.on("data", (chunk) => { body += chunk; });
+			req.on("end", async () => {
+				try {
+					const { enabled } = JSON.parse(body);
+					const astroAgentDir = path.join(os.homedir(), ".astro-agent");
+					if (!fs.existsSync(astroAgentDir)) fs.mkdirSync(astroAgentDir, { recursive: true });
+					fs.writeFileSync(path.join(astroAgentDir, "browser-tool.json"), JSON.stringify({ enabled: !!enabled }, null, 2));
+					res.setHeader("Content-Type", "application/json");
+					res.end(JSON.stringify({ success: true }));
+				} catch (e: any) {
+					res.statusCode = 500;
+					res.end(JSON.stringify({ error: e.message }));
+				}
+			});
 			return;
 		}
 

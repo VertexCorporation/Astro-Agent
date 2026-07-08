@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { IconX, IconSettings, IconBrain, IconShieldLock, IconPalette, IconRefresh } from '@tabler/icons-react';
+import { IconX, IconSettings, IconBrain, IconShieldLock, IconPalette, IconRefresh, IconWorld, IconCopy, IconCheck } from '@tabler/icons-react';
 import { cn } from '../../lib/utils';
 import { useApp } from '../../context/AppContext';
 import { api } from '../../lib/api';
@@ -9,12 +9,13 @@ interface Props {
   onClose: () => void;
 }
 
-type SettingsTab = 'general' | 'memory' | 'security' | 'custom';
+type SettingsTab = 'general' | 'memory' | 'security' | 'custom' | 'browser';
 
 export function SettingsModal({ open, onClose }: Props) {
-  const { settings, refresh } = useApp();
+  const { settings, browserToolStatus, refresh } = useApp();
   const [tab, setTab] = useState<SettingsTab>('general');
   const [localSettings, setLocalSettings] = useState({ ...settings });
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (settings) setLocalSettings({ ...settings });
@@ -22,6 +23,9 @@ export function SettingsModal({ open, onClose }: Props) {
 
   const handleSave = async () => {
     await api.saveSettings(localSettings as any);
+    if ('browserToolEnabled' in localSettings) {
+      await api.setBrowserToolEnabled(localSettings.browserToolEnabled as boolean);
+    }
     refresh();
     onClose();
   };
@@ -31,6 +35,7 @@ export function SettingsModal({ open, onClose }: Props) {
     { id: 'memory', label: 'Memory', icon: IconBrain },
     { id: 'security', label: 'Security', icon: IconShieldLock },
     { id: 'custom', label: 'Customization', icon: IconPalette },
+    { id: 'browser', label: 'Browser Tool', icon: IconWorld },
   ];
 
   if (!open) return null;
@@ -128,6 +133,66 @@ export function SettingsModal({ open, onClose }: Props) {
                     </button>
                   ))}
                 </div>
+              </div>
+            </div>
+          )}
+          {tab === 'browser' && (
+            <div className="space-y-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <label className="text-sm font-medium block">Browser Tool</label>
+                  <p className="text-xs text-fg-subtle mt-0.5">Enable browser automation via Chrome extension</p>
+                </div>
+                <button onClick={() => setLocalSettings(prev => ({ ...prev, browserToolEnabled: !prev.browserToolEnabled }))}
+                  className={cn('relative w-12 h-6 rounded-full transition-colors',
+                    localSettings.browserToolEnabled ? 'bg-accent' : 'bg-base-3'
+                  )}>
+                  <span className={cn('absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform',
+                    localSettings.browserToolEnabled && 'translate-x-6')} />
+                </button>
+              </div>
+
+              <div className="bg-base-2 rounded-lg p-3 border border-border-default">
+                <label className="text-xs font-semibold text-fg-subtle uppercase tracking-wider block mb-2">Extension Path</label>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 text-xs font-mono bg-base-1 rounded px-2 py-1.5 truncate select-all"
+                    onClick={() => { navigator.clipboard.writeText(browserToolStatus?.extensionPath || ''); setCopied(true); setTimeout(() => setCopied(false), 2000); }}>
+                    {browserToolStatus?.extensionPath || 'Loading...'}
+                  </code>
+                  <button onClick={() => { navigator.clipboard.writeText(browserToolStatus?.extensionPath || ''); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+                    className="flex items-center gap-1 px-2 py-1.5 text-xs rounded-md bg-base-3 hover:bg-base-4 transition-colors">
+                    {copied ? <IconCheck size={14} className="text-success" /> : <IconCopy size={14} />}
+                  </button>
+                </div>
+                <p className="text-xs text-fg-subtle mt-1.5">
+                  1. Copy this path &middot; 2. Open <code className="text-fg-muted bg-base-1 px-1 rounded">chrome://extensions</code> &middot; 3. Enable Developer mode &middot; 4. Click "Load unpacked" and paste path
+                </p>
+              </div>
+
+              <div className="bg-base-2 rounded-lg p-3 border border-border-default">
+                <label className="text-xs font-semibold text-fg-subtle uppercase tracking-wider block mb-2">Connection Status</label>
+                <div className="flex items-center gap-3">
+                  <span className={cn('w-3 h-3 rounded-full',
+                    browserToolStatus?.connected ? 'bg-success shadow-[0_0_8px_oklch(69%_0.16_142)]' : 'bg-base-4'
+                  )} />
+                  <span className="text-sm font-medium">
+                    {browserToolStatus?.connected
+                      ? `Connected — Port ${browserToolStatus.port}`
+                      : 'Not connected'}
+                  </span>
+                  <span className="text-xs text-fg-subtle ml-auto">
+                    {browserToolStatus?.clients || 0} client{browserToolStatus?.clients !== 1 ? 's' : ''}
+                  </span>
+                </div>
+                <p className="text-xs text-fg-subtle mt-1.5">
+                  Shared port: <code className="text-fg-muted bg-base-1 px-1 rounded">{browserToolStatus?.sharedPortFile || '...'}</code>
+                </p>
+              </div>
+
+              <div className="bg-accent-subtle/10 rounded-lg p-3 border border-accent/20">
+                <p className="text-xs text-fg-subtle leading-relaxed">
+                  <strong className="text-fg-default">How it works:</strong> The Browser Tool uses the existing Chrome extension to connect AI to your real browser with your sessions and cookies. All Astro instances share the same bridge port.
+                </p>
               </div>
             </div>
           )}

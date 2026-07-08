@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { IconSend, IconPlayerStop, IconPaperclip, IconBrain, IconX } from '@tabler/icons-react';
+import { IconSend, IconPlayerStop, IconPaperclip, IconBrain, IconX, IconWorld } from '@tabler/icons-react';
 import { useApp } from '../../context/AppContext';
 import { cn } from '../../lib/utils';
 import { toast } from '../../lib/toast';
@@ -13,7 +13,7 @@ interface Props {
 const MAX_FILE_SIZE = 20 * 1024 * 1024;
 
 export function MessageInput({ onOpenModelSelect, onOpenReasoning }: Props) {
-  const { sendMessage, interrupt, loading, status, settings } = useApp();
+  const { sendMessage, interrupt, loading, status, settings, browserToolStatus } = useApp();
   const [input, setInput] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -182,6 +182,11 @@ export function MessageInput({ onOpenModelSelect, onOpenReasoning }: Props) {
       </div>
       <div className="flex items-center justify-between mt-2 px-1">
         <div className="flex items-center gap-1">
+          {settings?.browserToolEnabled && browserToolStatus?.connected && (
+            <span className="flex items-center gap-1 px-2 py-1 text-2xs rounded-md text-success bg-success/10 font-medium">
+              <IconWorld size={13} stroke={1.5} /> WEB: Active
+            </span>
+          )}
           <button onClick={toggleThinking}
             className={cn('flex items-center gap-1 px-2 py-1 text-2xs rounded-md transition-colors',
               thinking ? 'text-fg-accent bg-accent-subtle' : 'text-fg-subtle hover:text-fg-muted hover:bg-base-3')}>
