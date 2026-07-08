@@ -95,6 +95,10 @@ export const api = {
   // Commands
   getCommands: (signal?: AbortSignal) => getJSON<{ cmd: string; desc: string }[]>('/api/commands', signal),
 
+  // Skills
+  getSkills: (signal?: AbortSignal) => getJSON<{ skills: { name: string; description: string }[] }>('/api/skills', signal),
+  loadSkill: (name: string) => postJSON<{ success: boolean; error?: string }>('/api/skills/load', { name }),
+
   // Memory
   getMemoryExperiences: (signal?: AbortSignal) => getJSON<{ success: boolean; experiences: any[] }>('/api/memory/experiences', signal),
 };

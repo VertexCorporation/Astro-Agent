@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { IconX, IconPlugConnected, IconPlugConnectedX, IconRefresh, IconPlus, IconTrash, IconTool } from '@tabler/icons-react';
+import { IconX, IconPlugConnected, IconPlugConnectedX, IconRefresh, IconPlus, IconTrash, IconTool, IconUsers } from '@tabler/icons-react';
 import { cn } from '../../lib/utils';
 import { useApp } from '../../context/AppContext';
 import { api } from '../../lib/api';
+import { toast } from '../../lib/toast';
 
 interface Props {
   open: boolean;
@@ -14,27 +15,45 @@ export function McpModal({ open, onClose }: Props) {
   const [customName, setCustomName] = useState('');
   const [customCommand, setCustomCommand] = useState('');
   const [customArgs, setCustomArgs] = useState('');
+  const [customEnv, setCustomEnv] = useState('');
+  const [customCwd, setCustomCwd] = useState('');
+  const [customAutoStart, setCustomAutoStart] = useState(false);
 
   const handleAction = async (action: string, data?: any) => {
-    await api.mcpAction(action, data);
-    refresh();
+    try {
+      await api.mcpAction(action, data);
+      refresh();
+      toast.success(`MCP ${action} successful`);
+    } catch (e: any) {
+      toast.error(e.message || `MCP ${action} failed`);
+    }
   };
 
   const handleAddCustom = async () => {
     if (!customName.trim() || !customCommand.trim()) return;
+    const env: Record<string, string> = {};
+    customEnv.split('\n').filter(Boolean).forEach(line => {
+      const idx = line.indexOf('=');
+      if (idx > 0) env[line.slice(0, idx).trim()] = line.slice(idx + 1).trim();
+    });
     await handleAction('add_custom', {
       name: customName.trim(),
       command: customCommand.trim(),
-      args: customArgs.trim() ? customArgs.trim().split(' ') : [],
+      args: customArgs.trim() ? customArgs.trim().split(/\s+/) : [],
+      env: Object.keys(env).length > 0 ? env : undefined,
+      cwd: customCwd.trim() || undefined,
+      autoStart: customAutoStart,
     });
-    setCustomName('');
-    setCustomCommand('');
-    setCustomArgs('');
+    setCustomName(''); setCustomCommand(''); setCustomArgs('');
+    setCustomEnv(''); setCustomCwd(''); setCustomAutoStart(false);
   };
 
   if (!open) return null;
 
   const servers = mcp?.servers || [];
+  const clients = mcp?.clients || [];
+  const clientCount = Array.isArray(clients) ? clients.length : (typeof clients === 'number' ? clients : 0);
+  const toolTotal = mcp?.tools || 0;
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -48,8 +67,8 @@ export function McpModal({ open, onClose }: Props) {
         </div>
         <div className="px-4 py-2 border-b border-border-default text-xs text-fg-subtle flex gap-4">
           <span>{servers.length} server(s)</span>
-          <span>{mcp?.clients || 0} client(s)</span>
-          <span>{mcp?.tools || 0} tool(s)</span>
+          <span>{clientCount} client(s)</span>
+          <span>{toolTotal} tool(s)</span>
         </div>
         <div className="modal-body">
           {servers.length > 0 ? (
@@ -65,18 +84,21 @@ export function McpModal({ open, onClose }: Props) {
                     <span className={cn('badge text-2xs', s.connected ? 'badge-accent' : 'badge-danger')}>
                       {s.connected ? 'Connected' : 'Disconnected'}
                     </span>
-                    {s.connected && (
+                    {!s.connected ? (
+                      <button onClick={() => handleAction('connect', { name: s.name })}
+                        className="btn btn-ghost btn-sm text-2xs">Connect</button>
+                    ) : (
                       <button onClick={() => handleAction('disconnect', { name: s.name })}
-                        className="btn btn-ghost btn-icon text-2xs">Disconnect</button>
+                        className="btn btn-ghost btn-sm text-2xs">Disconnect</button>
                     )}
                     <button onClick={() => handleAction('remove', { name: s.name })}
                       className="btn btn-ghost btn-icon text-fg-danger">
                       <IconTrash size={14} />
                     </button>
                   </div>
-                  {s.tools > 0 && (
+                  {Array.isArray(s.tools) && s.tools.length > 0 && (
                     <div className="flex items-center gap-1 mt-1 ml-6 text-xs text-fg-subtle">
-                      <IconTool size={12} /> {s.tools} tools
+                      <IconTool size={12} /> {s.tools.join(', ')}
                     </div>
                   )}
                   {s.command && (
@@ -92,6 +114,19 @@ export function McpModal({ open, onClose }: Props) {
             </div>
           )}
 
+          {clientCount > 0 && Array.isArray(clients) && (
+            <div className="border-t border-border-default pt-3 pb-2">
+              <span className="text-xs font-semibold uppercase text-fg-subtle tracking-wider block mb-2">
+                <IconUsers size={14} className="inline mr-1" />Connected Clients
+              </span>
+              <div className="flex flex-wrap gap-2">
+                {clients.map((c: any, i: number) => (
+                  <span key={i} className="badge badge-info text-2xs">{c.name}{c.version ? ` ${c.version}` : ''}</span>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="border-t border-border-default pt-4">
             <span className="text-sm font-medium block mb-3">Add Custom MCP Server</span>
             <div className="space-y-2">
@@ -101,6 +136,15 @@ export function McpModal({ open, onClose }: Props) {
                 placeholder="Command (e.g., npx, uvx, node)" className="input text-sm" />
               <input value={customArgs} onChange={e => setCustomArgs(e.target.value)}
                 placeholder="Arguments (space-separated)" className="input text-sm" />
+              <input value={customCwd} onChange={e => setCustomCwd(e.target.value)}
+                placeholder="Working directory (optional)" className="input text-sm" />
+              <textarea value={customEnv} onChange={e => setCustomEnv(e.target.value)}
+                placeholder="Environment variables (KEY=VALUE per line, optional)" className="input text-sm min-h-[50px]" />
+              <label className="flex items-center gap-2 text-xs text-fg-muted cursor-pointer">
+                <input type="checkbox" checked={customAutoStart} onChange={e => setCustomAutoStart(e.target.checked)}
+                  className="rounded border-border-default" />
+                Auto-start with Astro Agent
+              </label>
               <button onClick={handleAddCustom} disabled={!customName.trim() || !customCommand.trim()}
                 className="btn btn-primary w-full mt-1 disabled:opacity-40">
                 <IconPlus size={16} /> Add & Connect

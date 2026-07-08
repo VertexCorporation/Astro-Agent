@@ -68,6 +68,68 @@
   --gradient-header: linear-gradient(135deg, rgba(0,255,136,0.08), rgba(64,160,255,0.04));
 }
 
+/* ===== TOKYO MIDNIGHT THEME ===== */
+[data-theme="tokyo"] {
+  --base-0: #070a0e;
+  --base-1: #0f1419;
+  --base-2: #151c26;
+  --base-3: #1a2332;
+  --base-4: #1f2a3e;
+  --base-5: #26334a;
+
+  --border-default: #1f2a3e;
+  --border-muted: #151c26;
+  --border-accent: #7aa2f7;
+
+  --fg-default: #a6b4ce;
+  --fg-muted: #7986a7;
+  --fg-subtle: #515f7a;
+  --fg-accent: #7aa2f7;
+  --fg-danger: #f7768e;
+  --fg-warning: #e0af68;
+  --fg-info: #89ddff;
+  --fg-success: #9ece6a;
+  --fg-orange: #ff9e64;
+
+  --accent: #7aa2f7;
+  --accent-hover: #9bb8f9;
+  --accent-muted: #5a82d6;
+  --accent-subtle: rgba(122, 162, 247, 0.12);
+  --accent-glow: 0 0 20px rgba(122, 162, 247, 0.15);
+
+  --sidebar-bg: #080c12;
+  --sidebar-hover: #141c2a;
+  --sidebar-active: #1a2538;
+
+  --activity-bg: #04070a;
+  --activity-fg: #515f7a;
+  --activity-active: #a6b4ce;
+
+  --titlebar-bg: #080c12;
+  --titlebar-fg: #a6b4ce;
+
+  --statusbar-bg: #080c12;
+  --statusbar-fg: #515f7a;
+  --statusbar-hover: #141c2a;
+
+  --chat-bg: #070a0e;
+  --chat-user-bg: rgba(122, 162, 247, 0.08);
+  --chat-input-bg: #0f1419;
+
+  --scrollbar: #1f2a3e;
+  --scrollbar-hover: #2c3e5a;
+
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.5);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.5), 0 1px 2px rgba(0,0,0,0.4);
+  --shadow-md: 0 3px 6px rgba(0,0,0,0.5), 0 2px 4px rgba(0,0,0,0.4);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.6);
+  --shadow-xl: 0 12px 48px rgba(0,0,0,0.7);
+
+  --gradient-brand: linear-gradient(135deg, #7aa2f7, #bb9af7);
+  --gradient-subtle: linear-gradient(135deg, rgba(122,162,247,0.08), rgba(187,154,247,0.08));
+  --gradient-header: linear-gradient(135deg, rgba(122,162,247,0.1), rgba(187,154,247,0.05));
+}
+
 /* ===== LIGHT THEME ===== */
 [data-theme="light"] {
   --base-0: #f5f5f8;

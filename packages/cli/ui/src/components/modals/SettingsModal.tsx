@@ -118,13 +118,13 @@ export function SettingsModal({ open, onClose }: Props) {
               <div>
                 <label className="text-sm font-medium block mb-1">Theme</label>
                 <div className="flex gap-2">
-                  {(['dark', 'light'] as const).map(theme => (
+                  {(['dark', 'light', 'tokyo'] as const).map(theme => (
                     <button key={theme} onClick={() => setLocalSettings(prev => ({ ...prev, theme }))}
                       className={cn('flex items-center gap-2 px-4 py-2 rounded-lg border text-sm transition-colors',
                         localSettings.theme === theme
                           ? 'border-accent bg-accent-subtle text-fg-accent'
                           : 'border-border-default bg-base-2 text-fg-muted hover:bg-base-3')}>
-                      <IconPalette size={16} /> {theme.charAt(0).toUpperCase() + theme.slice(1)}
+                      <IconPalette size={16} /> {theme === 'tokyo' ? 'Tokyo Midnight' : theme.charAt(0).toUpperCase() + theme.slice(1)}
                     </button>
                   ))}
                 </div>

@@ -26,19 +26,27 @@ const PROVIDER_INITIALS: Record<string, string> = {
 export function ModelModal({ open, onClose }: Props) {
   const { models, setModel, status, refresh } = useApp();
   const [tab, setTab] = useState<'cloud' | 'local'>('cloud');
+  const [localTab, setLocalTab] = useState<'ollama' | 'lm-studio'>('ollama');
   const [search, setSearch] = useState('');
-  const filtered = models.filter(m => {
-    if (tab === 'cloud' && ['ollama', 'lm-studio'].includes(m.provider)) return false;
-    if (tab === 'local' && !['ollama', 'lm-studio'].includes(m.provider)) return false;
-    if (search && !m.name.toLowerCase().includes(search.toLowerCase()) && !m.id.toLowerCase().includes(search.toLowerCase())) return false;
-    return true;
-  }).sort((a, b) => {
-    if (a.authenticated !== b.authenticated) return a.authenticated ? -1 : 1;
-    if (a.provider !== b.provider) return a.provider.localeCompare(b.provider);
-    return a.name.localeCompare(b.name);
-  });
 
-  const grouped = filtered.reduce((acc, m) => {
+  const isCloud = (m: ModelInfo) => !['ollama', 'lm-studio'].includes(m.provider);
+  const matchesSearch = (m: ModelInfo) =>
+    !search || m.name.toLowerCase().includes(search.toLowerCase()) || m.id.toLowerCase().includes(search.toLowerCase());
+
+  const cloudModels = models.filter(m => isCloud(m) && matchesSearch(m))
+    .sort((a, b) => {
+      if (a.authenticated !== b.authenticated) return a.authenticated ? -1 : 1;
+      if (a.provider !== b.provider) return a.provider.localeCompare(b.provider);
+      return a.name.localeCompare(b.name);
+    });
+
+  const ollamaModels = models.filter(m => m.provider === 'ollama' && matchesSearch(m))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  const lmStudioModels = models.filter(m => m.provider === 'lm-studio' && matchesSearch(m))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  const groupedCloud = cloudModels.reduce((acc, m) => {
     (acc[m.provider] = acc[m.provider] || []).push(m);
     return acc;
   }, {} as Record<string, ModelInfo[]>);
@@ -60,6 +68,24 @@ export function ModelModal({ open, onClose }: Props) {
 
   if (!open) return null;
 
+  const renderModelItem = (m: ModelInfo) => (
+    <div key={m.id} onClick={() => handleSelect(m.provider, m.id)}
+      className={cn('model-item', status?.model === m.id && 'selected', !m.authenticated && isCloud(m) && 'opacity-50 cursor-not-allowed')}>
+      <div className="model-icon" style={{ background: `${PROVIDER_COLORS[m.provider] || '#555'}20`, color: PROVIDER_COLORS[m.provider] || '#888' }}>
+        {PROVIDER_INITIALS[m.provider] || m.provider[0].toUpperCase()}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="text-sm font-medium truncate">{m.name}</div>
+        <div className="text-xs text-fg-subtle truncate font-mono">{m.id}</div>
+      </div>
+      {m.context && <span className="badge badge-info text-2xs">{(m.context / 1000).toFixed(0)}k</span>}
+      {!m.authenticated && isCloud(m) && (
+        <IconLock size={14} className="text-fg-subtle shrink-0" />
+      )}
+      {status?.model === m.id && <span className="badge badge-accent text-2xs">Active</span>}
+    </div>
+  );
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal wide" onClick={e => e.stopPropagation()}>
@@ -76,39 +102,64 @@ export function ModelModal({ open, onClose }: Props) {
           <button onClick={() => setTab('local')} className={cn('tab', tab === 'local' && 'active')}>Local</button>
         </div>
         <div className="modal-body">
-          {Object.entries(grouped).map(([provider, ms]) => (
-            <div key={provider} className="mb-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold uppercase text-fg-subtle tracking-wider">{provider}</span>
-                {!['ollama', 'lm-studio'].includes(provider) && !ms[0]?.authenticated && (
-                  <button onClick={() => handleLogin(provider)}
-                    className="flex items-center gap-1 px-2 py-1 text-2xs rounded-md bg-accent-subtle text-fg-accent hover:bg-accent-subtle/70 transition-colors">
-                    <IconLockOpen size={12} /> Login
-                  </button>
-                )}
-              </div>
-              {ms.map(m => (
-                <div key={m.id} onClick={() => handleSelect(m.provider, m.id)}
-                  className={cn('model-item', status?.model === m.id && 'selected', !m.authenticated && !['ollama', 'lm-studio'].includes(provider) && 'opacity-50 cursor-not-allowed')}>
-                  <div className="model-icon" style={{ background: `${PROVIDER_COLORS[provider] || '#555'}20`, color: PROVIDER_COLORS[provider] || '#888' }}>
-                    {PROVIDER_INITIALS[provider] || provider[0].toUpperCase()}
+          {tab === 'cloud' ? (
+            Object.keys(groupedCloud).length > 0 ? (
+              Object.entries(groupedCloud).map(([provider, ms]) => (
+                <div key={provider} className="mb-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-semibold uppercase text-fg-subtle tracking-wider">{provider}</span>
+                    {!ms[0]?.authenticated && (
+                      <button onClick={() => handleLogin(provider)}
+                        className="flex items-center gap-1 px-2 py-1 text-2xs rounded-md bg-accent-subtle text-fg-accent hover:bg-accent-subtle/70 transition-colors">
+                        <IconLockOpen size={12} /> Login
+                      </button>
+                    )}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium truncate">{m.name}</div>
-                    <div className="text-xs text-fg-subtle truncate font-mono">{m.id}</div>
-                  </div>
-                  {m.context && <span className="badge badge-info text-2xs">{(m.context / 1000).toFixed(0)}k</span>}
-                  {!m.authenticated && !['ollama', 'lm-studio'].includes(provider) && (
-                    <IconLock size={14} className="text-fg-subtle shrink-0" />
-                  )}
-                  {status?.model === m.id && <span className="badge badge-accent text-2xs">Active</span>}
+                  {ms.map(renderModelItem)}
                 </div>
-              ))}
-            </div>
-          ))}
-          {Object.keys(grouped).length === 0 && (
-            <div className="flex flex-col items-center justify-center py-10 text-fg-subtle text-sm">
-              {search ? 'No models match your search' : 'No models available'}
+              ))
+            ) : (
+              <div className="flex flex-col items-center justify-center py-10 text-fg-subtle text-sm">
+                {search ? 'No models match your search' : 'No cloud models available'}
+              </div>
+            )
+          ) : (
+            /* Local tab: Ollama + LM Studio split */
+            <div>
+              <div className="flex gap-0 mb-4 border-b border-border-default">
+                <button onClick={() => setLocalTab('ollama')} className={cn('tab', localTab === 'ollama' && 'active')}>Ollama</button>
+                <button onClick={() => setLocalTab('lm-studio')} className={cn('tab', localTab === 'lm-studio' && 'active')}>LM Studio</button>
+              </div>
+
+              {localTab === 'ollama' && (
+                <div>
+                  {ollamaModels.length > 0 ? (
+                    <div className="mb-2">
+                      {ollamaModels.map(renderModelItem)}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-8 text-fg-subtle text-sm">
+                      <span>No Ollama models found</span>
+                      <span className="text-xs mt-1">Make sure Ollama is running and has models pulled</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {localTab === 'lm-studio' && (
+                <div>
+                  {lmStudioModels.length > 0 ? (
+                    <div className="mb-2">
+                      {lmStudioModels.map(renderModelItem)}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-8 text-fg-subtle text-sm">
+                      <span>No LM Studio models found</span>
+                      <span className="text-xs mt-1">Make sure LM Studio is running with API server enabled</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>

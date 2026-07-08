@@ -36,7 +36,7 @@ interface AppActions {
   editMessage: (id: string, text: string) => Promise<void>;
   togglePin: (id: string, pinned: boolean) => Promise<void>;
   setModel: (provider: string, model: string) => Promise<void>;
-  setTheme: (theme: 'dark' | 'light') => void;
+  setTheme: (theme: 'dark' | 'light' | 'tokyo') => void;
   setThinking: (level: number) => Promise<void>;
   logout: (provider?: string) => Promise<void>;
   refresh: () => Promise<void>;
@@ -75,7 +75,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [todos, setTodos] = useState<TodoItem[]>([]);
   const [settings, setSettings] = useState<AppSettings>(() => {
     const stored = localStorage.getItem('astro-theme');
-    return stored ? { ...defaultSettings, theme: stored as 'dark' | 'light' } : defaultSettings;
+    return stored ? { ...defaultSettings, theme: stored as 'dark' | 'light' | 'tokyo' } : defaultSettings;
   });
   const [subAgents, setSubAgents] = useState<SubAgent[]>([]);
   const [loading, setLoading] = useState(false);
@@ -327,7 +327,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setActiveFilePath(path);
   }, []);
 
-  const setTheme = useCallback((theme: 'dark' | 'light') => {
+  const setTheme = useCallback((theme: 'dark' | 'light' | 'tokyo') => {
     setSettings(prev => ({ ...prev, theme }));
   }, []);
 

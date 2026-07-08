@@ -14,6 +14,7 @@ import { SettingsModal } from './modals/SettingsModal';
 import { McpModal } from './modals/McpModal';
 import { ReasoningModal } from './modals/ReasoningModal';
 import { MemoryModal } from './modals/MemoryModal';
+import { SkillsModal } from './modals/SkillsModal';
 import { useApp } from '../context/AppContext';
 import { useKeyboard } from '../hooks/useKeyboard';
 
@@ -26,6 +27,7 @@ export function Layout() {
   const [mcpModalOpen, setMcpModalOpen] = useState(false);
   const [reasoningModalOpen, setReasoningModalOpen] = useState(false);
   const [memoryModalOpen, setMemoryModalOpen] = useState(false);
+  const [skillsModalOpen, setSkillsModalOpen] = useState(false);
 
   useKeyboard([
     { key: 'b', ctrl: true, handler: toggleSidebar },
@@ -60,6 +62,7 @@ export function Layout() {
           onTabChange={setActiveTab}
           onOpenSettings={() => setSettingsModalOpen(true)}
           onOpenMemory={() => setMemoryModalOpen(true)}
+          onOpenSkills={() => setSkillsModalOpen(true)}
         />
 
         {sidebarOpen && activeTab !== 'chat' && (
@@ -97,6 +100,7 @@ export function Layout() {
       <McpModal open={mcpModalOpen} onClose={() => setMcpModalOpen(false)} />
       <ReasoningModal open={reasoningModalOpen} onClose={() => setReasoningModalOpen(false)} />
       <MemoryModal open={memoryModalOpen} onClose={() => setMemoryModalOpen(false)} />
+      <SkillsModal open={skillsModalOpen} onClose={() => setSkillsModalOpen(false)} />
     </div>
   );
 }

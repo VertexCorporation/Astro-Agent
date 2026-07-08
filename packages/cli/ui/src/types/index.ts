@@ -71,14 +71,21 @@ export interface McpServer {
   command?: string;
   args?: string[];
   cwd?: string;
+  env?: Record<string, string>;
+  autoStart?: boolean;
   connected: boolean;
-  tools: number;
+  tools: string[];
   port?: number;
+}
+
+export interface McpClient {
+  name: string;
+  version: string;
 }
 
 export interface McpPanelState {
   servers: McpServer[];
-  clients: number;
+  clients: McpClient[];
   tools: number;
   market: any[];
 }
@@ -91,7 +98,7 @@ export interface TodoItem {
 }
 
 export interface AppSettings {
-  theme: 'dark' | 'light';
+  theme: 'dark' | 'light' | 'tokyo';
   thinkingLevel: number;
   permissionLevel: 'ask' | 'safe' | 'full';
   compactionProfile: 'aggressive' | 'balanced' | 'off';
