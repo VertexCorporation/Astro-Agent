@@ -2216,9 +2216,12 @@ export class StudioMode {
 	}
 
 	private get uiDir(): string {
+		// studio-mode.ts compiles to dist/modes/studio/studio-mode.js
+		// import.meta.url => .../dist/modes/studio/studio-mode.js
+		// we need .../dist/ui/
 		const _filename = fileURLToPath(import.meta.url);
-		const _dirname = dirname(_filename);
-		return path.resolve(_dirname, "ui");
+		const _dirname = dirname(_filename); // .../dist/modes/studio/
+		return path.resolve(_dirname, "..", "..", "ui"); // .../dist/ui/
 	}
 
 	private tryServeReactAsset(pathname: string, res: ServerResponse): boolean {
