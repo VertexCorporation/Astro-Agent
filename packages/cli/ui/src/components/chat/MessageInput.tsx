@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { IconSend, IconPlayerStop, IconPaperclip, IconBrain, IconX, IconWorld, IconRocket, IconBolt } from '@tabler/icons-react';
+import { IconSend, IconPlayerStop, IconPaperclip, IconBrain, IconX, IconWorld, IconRocket } from '@tabler/icons-react';
 import { useApp } from '../../context/AppContext';
 import { cn } from '../../lib/utils';
 import { toast } from '../../lib/toast';
@@ -33,18 +33,8 @@ export function MessageInput({ onOpenModelSelect, onOpenReasoning }: Props) {
     ? { enabled: true, tier: settings.fableTier || 'sonnet' }
     : { enabled: false, tier: undefined as string | undefined };
 
-  const cycleFable = async () => {
-    const tiers = ['haiku', 'sonnet', 'opus', 'xhight'] as const;
-    if (!fableConfig.enabled) {
-      await api.setFable(true, 'haiku');
-    } else {
-      const idx = tiers.indexOf(fableConfig.tier as any);
-      if (idx === -1 || idx === tiers.length - 1) {
-        await api.setFable(false);
-      } else {
-        await api.setFable(true, tiers[idx + 1]);
-      }
-    }
+  const setFable = async (enabled: boolean, tier?: 'haiku' | 'sonnet' | 'opus' | 'xhight') => {
+    await api.setFable(enabled, tier);
     refresh();
   };
 
@@ -212,19 +202,27 @@ export function MessageInput({ onOpenModelSelect, onOpenReasoning }: Props) {
               thinking ? 'text-fg-accent bg-accent-subtle' : 'text-fg-subtle hover:text-fg-muted hover:bg-base-3')}>
             <IconBrain size={13} stroke={1.5} /> Think
           </button>
-          <button onClick={cycleFable}
+          <button onClick={() => setFable(!fableConfig.enabled, !fableConfig.enabled ? 'haiku' : undefined)}
             className={cn('flex items-center gap-1 px-2 py-1 text-2xs rounded-md transition-colors font-medium',
-              !fableConfig.enabled ? 'text-fg-subtle hover:text-fg-muted hover:bg-base-3' :
-              fableConfig.tier === 'haiku' ? 'text-fg-info bg-info/10' :
-              fableConfig.tier === 'sonnet' ? 'text-fg-accent bg-accent-subtle' :
-              fableConfig.tier === 'opus' ? 'text-warning bg-warning/10' :
-              'text-danger bg-danger/10')}>
-            {fableConfig.enabled ? (
-              <><IconBolt size={13} stroke={1.5} /> Fable {fableConfig.tier === 'xhight' ? 'XHIGHT' : fableConfig.tier ? fableConfig.tier.charAt(0).toUpperCase() + fableConfig.tier.slice(1) : ''}</>
-            ) : (
-              <><IconRocket size={13} stroke={1.5} /> Fable</>
-            )}
+              fableConfig.enabled ? 'text-accent bg-accent-subtle' : 'text-fg-subtle hover:text-fg-muted hover:bg-base-3')}>
+            <IconRocket size={13} stroke={1.5} /> Fable
           </button>
+          {fableConfig.enabled && (
+            <>
+              {(['haiku', 'sonnet', 'opus', 'xhight'] as const).map(t => (
+                <button key={t} onClick={() => setFable(true, t)}
+                  className={cn('flex items-center gap-1 px-1.5 py-0.5 text-2xs rounded-md transition-colors font-medium',
+                    fableConfig.tier === t ? (
+                      t === 'haiku' ? 'text-fg-info bg-info/10' :
+                      t === 'sonnet' ? 'text-fg-accent bg-accent-subtle' :
+                      t === 'opus' ? 'text-warning bg-warning/10' :
+                      'text-danger bg-danger/10'
+                    ) : 'text-fg-subtle hover:text-fg-muted hover:bg-base-3')}>
+                  {t === 'xhight' ? 'XH' : t.charAt(0).toUpperCase() + t.slice(1)}
+                </button>
+              ))}
+            </>
+          )}
           <button onClick={onOpenModelSelect} className="status-pill text-2xs">
             {status?.model ? status.model : 'Model'}
           </button>

@@ -144,7 +144,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   useSSE('/api/stream', {
     open: () => setError(null),
-    error: () => setError('SSE connection lost. Reconnecting...'),
+    error: (data: any) => {
+      setError(data?.error || 'SSE connection lost. Reconnecting...');
+      setLoading(false);
+    },
     state_update: (data: any) => {
       setStatus(prev => prev ? { ...prev, ...(data.state || data) } : prev);
     },
@@ -160,10 +163,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
     message_end: () => {
       api.getHistory().then(setMessages).catch(() => {});
     },
-    engine_end: () => {
+    engine_end: (data: any) => {
       setLoading(false);
       setStreamingContent('');
-      api.getHistory().then(setMessages).catch(() => {});
+      if (data?.error) {
+        setError(data.error);
+      }
+      api.getHistory().then(msgs => {
+        setMessages(msgs || []);
+        // If last assistant message is empty/error, surface it
+        if (msgs && msgs.length > 0) {
+          const last = msgs[msgs.length - 1];
+          if (last?.role === 'assistant' && (!last.content || last.content.trim() === '')) {
+            setError('Model returned empty response. Check the model or try again.');
+          }
+        }
+      }).catch(() => {});
       refresh();
     },
     clear_chat: () => {
