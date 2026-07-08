@@ -1545,6 +1545,23 @@ export class StudioMode {
 					...m,
 					authenticated: availableSet.has(`${m.provider}:${m.id}`),
 				}));
+
+				// Inject minimax-m3:cloud as a known working cloud model
+				const hasMinimaxCloud = modelsWithAuth.some((m: any) => m.id === "minimax-m3:cloud");
+				if (!hasMinimaxCloud) {
+					modelsWithAuth.push({
+						id: "minimax-m3:cloud",
+						name: "MiniMax M3 Cloud",
+						provider: "opencode",
+						contextWindow: 204800,
+						authenticated: true,
+						api: "openai-completions",
+						baseUrl: "https://api.opencode.ai/v1",
+						reasoning: false,
+						input: ["text"],
+					} as any);
+				}
+
 				res.end(JSON.stringify(modelsWithAuth));
 			} catch (_e) {
 				res.statusCode = 500;

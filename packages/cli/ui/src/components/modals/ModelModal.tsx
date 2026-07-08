@@ -15,12 +15,14 @@ const PROVIDER_COLORS: Record<string, string> = {
   groq: '#f55036', openrouter: '#84309c', deepseek: '#4f6bf5',
   perplexity: '#1e1b4b', together: '#fa2f5e',
   ollama: '#f5a623', 'lm-studio': '#6366f1',
+  opencode: '#8b5cf6', minimax: '#06b6d4',
 };
 
 const PROVIDER_INITIALS: Record<string, string> = {
   openai: 'O', anthropic: 'A', google: 'G', groq: 'G',
   openrouter: 'OR', deepseek: 'D', perplexity: 'P',
   together: 'T', ollama: 'OL', 'lm-studio': 'LM',
+  opencode: 'OC', minimax: 'MX',
 };
 
 export function ModelModal({ open, onClose }: Props) {
