@@ -5,6 +5,7 @@
 	"author": "theayzek01",
 	"workspaces": [
 		"packages/*",
+		"packages/cli/ui",
 		"packages/cli/examples/extensions/with-deps",
 		"packages/cli/examples/extensions/custom-provider-anthropic",
 		"packages/cli/examples/extensions/custom-provider-gitlab-duo",
@@ -65,7 +66,8 @@
 	"bin": {
 		"astroagent": "packages/cli/dist/cli.js",
 		"astro": "packages/cli/dist/cli.js",
-		"asg": "packages/cli/dist/cli.js"
+		"asg": "packages/cli/dist/cli.js",
+		"estro": "packages/cli/dist/cli.js"
 	},
 	"dependencies": {
 		"@mariozechner/jiti": "^2.6.5",

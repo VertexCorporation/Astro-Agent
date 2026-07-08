@@ -76,8 +76,67 @@
  --md-sys-motion-duration-medium: 250ms;
  --md-sys-motion-duration-long: 400ms;
 }
+[data-theme="tokyo"] {
+	--md-sys-color-primary: #7aa2f7;
+	--md-sys-color-on-primary: #0f1b33;
+	--md-sys-color-primary-container: #1a2d5c;
+	--md-sys-color-on-primary-container: #c8d9ff;
+	--md-sys-color-secondary: #89ddff;
+	--md-sys-color-on-secondary: #0a1b2e;
+	--md-sys-color-secondary-container: #143b54;
+	--md-sys-color-on-secondary-container: #c2eaff;
+	--md-sys-color-tertiary: #bb9af7;
+	--md-sys-color-on-tertiary: #1e1433;
+	--md-sys-color-tertiary-container: #3a285c;
+	--md-sys-color-on-tertiary-container: #e3d4ff;
+	--md-sys-color-error: #f7768e;
+	--md-sys-color-on-error: #2a0a12;
+	--md-sys-color-error-container: #5c1a28;
+	--md-sys-color-on-error-container: #fdd0d8;
+	--md-sys-color-surface: #0f1419;
+	--md-sys-color-on-surface: #a6b4ce;
+	--md-sys-color-surface-variant: #1a2332;
+	--md-sys-color-on-surface-variant: #7986a7;
+	--md-sys-color-outline: rgba(167,188,206,0.12);
+	--md-sys-color-outline-variant: rgba(167,188,206,0.20);
+	--md-sys-color-surface-container-lowest: #070a0e;
+	--md-sys-color-surface-container-low: #131a26;
+	--md-sys-color-surface-container: #192233;
+	--md-sys-color-surface-container-high: #1f2a3e;
+	--md-sys-color-surface-container-highest: #26334a;
+	--md-sys-elevation-level0: none;
+	--md-sys-elevation-level1: 0 1px 2px rgba(0,0,0,0.40);
+	--md-sys-elevation-level2: 0 1px 3px rgba(0,0,0,0.45);
+	--md-sys-elevation-level3: 0 4px 8px rgba(0,0,0,0.50);
+	--md-sys-elevation-level4: 0 6px 14px rgba(0,0,0,0.55);
+	--md-sys-elevation-level5: 0 8px 24px rgba(0,0,0,0.60);
+	--md-sys-shape-corner-none: 0px;
+	--md-sys-shape-corner-extra-small: 4px;
+	--md-sys-shape-corner-small: 8px;
+	--md-sys-shape-corner-medium: 12px;
+	--md-sys-shape-corner-large: 16px;
+	--md-sys-shape-corner-extra-large: 28px;
+	--md-sys-shape-corner-full: 9999px;
+	--md-sys-typescale-headline-1: 700 2rem/1.2 'Inter',system-ui,sans-serif;
+	--md-sys-typescale-headline-2: 600 1.5rem/1.3 'Inter',system-ui,sans-serif;
+	--md-sys-typescale-headline-3: 600 1.25rem/1.4 'Inter',system-ui,sans-serif;
+	--md-sys-typescale-title-large: 500 1.1rem/1.4 'Inter',system-ui,sans-serif;
+	--md-sys-typescale-title-medium: 500 1rem/1.5 'Inter',system-ui,sans-serif;
+	--md-sys-typescale-title-small: 500 0.875rem/1.5 'Inter',system-ui,sans-serif;
+	--md-sys-typescale-body-large: 400 1rem/1.5 'Inter',system-ui,sans-serif;
+	--md-sys-typescale-body-medium: 400 0.875rem/1.5 'Inter',system-ui,sans-serif;
+	--md-sys-typescale-body-small: 400 0.75rem/1.5 'Inter',system-ui,sans-serif;
+	--md-sys-typescale-label-large: 500 0.875rem/1.5 'Inter',system-ui,sans-serif;
+	--md-sys-typescale-label-medium: 500 0.75rem/1.5 'Inter',system-ui,sans-serif;
+	--md-sys-typescale-label-small: 500 0.625rem/1.5 'Inter',system-ui,sans-serif;
+	--md-sys-motion-easing-emphasized: cubic-bezier(0.2,0,0,1);
+	--md-sys-motion-easing-standard: cubic-bezier(0.2,0,0.6,1);
+	--md-sys-motion-duration-short: 150ms;
+	--md-sys-motion-duration-medium: 250ms;
+	--md-sys-motion-duration-long: 400ms;
+}
 [data-theme="light"] {
- --md-sys-color-primary: #1565c0;
+	--md-sys-color-primary: #1565c0;
  --md-sys-color-on-primary: #ffffff;
  --md-sys-color-primary-container: #d1e4ff;
  --md-sys-color-on-primary-container: #001d36;
@@ -1722,6 +1781,7 @@ body.wallpaper-active{background:transparent!important}
 			<select id="mob-theme" onchange="setTheme(this.value)" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--fg);font-size:0.8rem;">
 							<option value="dark">GitHub Dark</option>
 							<option value="light">GitHub Light</option>
+							<option value="tokyo">Tokyo Midnight</option>
 			</select>
 		</div>
 		<div class="mobile-settings-row">
@@ -2170,6 +2230,7 @@ body.wallpaper-active{background:transparent!important}
 						<select class="form-select" id="set-theme" onchange="setTheme(this.value)">
 							<option value="dark">GitHub Dark</option>
 							<option value="light">GitHub Light</option>
+							<option value="tokyo">Tokyo Midnight</option>
 						</select>
 					</div>
 
@@ -2416,16 +2477,24 @@ body.wallpaper-active{background:transparent!important}
  </div>
  <div class="theme-name" style="background:#0d1117;color:#e6edf3;">GitHub Dark</div>
  </div>
- <div class="theme-card" id="theme-light" onclick="setTheme(`light`)">
- <div class="theme-preview" style="background:linear-gradient(135deg,#ffffff 40%,#f6f8fa);border-bottom:1px solid rgba(31,35,40,0.12);">
- <div style="position:absolute;bottom:8px;left:10px;display:flex;gap:4px;">
- <div style="width:36px;height:8px;border-radius:4px;background:#0969da;opacity:0.7;"></div>
- <div style="width:22px;height:8px;border-radius:4px;background:#1a7f37;opacity:0.5;"></div>
- </div>
- </div>
- <div class="theme-name" style="background:#ffffff;color:#1f2328;">GitHub Light</div>
- </div>
-
+	<div class="theme-card" id="theme-light" onclick="setTheme(`light`)">
+	<div class="theme-preview" style="background:linear-gradient(135deg,#ffffff 40%,#f6f8fa);border-bottom:1px solid rgba(31,35,40,0.12);">
+	<div style="position:absolute;bottom:8px;left:10px;display:flex;gap:4px;">
+	<div style="width:36px;height:8px;border-radius:4px;background:#0969da;opacity:0.7;"></div>
+	<div style="width:22px;height:8px;border-radius:4px;background:#1a7f37;opacity:0.5;"></div>
+	</div>
+	</div>
+	<div class="theme-name" style="background:#ffffff;color:#1f2328;">GitHub Light</div>
+	</div>
+	<div class="theme-card" id="theme-tokyo" onclick="setTheme(`tokyo`)">
+	<div class="theme-preview" style="background:linear-gradient(135deg,#0f1419 40%,#1a2332);border-bottom:1px solid rgba(122,162,247,0.15);">
+	<div style="position:absolute;bottom:8px;left:10px;display:flex;gap:4px;">
+	<div style="width:36px;height:8px;border-radius:4px;background:#7aa2f7;opacity:0.8;"></div>
+	<div style="width:22px;height:8px;border-radius:4px;background:#bb9af7;opacity:0.6;"></div>
+	</div>
+	</div>
+	<div class="theme-name" style="background:#0f1419;color:#a6b4ce;">Tokyo Midnight</div>
+	</div>
 
 			</div>
 
@@ -3145,10 +3214,8 @@ function setTheme(theme) {
 
 	const hljsLink = document.getElementById('hljs-theme');
 	if (hljsLink) {
-		const isLight = theme === 'light';
-		hljsLink.href = isLight
-			? 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css'
-			: 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css';
+		const map = { light: 'github.min.css', dark: 'atom-one-dark.min.css', tokyo: 'atom-one-dark.min.css' };
+		hljsLink.href = 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/' + (map[theme] || 'atom-one-dark.min.css');
 	}
 	closeModal('themeModal');
 	toast('Theme changed', 'success');

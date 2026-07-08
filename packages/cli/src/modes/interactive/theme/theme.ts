@@ -450,7 +450,7 @@ let BUILTIN_THEMES: Record<string, ThemeJson> | undefined;
 function getBuiltinThemes(): Record<string, ThemeJson> {
 	if (!BUILTIN_THEMES) {
 		const themesDir = getThemesDir();
-		const builtinThemeFiles = ["github-light.json", "github-dark.json"];
+		const builtinThemeFiles = ["github-light.json", "github-dark.json", "tokyo-midnight.json"];
 		BUILTIN_THEMES = {};
 		for (const file of builtinThemeFiles) {
 			const themePath = path.join(themesDir, file);
