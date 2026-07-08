@@ -2164,7 +2164,7 @@ export class StudioMode {
 	private get uiDir(): string {
 		const _filename = fileURLToPath(import.meta.url);
 		const _dirname = dirname(_filename);
-		return path.resolve(_dirname, "..", "..", "ui");
+		return path.resolve(_dirname, "ui");
 	}
 
 	private tryServeReactAsset(pathname: string, res: ServerResponse): boolean {
