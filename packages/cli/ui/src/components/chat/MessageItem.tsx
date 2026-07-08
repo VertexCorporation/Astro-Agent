@@ -8,6 +8,55 @@ interface Props {
   message: Message;
 }
 
+function ToolCard({ tool }: { tool: ToolCall }) {
+  const [expanded, setExpanded] = useState(false);
+  const isRunning = tool.status === 'running';
+  const isDone = tool.status === 'done';
+  const isError = tool.status === 'error';
+
+  const icon = isRunning ? <IconLoader2 size={14} className="animate-spin" /> :
+    isDone ? <IconCheck size={14} className="text-fg-success" /> :
+    <IconX size={14} className="text-fg-danger" />;
+
+  const borderColor = isDone ? 'border-fg-success/30' :
+    isRunning ? 'border-fg-info/30' :
+    'border-fg-danger/30';
+
+  return (
+    <div className={`border ${borderColor} rounded-lg overflow-hidden`}>
+      <div
+        onClick={() => setExpanded(!expanded)}
+        className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-base-3/50 transition-colors select-none"
+      >
+        <span className="shrink-0">{icon}</span>
+        <span className="text-xs font-medium flex-1 truncate">{tool.tool}</span>
+        {tool.duration !== undefined && (
+          <span className="text-2xs text-fg-subtle shrink-0">{(tool.duration / 1000).toFixed(1)}s</span>
+        )}
+        <span className="shrink-0 text-fg-subtle">
+          {expanded ? <IconChevronUp size={14} /> : <IconChevronDown size={14} />}
+        </span>
+      </div>
+      {expanded && (
+        <div className="border-t border-border-default">
+          {tool.input && (
+            <div className="px-3 py-2 border-b border-border-default">
+              <div className="text-2xs font-semibold text-fg-subtle uppercase mb-1">Input</div>
+              <pre className="text-xs text-fg-muted whitespace-pre-wrap font-mono leading-relaxed max-h-32 overflow-y-auto">{tool.input}</pre>
+            </div>
+          )}
+          {tool.output && (
+            <div className="px-3 py-2">
+              <div className="text-2xs font-semibold text-fg-subtle uppercase mb-1">Output</div>
+              <pre className={`text-xs whitespace-pre-wrap font-mono leading-relaxed max-h-48 overflow-y-auto ${isRunning ? 'text-fg-info' : isError ? 'text-fg-danger' : 'text-fg-muted'}`}>{tool.output}</pre>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function MessageItem({ message }: Props) {
   const { deleteMessage, togglePin } = useApp();
   const [copied, setCopied] = useState(false);
@@ -68,16 +117,9 @@ export function MessageItem({ message }: Props) {
           </button>
         )}
         {!isUser && message.tools && message.tools.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mt-2">
+          <div className="flex flex-col gap-1.5 mt-2">
             {message.tools.map((tool: ToolCall) => (
-              <span key={tool.id} className={cn('inline-flex items-center gap-1 px-2 py-1 text-2xs rounded-md transition-colors',
-                tool.status === 'running' ? 'bg-info/10 text-fg-info' :
-                tool.status === 'done' ? 'bg-accent-subtle text-fg-accent' :
-                'bg-danger/10 text-fg-danger')}>
-                {tool.status === 'running' ? <IconLoader2 size={10} className="animate-spin" /> :
-                 tool.status === 'done' ? <IconCheck size={10} /> : <IconX size={10} />}
-                {tool.tool}
-              </span>
+              <ToolCard key={tool.id} tool={tool} />
             ))}
           </div>
         )}

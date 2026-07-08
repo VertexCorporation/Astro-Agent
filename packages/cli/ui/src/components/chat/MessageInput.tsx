@@ -10,7 +10,7 @@ interface Props {
   onOpenReasoning: () => void;
 }
 
-const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB
+const MAX_FILE_SIZE = 20 * 1024 * 1024;
 
 export function MessageInput({ onOpenModelSelect, onOpenReasoning }: Props) {
   const { sendMessage, interrupt, loading, status, settings } = useApp();
@@ -49,8 +49,17 @@ export function MessageInput({ onOpenModelSelect, onOpenReasoning }: Props) {
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
-    if (e.key === '/' && input === '') { e.preventDefault(); setShowCommands(true); }
-    if (e.key === 'Escape') { setShowCommands(false); if (input.startsWith('/')) setInput(''); }
+    if (e.key === 'Escape') { setShowCommands(false); }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const val = e.target.value;
+    setInput(val);
+    if (val.startsWith('/')) {
+      setShowCommands(true);
+    } else {
+      setShowCommands(false);
+    }
   };
 
   const insertCommand = (cmd: string) => {
@@ -94,9 +103,12 @@ export function MessageInput({ onOpenModelSelect, onOpenReasoning }: Props) {
     setAttachedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
+  const filteredCommands = showCommands && input.startsWith('/')
+    ? commands.filter(c => c.cmd.includes(input.toLowerCase().split(' ')[0]))
+    : [];
+
   return (
     <div className="px-4 py-3 border-t border-border-default bg-chat-bg">
-      {/* Attached files preview */}
       {attachedFiles.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-2">
           {attachedFiles.map((f, i) => (
@@ -115,10 +127,9 @@ export function MessageInput({ onOpenModelSelect, onOpenReasoning }: Props) {
         </div>
       )}
 
-      {/* Slash commands menu */}
-      {showCommands && (
-        <div className="mb-2 border border-border-default rounded-lg bg-base-2 overflow-hidden shadow-lg">
-          {commands.map(c => (
+      {showCommands && input.startsWith('/') && filteredCommands.length > 0 && (
+        <div className="mb-2 border border-border-default rounded-lg bg-base-2 overflow-hidden shadow-lg max-h-48 overflow-y-auto">
+          {filteredCommands.map(c => (
             <div key={c.cmd} onClick={() => insertCommand(c.cmd)}
               className="flex items-center gap-3 px-3 py-2 text-sm cursor-pointer hover:bg-base-3 transition-colors">
               <span className="font-mono text-fg-accent text-xs">{c.cmd}</span>
@@ -128,7 +139,6 @@ export function MessageInput({ onOpenModelSelect, onOpenReasoning }: Props) {
         </div>
       )}
 
-      {/* Hidden file input */}
       <input ref={fileInputRef} type="file" accept="image/*,.txt,.pdf,.csv,.json,.md,.ts,.tsx,.js,.jsx,.py,.css,.html"
         className="hidden" onChange={handleFileSelect} />
 
@@ -136,7 +146,7 @@ export function MessageInput({ onOpenModelSelect, onOpenReasoning }: Props) {
         <textarea
           ref={textareaRef}
           value={input}
-          onChange={e => { setInput(e.target.value); if (e.target.value.startsWith('/')) setShowCommands(true); }}
+          onChange={handleChange}
           onKeyDown={handleKeyDown}
           placeholder="Send a message... (/ for commands, Enter to send)"
           rows={1}
