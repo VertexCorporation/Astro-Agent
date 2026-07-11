@@ -15,6 +15,7 @@ import {
 	type Message,
 	type Model,
 	type OAuthProviderId,
+	type OAuthSelectPrompt,
 } from "astro-core";
 import type { EngineMessage } from "astro-engine";
 import type {
@@ -34,9 +35,7 @@ import {
 	Container,
 	fuzzyFilter,
 	getCapabilities,
-	Image,
-	Loader,
-	type LoaderIndicatorOptions,
+	hyperlink,
 	Markdown,
 	matchesKey,
 	ProcessTerminal,
@@ -47,20 +46,26 @@ import {
 	TUI,
 	visibleWidth,
 } from "astro-tui";
+import chalk from "chalk";
 import { spawn, spawnSync } from "child_process";
-import { buildWelcomeMessage } from "../../cli/initial-message.js";
 import {
 	APP_NAME,
 	APP_TITLE,
+	CONFIG_DIR_NAME,
 	getAuthPath,
 	getDebugLogPath,
 	getDocsPath,
 	getEngineDir,
-	getPackageDir,
 	getShareViewerUrl,
 	VERSION,
 } from "../../config.js";
-import { renderCodingAgentsWorkspace } from "../../core/agents.js";
+import {
+	CACHE_TTL_MS,
+	type CacheMiss,
+	collectCacheMisses,
+	computeCacheWaste,
+	detectCacheMiss,
+} from "../../core/cache-stats.js";
 import { addXp } from "../../core/dev-level.js";
 import { type EngineSession, type EngineSessionEvent, parseSkillBlock } from "../../core/engine-session.js";
 import { type EngineSessionRuntime, SessionImportFileNotFoundError } from "../../core/engine-session-runtime.js";
@@ -73,9 +78,11 @@ import type {
 	ExtensionUIContext,
 	ExtensionUIDialogOptions,
 	ExtensionWidgetOptions,
+	ProjectTrustContext,
+	WorkingIndicatorOptions,
 } from "../../core/extensions/index.js";
 import { FooterDataProvider, type ReadonlyFooterDataProvider } from "../../core/footer-data-provider.js";
-import { runFusionThink } from "../../core/fusion.js";
+import { configureHttpDispatcher, formatHttpIdleTimeoutMs } from "../../core/http-dispatcher.js";
 import { type AppKeybinding, KeybindingsManager } from "../../core/keybindings.js";
 import { createCompactionSummaryMessage } from "../../core/messages.js";
 import {
@@ -89,31 +96,31 @@ import { DefaultPackageManager } from "../../core/package-manager.js";
 import { BUILT_IN_PROVIDER_DISPLAY_NAMES } from "../../core/provider-display-names.js";
 import type { ResourceDiagnostic } from "../../core/resource-loader.js";
 import { formatMissingSessionCwdPrompt, MissingSessionCwdError } from "../../core/session-cwd.js";
-import { type SessionContext, SessionManager } from "../../core/session-manager.js";
+import { type SessionEntry, SessionManager } from "../../core/session-manager.js";
 import { BUILTIN_SLASH_COMMANDS } from "../../core/slash-commands.js";
 import type { SourceInfo } from "../../core/source-info.js";
 import { isInstallTelemetryEnabled } from "../../core/telemetry.js";
 import { subagentEventEmitter } from "../../core/tools/invoke_subagent.js";
 import { taskEventEmitter } from "../../core/tools/task.js";
 import type { TruncationResult } from "../../core/tools/truncate.js";
-import { handlePackageCommand } from "../../package-manager-cli.js";
+import { hasTrustRequiringProjectResources, ProjectTrustStore } from "../../core/trust-manager.js";
 import { getAstroUserEngine } from "../../utils/astro-user-engine.js";
-import { getChangelogPath, getNewEntries, parseChangelog } from "../../utils/changelog.js";
-import { copyToClipboard } from "../../utils/clipboard.js";
+import { getChangelogPath, getNewEntries, normalizeChangelogLinks, parseChangelog } from "../../utils/changelog.js";
+import { copyToClipboard, readClipboardText } from "../../utils/clipboard.js";
 import { extensionForImageMimeType, readClipboardImage } from "../../utils/clipboard-image.js";
 import { parseGitUrl } from "../../utils/git.js";
+import { getCwdRelativePath } from "../../utils/paths.js";
 import { killTrackedDetachedChildren } from "../../utils/shell.js";
-import { ensureTool, getToolPath } from "../../utils/tools-manager.js";
-import { checkForNewAstroAgentVersion } from "../../utils/version-check.js";
-import { AstroAgentHeaderComponent } from "./components/Astro-Agent-header.js";
-import { AppLockComponent } from "./components/app-lock.js";
+import { ensureTool } from "../../utils/tools-manager.js";
+import { checkForNewAstroAgentVersion, type LatestAstroAgentRelease } from "../../utils/version-check.js";
 import { ArminComponent } from "./components/armin.js";
 import { AssistantMessageComponent } from "./components/assistant-message.js";
+import { AstroAgentHeaderComponent } from "./components/astro-agent-header.js";
 import { BashExecutionComponent } from "./components/bash-execution.js";
 import { BorderedLoader } from "./components/bordered-loader.js";
 import { BranchSummaryMessageComponent } from "./components/branch-summary-message.js";
 import { CompactionSummaryMessageComponent } from "./components/compaction-summary-message.js";
-import { CountdownTimer } from "./components/countdown-timer.js";
+import type { CountdownTimer } from "./components/countdown-timer.js";
 import { CustomEditor } from "./components/custom-editor.js";
 import { CustomMessageComponent } from "./components/custom-message.js";
 import { DaxnutsComponent } from "./components/daxnuts.js";
@@ -123,197 +130,74 @@ import { ExtensionEditorComponent } from "./components/extension-editor.js";
 import { ExtensionInputComponent } from "./components/extension-input.js";
 import { ExtensionSelectorComponent } from "./components/extension-selector.js";
 import { FooterComponent } from "./components/footer.js";
-import { AstroAgentIntroComponent } from "./components/intro.js";
-import { keyHint, keyText, rawKeyHint } from "./components/keybinding-hints.js";
+import { formatKeyText, keyDisplayText, keyText } from "./components/keybinding-hints.js";
 import { LoginDialogComponent } from "./components/login-dialog.js";
-import { MetricsChartComponent } from "./components/metrics-chart.js";
 import { ModelSelectorComponent } from "./components/model-selector.js";
-import { type AuthSelectorProvider, OAuthSelectorComponent } from "./components/oauth-selector.js";
+import {
+	type AuthSelectorProvider,
+	formatAuthSelectorProviderType,
+	OAuthSelectorComponent,
+} from "./components/oauth-selector.js";
 import { RoadmapComponent, type RoadmapStep } from "./components/roadmap.js";
 import { ScopedModelsSelectorComponent } from "./components/scoped-models-selector.js";
 import { SessionSelectorComponent } from "./components/session-selector.js";
 import { SettingsSelectorComponent } from "./components/settings-selector.js";
 import { SkillInvocationMessageComponent } from "./components/skill-invocation-message.js";
+import {
+	BranchSummaryStatusIndicator,
+	CompactionStatusIndicator,
+	IdleStatus,
+	RetryStatusIndicator,
+	type StatusIndicator,
+	WorkingStatusIndicator,
+} from "./components/status-indicator.js";
 import { SubagentOverlayComponent } from "./components/subagent-overlay.js";
 import { SubagentStatusComponent } from "./components/subagent-status.js";
-import { type TaskItem, TaskPanelComponent } from "./components/task-panel.js";
-import { ToolBatchComponent } from "./components/tool-batch.js";
+import { TaskPanelComponent } from "./components/task-panel.js";
 import { ToolExecutionComponent } from "./components/tool-execution.js";
 import { TreeSelectorComponent } from "./components/tree-selector.js";
+import { TrustSelectorComponent } from "./components/trust-selector.js";
 import { UserMessageComponent } from "./components/user-message.js";
 import { UserMessageSelectorComponent } from "./components/user-message-selector.js";
-import { parseWizardBlock, WizardSelectorComponent } from "./components/wizard-selector.js";
-// WorkspacePanelComponent removed — right panel disabled
+import { getModelSearchText } from "./model-search.js";
 import {
 	getAvailableThemes,
 	getAvailableThemesWithPaths,
 	getEditorTheme,
 	getMarkdownTheme,
 	getThemeByName,
-	initTheme,
 	onThemeChange,
 	setRegisteredThemes,
-	setTheme,
-	setThemeInstance,
 	stopThemeWatcher,
 	Theme,
 	type ThemeColor,
 	theme,
 } from "./theme/theme.js";
+import { InteractiveThemeController } from "./theme/theme-controller.js";
 
 /** Interface for components that can be expanded/collapsed */
 interface Expandable {
 	setExpanded(expanded: boolean): void;
 }
 
-function canonicalProviderId(providerId: string): string {
-	return normalizeProviderId(providerId) ?? providerId;
-}
-
 function isExpandable(obj: unknown): obj is Expandable {
 	return typeof obj === "object" && obj !== null && "setExpanded" in obj && typeof obj.setExpanded === "function";
 }
 
-function isChatMessageComponent(child: any): boolean {
-	if (!child || typeof child !== "object") return false;
-	const name = child.constructor?.name;
-	return (
-		name === "UserMessageComponent" ||
-		name === "AssistantMessageComponent" ||
-		name === "CustomMessageComponent" ||
-		name === "BranchSummaryMessageComponent" ||
-		name === "CompactionSummaryMessageComponent" ||
-		name === "SkillInvocationMessageComponent" ||
-		name === "ToolExecutionComponent" ||
-		name === "BashExecutionComponent"
-	);
-}
-
-class VirtualizedChatContainer extends Container {
-	private cachedHeight?: number;
-	staticOverhead = 10;
-	staticMaxChildren = 900;
-	staticPruneToChildren = 650;
-	/** 0 = bottom (newest), higher = scrolled up toward older messages */
-	private _scrollOffset = 0;
-	/** Total content lines from last render */
-	private _totalContentLines = 0;
-	/** Viewport lines from last render */
-	private _viewportLines = 0;
-	/** If true, auto-scroll on new content */
-	private _autoScroll = true;
-
-	get scrollOffset(): number {
-		return this._scrollOffset;
-	}
-
-	/** Scroll by delta lines (negative = up, positive = down toward bottom). */
-	scrollBy(delta: number): void {
-		const maxOff = Math.max(0, this._totalContentLines - this._viewportLines);
-		this._scrollOffset = Math.max(0, Math.min(maxOff, this._scrollOffset + delta));
-		this._autoScroll = this._scrollOffset <= 0;
-		this.cachedLines = undefined;
-		this.cachedHeight = undefined;
-	}
-
-	scrollToBottom(): void {
-		this._scrollOffset = 0;
-		this._autoScroll = true;
-		this.cachedLines = undefined;
-		this.cachedHeight = undefined;
-	}
-
-	override addChild(child: Component): void {
-		super.addChild(child);
-		if (isChatMessageComponent(child)) {
-			this.chatItemCount++;
-			if (this._autoScroll) {
-				this.scrollToBottom();
-			}
-		}
-		this.pruneOldChildrenForTuiSpeed();
-	}
-
-	private pruneOldChildrenForTuiSpeed(): void {
-		if (this.children.length <= this.staticMaxChildren) {
-			return;
-		}
-		const removeCount = Math.max(0, this.children.length - this.staticPruneToChildren);
-		let removedChatItems = 0;
-		for (let i = 0; i < removeCount; i++) {
-			if (isChatMessageComponent(this.children[i])) {
-				removedChatItems++;
-			}
-		}
-		this.children.splice(0, removeCount);
-		this.prunedChatItemCount += removedChatItems;
-		this.cachedLines = undefined;
-	}
-
-	override render(width: number): string[] {
-		const terminalHeight = process.stdout.rows || 40;
-
-		if (
-			this.enableCaching &&
-			this.cachedLines &&
-			this.cachedWidth === width &&
-			this.cachedHeight === terminalHeight
-		) {
-			return this.cachedLines;
-		}
-
-		let lines: string[] = [];
-		if (this.children.length === 0) {
-			lines = super.render(width) || [];
-		} else {
-			for (let i = 0; i < this.children.length; i++) {
-				const child = this.children[i];
-				if (!child) continue;
-				const childLines = child.render(width) || [];
-				lines.push(...childLines);
-			}
-		}
-
-		this._totalContentLines = lines.length;
-		this._viewportLines = terminalHeight - this.staticOverhead;
-
-		// Apply scroll offset: when content exceeds viewport, show a window
-		if (lines.length > this._viewportLines) {
-			const maxOff = lines.length - this._viewportLines;
-			if (this._scrollOffset > maxOff) {
-				this._scrollOffset = maxOff;
-			}
-			const start = maxOff - this._scrollOffset;
-			lines = lines.slice(start, start + this._viewportLines);
-
-			// Add scroll indicator at top if scrolled up
-			if (this._scrollOffset > 0 && lines.length > 0) {
-				lines[0] = ` [^] ${lines[0]}`;
-			}
-			// Add scroll indicator at bottom if not at bottom
-			if (this._scrollOffset < maxOff && lines.length > 1) {
-				lines[lines.length - 1] = `${lines[lines.length - 1]} [v]`;
-			}
-		}
-
-		if (this.enableCaching) {
-			this.cachedWidth = width;
-			this.cachedHeight = terminalHeight;
-			this.cachedLines = lines;
-		}
-		return lines;
-	}
-}
-
 class ExpandableText extends Text implements Expandable {
+	private readonly getCollapsedText: () => string;
+	private readonly getExpandedText: () => string;
+
 	constructor(
-		private readonly getCollapsedText: () => string,
-		private readonly getExpandedText: () => string,
+		getCollapsedText: () => string,
+		getExpandedText: () => string,
 		expanded = false,
 		paddingX = 0,
 		paddingY = 0,
 	) {
 		super(expanded ? getExpandedText() : getCollapsedText(), paddingX, paddingY);
+		this.getCollapsedText = getCollapsedText;
+		this.getExpandedText = getExpandedText;
 	}
 
 	setExpanded(expanded: boolean): void {
@@ -326,8 +210,31 @@ type CompactionQueuedMessage = {
 	mode: "steer" | "followUp";
 };
 
+type RenderSessionItem = EngineMessage | Extract<SessionEntry, { type: "custom" }>;
+
+function isCustomSessionEntry(item: RenderSessionItem): item is Extract<SessionEntry, { type: "custom" }> {
+	return "type" in item && item.type === "custom";
+}
+
+function sessionEntryToContextMessages(entry: SessionEntry): EngineMessage[] {
+	if (entry.type === "message") {
+		return [entry.message];
+	}
+	return [];
+}
+
+const DEAD_TERMINAL_ERROR_CODES = new Set(["EIO", "EPIPE", "ENOTCONN"]);
+
+function isDeadTerminalError(error: unknown): boolean {
+	if (!error || typeof error !== "object" || !("code" in error)) {
+		return false;
+	}
+	const code = (error as NodeJS.ErrnoException).code;
+	return code !== undefined && DEAD_TERMINAL_ERROR_CODES.has(code);
+}
+
 const ANTHROPIC_SUBSCRIPTION_AUTH_WARNING =
-	"Anthropic abonelik yetkilendirmesi aktif. Ucuncu taraf kullanimi ek ucrete tabidir ve jeton basina ucretlendirilir. Ayarlari su adresten yonetebilirsiniz: https://claude.ai/settings/usage.";
+	"Anthropic subscription auth is active. Third-party harness usage draws from extra usage and is billed per token, not your Claude plan limits. Manage extra usage at https://claude.ai/settings/usage.";
 
 function isAnthropicSubscriptionAuthKey(apiKey: string | undefined): boolean {
 	return typeof apiKey === "string" && apiKey.startsWith("sk-ant-oat");
@@ -337,12 +244,35 @@ function isUnknownModel(model: Model<any> | undefined): boolean {
 	return !!model && model.provider === "unknown" && model.id === "unknown" && model.api === "unknown";
 }
 
+function quoteIfNeeded(value: string): string {
+	if (value.length > 0 && !/[^a-zA-Z0-9_\-./~:@]/.test(value)) {
+		return value;
+	}
+	return `'${value.replace(/'/g, `'\\''`)}'`;
+}
+
+export function formatResumeCommand(sessionManager: SessionManager): string | undefined {
+	if (!process.stdout.isTTY) return undefined;
+	if (!sessionManager.isPersisted()) return undefined;
+
+	const sessionFile = sessionManager.getSessionFile();
+	if (!sessionFile || !fs.existsSync(sessionFile)) return undefined;
+
+	const args = [APP_NAME];
+	if (!sessionManager.usesDefaultSessionDir()) {
+		args.push("--session-dir", quoteIfNeeded(sessionManager.getSessionDir()));
+	}
+	args.push("--session", sessionManager.getSessionId());
+	return args.join(" ");
+}
+
 function hasDefaultModelProvider(providerId: string): providerId is keyof typeof defaultModelPerProvider {
 	return providerId in defaultModelPerProvider;
 }
 
-const BEDROCK_PROVIDER_ID = "amazon-bedrock";
-const ASTRO_WORKING_FRAMES = ["·", "•", "●", "•"];
+function _canonicalProviderId(providerId: string): string {
+	return normalizeProviderId(providerId) ?? providerId;
+}
 
 const BUILT_IN_MODEL_PROVIDERS = new Set<string>(getProviders());
 
@@ -351,16 +281,66 @@ export function isApiKeyLoginProvider(
 	oauthProviderIds: ReadonlySet<string>,
 	builtInProviderIds: ReadonlySet<string> = BUILT_IN_MODEL_PROVIDERS,
 ): boolean {
-	if (oauthProviderIds.has(providerId)) {
-		return false;
-	}
 	if (BUILT_IN_PROVIDER_DISPLAY_NAMES[providerId]) {
 		return true;
 	}
 	if (builtInProviderIds.has(providerId)) {
 		return false;
 	}
-	return true;
+	return !oauthProviderIds.has(providerId);
+}
+
+type LoginProviderCompletionOption = {
+	id: string;
+	name: string;
+	authTypes: AuthSelectorProvider["authType"][];
+};
+
+const AUTH_TYPE_ORDER = { oauth: 0, api_key: 1 } satisfies Record<AuthSelectorProvider["authType"], number>;
+
+function createFuzzyAutocompleteItems<T>(
+	items: T[],
+	prefix: string,
+	getSearchText: (item: T) => string,
+	toAutocompleteItem: (item: T) => AutocompleteItem,
+): AutocompleteItem[] | null {
+	const filtered = fuzzyFilter(items, prefix, getSearchText);
+	if (filtered.length === 0) return null;
+	return filtered.map(toAutocompleteItem);
+}
+
+function getLoginProviderCompletionOptions(
+	providerOptions: readonly AuthSelectorProvider[],
+): LoginProviderCompletionOption[] {
+	const byId = new Map<string, LoginProviderCompletionOption>();
+	for (const provider of providerOptions) {
+		const existing = byId.get(provider.id);
+		if (existing) {
+			if (!existing.authTypes.includes(provider.authType)) {
+				existing.authTypes.push(provider.authType);
+				existing.authTypes.sort((a, b) => AUTH_TYPE_ORDER[a] - AUTH_TYPE_ORDER[b]);
+			}
+			continue;
+		}
+		byId.set(provider.id, {
+			id: provider.id,
+			name: provider.name,
+			authTypes: [provider.authType],
+		});
+	}
+	return Array.from(byId.values()).sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function getLoginProviderSearchText(provider: LoginProviderCompletionOption): string {
+	const authTypes = provider.authTypes
+		.map((authType) => `${authType} ${formatAuthSelectorProviderType(authType)}`)
+		.join(" ");
+	return `${provider.id} ${provider.name} ${authTypes}`;
+}
+
+function formatLoginProviderCompletionDescription(provider: LoginProviderCompletionOption): string {
+	const authTypes = provider.authTypes.map(formatAuthSelectorProviderType).join("/");
+	return provider.name === provider.id ? authTypes : `${provider.name} · ${authTypes}`;
 }
 
 /**
@@ -371,6 +351,8 @@ export interface InteractiveModeOptions {
 	migratedProviders?: string[];
 	/** Warning message if session model couldn't be restored */
 	modelFallbackMessage?: string;
+	/** Cwd to trust after reload if it gained a .pi directory during this implicitly trusted session. */
+	autoTrustOnReloadCwd?: string;
 	/** Initial message to send on startup (can include @file content) */
 	initialMessage?: string;
 	/** Images to attach to the initial message */
@@ -384,10 +366,10 @@ export interface InteractiveModeOptions {
 export class InteractiveMode {
 	private runtimeHost: EngineSessionRuntime;
 	private ui: TUI;
+	private loadedResourcesContainer: Container;
 	private chatContainer: Container;
 	private pendingMessagesContainer: Container;
 	private statusContainer: Container;
-	private roadmap: RoadmapComponent;
 	private defaultEditor: CustomEditor;
 	private editor: EditorComponent;
 	private editorComponentFactory: EditorFactory | undefined;
@@ -397,28 +379,30 @@ export class InteractiveMode {
 	private editorContainer: Container;
 	private footer: FooterComponent;
 	private footerDataProvider: FooterDataProvider;
-	// workspacePanel removed
 	// Stored so the same manager can be injected into custom editors, selectors, and extension UI.
 	private keybindings: KeybindingsManager;
 	private version: string;
 	private isInitialized = false;
-	private initPromise: Promise<void> | undefined;
-	private onInputCallback?: (text: string, images?: ImageContent[]) => void;
-	private isSubmitting = false;
-	private loadingAnimation: Loader | undefined = undefined;
+	private onInputCallback?: (text: string) => void;
+	private pendingUserInputs: string[] = [];
+	private activeStatusIndicator: StatusIndicator | undefined = undefined;
+	private readonly idleStatus = new IdleStatus();
 	private workingMessage: string | undefined = undefined;
 	private workingVisible = true;
-	private workingIndicatorOptions: LoaderIndicatorOptions | undefined = undefined;
-	private readonly defaultWorkingMessage = "Hazirlaniyor...";
+	private workingIndicatorOptions: WorkingIndicatorOptions | undefined = undefined;
+	private readonly defaultWorkingMessage = "Working...";
 	private readonly defaultHiddenThinkingLabel = "Thinking...";
 	private hiddenThinkingLabel = this.defaultHiddenThinkingLabel;
 
 	private lastSigintTime = 0;
 	private lastEscapeTime = 0;
+	private changelogMarkdown: string | undefined = undefined;
 	private startupNoticesShown = false;
 	private anthropicSubscriptionWarningShown = false;
-	private _statusText: Text | undefined = undefined;
-	private _displayUserText: string | undefined = undefined;
+
+	// Status line tracking (for mutating immediately-sequential status updates)
+	private lastStatusSpacer: Spacer | undefined = undefined;
+	private lastStatusText: Text | undefined = undefined;
 
 	// Streaming message tracking
 	private streamingComponent: AssistantMessageComponent | undefined = undefined;
@@ -427,27 +411,22 @@ export class InteractiveMode {
 	// Tool execution tracking: toolCallId -> component
 	private pendingTools = new Map<string, ToolExecutionComponent>();
 
-	// Tool batch grouping: groups consecutive tool calls into one collapsed block
-	private currentToolBatch: ToolBatchComponent | undefined;
-
 	// Tool output expansion state
 	private toolOutputExpanded = false;
 
 	// Thinking block visibility state
 	private hideThinkingBlock = false;
+	private outputPad = 1;
 
 	// Skill commands: command name -> skill file path
 	private skillCommands = new Map<string, string>();
 
-	// Engine subscription unsubscribe function
+	// Agent subscription unsubscribe function
 	private unsubscribe?: () => void;
 	private signalCleanupHandlers: Array<() => void> = [];
 
 	// Track if editor is in bash mode (text starts with !)
 	private isBashMode = false;
-
-	// Plan Mode: read-only analiz modu (write/edit/bash tool'lari devre disi)
-	private isPlanMode = false;
 
 	// Track current bash execution component
 	private bashComponent: BashExecutionComponent | undefined = undefined;
@@ -456,36 +435,19 @@ export class InteractiveMode {
 	private pendingBashComponents: BashExecutionComponent[] = [];
 
 	// Auto-compaction state
-	private autoCompactionLoader: Loader | undefined = undefined;
 	private autoCompactionEscapeHandler?: () => void;
 
-	// Roadmap state
-	private currentSteps: RoadmapStep[] = [];
-
 	// Auto-retry state
-	private retryLoader: Loader | undefined = undefined;
-	private retryCountdown: CountdownTimer | undefined = undefined;
 	private retryEscapeHandler?: () => void;
 
 	// Messages queued while compaction is running
 	private compactionQueuedMessages: CompactionQueuedMessage[] = [];
 
-	// Shutdown state
-	private shutdownRequested = false;
-	private webUiProcess: any = undefined;
-	private editorActionListenerRegistered = false;
-	private authPanelListenerRegistered = false;
-	private mcpPanelListenerRegistered = false;
-
 	// Extension UI state
 	private extensionSelector: ExtensionSelectorComponent | undefined = undefined;
 	private extensionInput: ExtensionInputComponent | undefined = undefined;
 	private extensionEditor: ExtensionEditorComponent | undefined = undefined;
-	private activeMetricsChart: MetricsChartComponent | undefined = undefined;
 	private extensionTerminalInputUnsubscribers = new Set<() => void>();
-
-	// Wizard selector (inline multi-step option picker)
-	private wizardSelector: WizardSelectorComponent | undefined = undefined;
 
 	// Extension widgets (components rendered above/below the editor)
 	private extensionWidgetsAbove = new Map<string, Component & { dispose?(): void }>();
@@ -505,25 +467,27 @@ export class InteractiveMode {
 	// Custom header from extension (undefined = use built-in header)
 	private customHeader: (Component & { dispose?(): void }) | undefined = undefined;
 
-	// Main chat layout
-	private mainLayout!: Container;
+	private options: InteractiveModeOptions;
+	private autoTrustOnReloadCwd: string | undefined;
+	private themeController: InteractiveThemeController;
+	private roadmap!: RoadmapComponent;
+	private taskPanel!: TaskPanelComponent;
+	private subagentStatus!: SubagentStatusComponent;
 	private chatAndPendingContainer!: Container;
-
-	// Zen Mode state
+	private mainLayout!: Container;
 	private isZenMode = false;
-
-	// Task Mode: side panel showing task list (on by default)
-	private isTaskMode = true;
-	private taskPanel: TaskPanelComponent | undefined = undefined;
-
-	private subagentStatus: SubagentStatusComponent | undefined = undefined;
+	private isTaskMode = false;
+	private currentSteps: RoadmapStep[] = [];
+	private isSubmitting = false;
+	private retryCountdown: CountdownTimer | undefined;
+	private retryLoader: BorderedLoader | undefined;
 
 	// Convenience accessors
 	private get session(): EngineSession {
 		return this.runtimeHost.session;
 	}
-	private get engine() {
-		return this.session.engine;
+	private get agent() {
+		return this.session.agent;
 	}
 	private get sessionManager() {
 		return this.session.sessionManager;
@@ -532,24 +496,22 @@ export class InteractiveMode {
 		return this.session.settingsManager;
 	}
 
-	constructor(
-		runtimeHost: EngineSessionRuntime,
-		private options: InteractiveModeOptions = {},
-	) {
+	constructor(runtimeHost: EngineSessionRuntime, options: InteractiveModeOptions = {}) {
 		this.runtimeHost = runtimeHost;
+		this.options = options;
+		this.autoTrustOnReloadCwd = options.autoTrustOnReloadCwd;
 		this.runtimeHost.setBeforeSessionInvalidate(() => {
 			this.resetExtensionUI();
 		});
 		this.runtimeHost.setRebindSession(async () => {
-			await this.rebindCurrentSession();
+			await this.rebindCurrentSession({ renderBeforeBind: true });
 		});
 		this.version = VERSION;
-		process.env.PI_TUI_MODE = "1";
 		this.ui = new TUI(new ProcessTerminal(), this.settingsManager.getShowHardwareCursor());
 		this.ui.setClearOnShrink(this.settingsManager.getClearOnShrink());
 		this.headerContainer = new Container();
-		this.chatContainer = new VirtualizedChatContainer();
-		this.chatContainer.enableCaching = true;
+		this.loadedResourcesContainer = new Container();
+		this.chatContainer = new Container();
 		this.pendingMessagesContainer = new Container();
 		this.statusContainer = new Container();
 		this.widgetContainerAbove = new Container();
@@ -566,21 +528,21 @@ export class InteractiveMode {
 		this.editorContainer = new Container();
 		this.editorContainer.addChild(this.editor as Component);
 		this.footerDataProvider = new FooterDataProvider(this.sessionManager.getCwd());
-		this.footer = new FooterComponent(this.session, this.footerDataProvider, () => {
-			const active = Array.from(this.pendingTools.values()).map((comp) => comp.getToolName());
-			if (this.bashComponent) {
-				active.push("bash");
-			}
-			return active;
-		});
+		this.footer = new FooterComponent(this.session, this.footerDataProvider);
 		this.footer.setAutoCompactEnabled(this.session.autoCompactionEnabled);
 
 		// Load hide thinking block setting
 		this.hideThinkingBlock = this.settingsManager.getHideThinkingBlock();
+		this.outputPad = this.settingsManager.getOutputPad();
 
 		// Register themes from resource loader and initialize
 		setRegisteredThemes(this.session.resourceLoader.getThemes().themes);
-		initTheme(this.settingsManager.getTheme(), true);
+		this.themeController = new InteractiveThemeController(
+			this.ui,
+			this.settingsManager,
+			(message) => this.showError(message),
+			() => this.updateEditorBorderColor(),
+		);
 	}
 
 	private getAutocompleteSourceTag(sourceInfo?: SourceInfo): string | undefined {
@@ -625,8 +587,8 @@ export class InteractiveMode {
 				type: "warning" as const,
 				message:
 					command.invocationName === command.name
-						? `Uzantı komutu '/${command.name}' yerleşik etkileşimli komutla çakışıyor. Otomatik tamamlamada atlanıyor.`
-						: `Uzantı komutu '/${command.name}' yerleşik etkileşimli komutla çakışıyor. '/${command.invocationName}' olarak kullanılabilir.`,
+						? `Extension command '/${command.name}' conflicts with built-in interactive command. Skipping in autocomplete.`
+						: `Extension command '/${command.name}' conflicts with built-in interactive command. Available as '/${command.invocationName}'.`,
 				path: command.sourceInfo.path,
 			}));
 	}
@@ -636,11 +598,12 @@ export class InteractiveMode {
 		const slashCommands: SlashCommand[] = BUILTIN_SLASH_COMMANDS.map((command) => ({
 			name: command.name,
 			description: command.description,
+			...(command.argumentHint && { argumentHint: command.argumentHint }),
 		}));
 
-		const modelsCommand = slashCommands.find((command) => command.name === "models");
-		if (modelsCommand) {
-			modelsCommand.getArgumentCompletions = (prefix: string): AutocompleteItem[] | null => {
+		const modelCommand = slashCommands.find((command) => command.name === "model");
+		if (modelCommand) {
+			modelCommand.getArgumentCompletions = (prefix: string): AutocompleteItem[] | null => {
 				// Get available models (scoped or from registry)
 				const models =
 					this.session.scopedModels.length > 0
@@ -653,18 +616,26 @@ export class InteractiveMode {
 				const items = models.map((m) => ({
 					id: m.id,
 					provider: m.provider,
+					name: m.name,
 					label: `${m.provider}/${m.id}`,
 				}));
 
-				// Fuzzy filter by model ID + provider (allows "opus anthropic" to match)
-				const filtered = fuzzyFilter(items, prefix, (item) => `${item.id} ${item.provider}`);
-
-				if (filtered.length === 0) return null;
-
-				return filtered.map((item) => ({
+				return createFuzzyAutocompleteItems(items, prefix, getModelSearchText, (item) => ({
 					value: item.label,
 					label: item.id,
 					description: item.provider,
+				}));
+			};
+		}
+
+		const loginCommand = slashCommands.find((command) => command.name === "login");
+		if (loginCommand) {
+			loginCommand.getArgumentCompletions = (prefix: string): AutocompleteItem[] | null => {
+				const providers = getLoginProviderCompletionOptions(this.getLoginProviderOptions());
+				return createFuzzyAutocompleteItems(providers, prefix, getLoginProviderSearchText, (provider) => ({
+					value: provider.id,
+					label: provider.id,
+					description: formatLoginProviderCompletionDescription(provider),
 				}));
 			};
 		}
@@ -710,8 +681,13 @@ export class InteractiveMode {
 
 	private setupAutocompleteProvider(): void {
 		let provider = this.createBaseAutocompleteProvider();
+		const triggerCharacters: string[] = [];
 		for (const wrapProvider of this.autocompleteProviderWrappers) {
 			provider = wrapProvider(provider);
+			triggerCharacters.push(...(provider.triggerCharacters ?? []));
+		}
+		if (triggerCharacters.length > 0) {
+			provider.triggerCharacters = [...new Set(triggerCharacters)];
 		}
 
 		this.autocompleteProvider = provider;
@@ -727,27 +703,55 @@ export class InteractiveMode {
 		}
 		this.startupNoticesShown = true;
 
-		const introText = new AstroAgentIntroComponent(() => this.ui.requestRender());
-		this.chatContainer.addChild(introText);
+		if (!this.changelogMarkdown) {
+			return;
+		}
+
+		if (this.chatContainer.children.length > 0) {
+			this.chatContainer.addChild(new Spacer(1));
+		}
+		this.chatContainer.addChild(new DynamicBorder());
+		if (this.settingsManager.getCollapseChangelog()) {
+			const versionMatch = this.changelogMarkdown.match(/##\s+\[?(\d+\.\d+\.\d+)\]?/);
+			const latestVersion = versionMatch ? versionMatch[1] : this.version;
+			const condensedText = `Updated to v${latestVersion}. Use ${theme.bold("/changelog")} to view full changelog.`;
+			this.chatContainer.addChild(new Text(condensedText, 1, 0));
+		} else {
+			this.chatContainer.addChild(new Text(theme.bold(theme.fg("accent", "What's New")), 1, 0));
+			this.chatContainer.addChild(new Spacer(1));
+			this.chatContainer.addChild(
+				new Markdown(this.changelogMarkdown.trim(), 1, 0, this.getMarkdownThemeWithSettings()),
+			);
+			this.chatContainer.addChild(new Spacer(1));
+		}
+		this.chatContainer.addChild(new DynamicBorder());
 	}
 
 	async init(): Promise<void> {
 		if (this.isInitialized) return;
-		if (this.initPromise) return this.initPromise;
 
-		this.initPromise = this.doInit();
-		return this.initPromise;
-	}
-
-	private async doInit(): Promise<void> {
 		this.registerSignalHandlers();
 
 		// Load changelog (only show new entries, skip for resumed sessions)
 		this.changelogMarkdown = this.getChangelogForDisplay();
 
-		// Do not block startup on helper downloads. Use what already exists, then
-		// warm missing tools in the background for autocomplete/search.
-		this.fdPath = getToolPath("fd") ?? undefined;
+		if (this.session.scopedModels.length > 0 && (this.options.verbose || !this.settingsManager.getQuietStartup())) {
+			const modelList = this.session.scopedModels
+				.map((sm) => {
+					const thinkingStr = sm.thinkingLevel ? `:${sm.thinkingLevel}` : "";
+					return `${sm.model.id}${thinkingStr}`;
+				})
+				.join(", ");
+			const cycleKeys = this.keybindings.getKeys("app.model.cycleForward");
+			const cycleHint =
+				cycleKeys.length > 0
+					? theme.fg("muted", ` (${formatKeyText(cycleKeys.join("/"), { capitalize: true })} to cycle)`)
+					: "";
+			console.log(theme.fg("dim", `Model scope: ${modelList}${cycleHint}`));
+		}
+
+		// Ensure fd and rg are available (downloads if missing, adds to PATH via getBinDir)
+		// Both are needed: fd for autocomplete, rg for grep tool and bash commands
 		void Promise.all([ensureTool("fd", true), ensureTool("rg", true)])
 			.then(([fdPath]) => {
 				if (fdPath && fdPath !== this.fdPath) {
@@ -756,56 +760,14 @@ export class InteractiveMode {
 				}
 			})
 			.catch(() => {
-				// Tool downloads are best-effort; grep/find will report if invoked and unavailable.
+				// Tool downloads are best-effort
 			});
-
-		// Add header container
-		// this.ui.addChild(this.headerContainer); // Removed from here, added before mainLayout
 
 		// Add header with keybindings from config (unless silenced)
 		if (this.options.verbose || !this.settingsManager.getQuietStartup()) {
-			// Build startup instructions using keybinding hint helpers
-			const hint = (keybinding: AppKeybinding, description: string) => keyHint(keybinding, description);
-
-			const _expandedInstructions = [
-				hint("app.interrupt", "islemi durdurmak icin"),
-				hint("app.clear", "ekrani temizlemek icin"),
-				rawKeyHint(`${keyText("app.clear")} iki kez`, "cikmak icin"),
-				hint("app.exit", "cikmak icin (bosken)"),
-				hint("app.suspend", "arka plana atmak icin"),
-				keyHint("tui.editor.deleteToLineEnd", "satir sonunu silmek icin"),
-				hint("app.thinking.cycle", "dusunme modunu degistirmek icin"),
-				rawKeyHint(
-					`${keyText("app.model.cycleForward")}/${keyText("app.model.cycleBackward")}`,
-					"modelleri degistirmek icin",
-				),
-				hint("app.model.select", "model secmek icin"),
-				hint("app.tools.expand", "araclari genisletmek icin"),
-				hint("app.thinking.toggle", "dusunme detaylarini gormek icin"),
-				hint("app.editor.external", "harici editorde acmak icin"),
-				rawKeyHint("/", "komut listesi icin"),
-				rawKeyHint("!", "bash komutu calistirmak icin"),
-				rawKeyHint("!!", "baglamsiz bash calistirmak icin"),
-				hint("app.message.followUp", "mesaji siraya eklemek icin"),
-				hint("app.message.dequeue", "siradaki mesajlari duzenlemek icin"),
-				hint("app.clipboard.pasteImage", "pano'dan resim eklemek icin"),
-				rawKeyHint("dosyalari surukleyin", "projeye eklemek icin"),
-			].join("\n");
-
-			const _compactInstructions = [
-				hint("app.interrupt", "durdur"),
-				rawKeyHint(`${keyText("app.clear")}/${keyText("app.exit")}`, "temizle/cik"),
-				rawKeyHint("/", "komutlar"),
-				rawKeyHint("!", "bash"),
-				hint("app.tools.expand", "yardim"),
-			].join(theme.fg("dim", " • "));
-
 			this.builtInHeader = new AstroAgentHeaderComponent(this.session, this.footerDataProvider);
-
-			// Setup UI layout
 			this.headerContainer.addChild(this.builtInHeader);
 		} else {
-			// Minimal header when silenced
 			this.builtInHeader = new Text("", 0, 0);
 			this.headerContainer.addChild(this.builtInHeader);
 		}
@@ -832,8 +794,6 @@ export class InteractiveMode {
 
 		this.subagentStatus = new SubagentStatusComponent(() => {
 			if (!this.subagentStatus?.active) return;
-			// Subagent status click handler
-			// the engine and taskName should be captured from the 'start' event
 		});
 
 		let activeSubagent: { id: string; engine: any; taskName: string } | null = null;
@@ -841,18 +801,14 @@ export class InteractiveMode {
 		subagentEventEmitter.on("start", (payload: any) => {
 			activeSubagent = { id: payload.id, engine: payload.engine, taskName: payload.taskName };
 			this.subagentStatus?.setStatus(true, payload.taskName);
-
-			// Override onClick to show overlay
 			if (this.subagentStatus) {
 				this.subagentStatus.onClick = () => {
 					if (!activeSubagent) return false;
-
 					const overlay = new SubagentOverlayComponent(activeSubagent.taskName, activeSubagent.engine, () => {
 						this.ui.hideOverlay();
 						this.editor.focus();
 						this.ui.requestRender();
 					});
-
 					this.ui.showOverlay(overlay, {
 						width: "90%",
 						height: "90%",
@@ -861,14 +817,11 @@ export class InteractiveMode {
 					return true;
 				};
 			}
-
 			this.ui.requestRender();
 		});
 
 		subagentEventEmitter.on("update", (payload: any) => {
 			if (activeSubagent?.id === payload.id) {
-				// We don't necessarily need to do anything here if the overlay handles its own render loop,
-				// but let's request a render just in case the overlay is open.
 				this.ui.requestRender();
 			}
 		});
@@ -889,12 +842,9 @@ export class InteractiveMode {
 		// Flex container for Chat + Roadmap
 		this.mainLayout = new Container();
 		this.mainLayout.setStyle({ flexDirection: "row" });
-
-		// Set fixed width for roadmap (chatAndPending will flex automatically)
 		this.roadmap.setStyle({ width: 45, minWidth: 45, border: "left" });
 
 		this.refreshLayout();
-
 		this.setupKeyHandlers();
 		this.setupEditorSubmitHandler();
 
@@ -902,6 +852,8 @@ export class InteractiveMode {
 		this.ui.start();
 		this.isInitialized = true;
 		this.scheduleStartupViewportStabilization();
+
+		await this.themeController.applyFromSettings();
 
 		// Initialize extensions first so resources are shown before messages
 		await this.rebindCurrentSession();
@@ -932,55 +884,7 @@ export class InteractiveMode {
 			})
 			.catch((err) => console.error("[mcp] Failed to import web-ui-server:", err));
 
-		this.isInitialized = true;
 		this.initPromise = undefined;
-	}
-
-	private scheduleStartupViewportStabilization(): void {
-		const delays = [40, 120, 280, 650];
-		for (const delay of delays) {
-			setTimeout(() => {
-				if (!this.isInitialized) return;
-				this.ui.invalidate();
-				this.ui.requestRender(true);
-			}, delay).unref?.();
-		}
-	}
-
-	private toggleZenMode(): void {
-		this.isZenMode = !this.isZenMode;
-		this.refreshLayout();
-		this.showStatus(this.isZenMode ? "🧘‍♂️ Zen Modu Aktif (Kapatmak için /zen)" : " Zen Modu Kapatıldı");
-	}
-
-	private refreshLayout(): void {
-		this.ui.children = [];
-		if (!this.isZenMode) {
-			this.ui.addChild(this.headerContainer);
-		}
-
-		this.mainLayout.clear();
-		this.mainLayout.addChild(this.chatAndPendingContainer);
-		if (this.currentSteps.length > 0 && !this.isZenMode) {
-			this.mainLayout.addChild(this.roadmap);
-		}
-		if (this.isTaskMode && !this.isZenMode && this.taskPanel) {
-			this.mainLayout.addChild(this.taskPanel);
-		}
-
-		this.ui.addChild(this.mainLayout);
-		if (!this.isZenMode) {
-			this.ui.addChild(this.statusContainer);
-		}
-		this.renderWidgets();
-		this.ui.addChild(this.widgetContainerAbove);
-		this.ui.addChild(this.widgetContainerBelow);
-		this.ui.addChild(this.editorContainer);
-		if (!this.isZenMode) {
-			this.ui.addChild(this.customFooter ?? this.footer);
-		}
-		this.ui.setFocus(this.editor);
-		this.ui.requestRender();
 	}
 
 	/**
@@ -996,6 +900,75 @@ export class InteractiveMode {
 		}
 	}
 
+	private scheduleStartupViewportStabilization(): void {
+		const delays = [40, 120, 280, 650];
+		for (const delay of delays) {
+			setTimeout(() => {
+				if (!this.isInitialized) return;
+				this.ui.invalidate();
+				this.ui.requestRender(true);
+			}, delay).unref?.();
+		}
+	}
+
+	private refreshLayout(): void {
+		this.ui.children = [];
+		if (!this.isZenMode) {
+			this.ui.addChild(this.headerContainer);
+		}
+		this.mainLayout.clear();
+		this.mainLayout.addChild(this.chatAndPendingContainer);
+		if (this.currentSteps.length > 0 && !this.isZenMode) {
+			this.mainLayout.addChild(this.roadmap);
+		}
+		if (this.isTaskMode && !this.isZenMode && this.taskPanel) {
+			this.mainLayout.addChild(this.taskPanel);
+		}
+		this.ui.addChild(this.mainLayout);
+		if (!this.isZenMode) {
+			this.ui.addChild(this.statusContainer);
+		}
+		this.renderWidgets();
+		this.ui.addChild(this.widgetContainerAbove);
+		this.ui.addChild(this.widgetContainerBelow);
+		this.ui.addChild(this.editorContainer);
+		if (!this.isZenMode) {
+			this.ui.addChild(this.customFooter ?? this.footer);
+		}
+		this.ui.setFocus(this.editor);
+		this.ui.requestRender();
+	}
+
+	private registerAuthPanel(server: any): void {
+		try {
+			server.registerTuiAuthListener?.({
+				onLogin: (provider: string) => {
+					this.showStatus(`Logged in to ${provider}`);
+				},
+				onLogout: (provider: string) => {
+					this.showStatus(`Logged out of ${provider}`);
+				},
+			});
+		} catch {
+			// best effort
+		}
+	}
+
+	private registerMcpPanel(server: any): void {
+		try {
+			server.registerTuiMcpListener?.({
+				onConnect: (serverName: string) => {
+					this.showStatus(`MCP connected: ${serverName}`);
+				},
+				onDisconnect: (serverName: string) => {
+					this.showStatus(`MCP disconnected: ${serverName}`);
+				},
+			});
+		} catch {
+			// best effort
+		}
+	}
+
 	/**
 	 * Run the interactive mode. This is the main entry point.
 	 * Initializes the UI, shows warnings, processes initial messages, and starts the interactive loop.
@@ -1004,9 +977,9 @@ export class InteractiveMode {
 		await this.init();
 
 		// Start version check asynchronously
-		checkForNewAstroAgentVersion(this.version).then((newVersion) => {
-			if (newVersion) {
-				this.showNewVersionNotification(newVersion);
+		checkForNewAstroAgentVersion(this.version).then((newRelease) => {
+			if (newRelease) {
+				this.showNewVersionNotification(newRelease);
 			}
 		});
 
@@ -1028,12 +1001,12 @@ export class InteractiveMode {
 		const { migratedProviders, modelFallbackMessage, initialMessage, initialImages, initialMessages } = this.options;
 
 		if (migratedProviders && migratedProviders.length > 0) {
-			this.showWarning(`Kimlik bilgileri auth.json dosyasına taşındı: ${migratedProviders.join(", ")}`);
+			this.showWarning(`Migrated credentials to auth.json: ${migratedProviders.join(", ")}`);
 		}
 
 		const modelsJsonError = this.session.modelRegistry.getError();
 		if (modelsJsonError) {
-			this.showError(`models.json hatası: ${modelsJsonError}`);
+			this.showError(`models.json error: ${modelsJsonError}`);
 		}
 
 		if (modelFallbackMessage) {
@@ -1047,7 +1020,7 @@ export class InteractiveMode {
 			try {
 				await this.session.prompt(initialMessage, { images: initialImages });
 			} catch (error: unknown) {
-				const errorMessage = error instanceof Error ? error.message : "Bilinmeyen bir hata oluştu";
+				const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
 				this.showError(errorMessage);
 			}
 		}
@@ -1057,7 +1030,7 @@ export class InteractiveMode {
 				try {
 					await this.session.prompt(message);
 				} catch (error: unknown) {
-					const errorMessage = error instanceof Error ? error.message : "Bilinmeyen bir hata oluştu";
+					const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
 					this.showError(errorMessage);
 				}
 			}
@@ -1065,184 +1038,11 @@ export class InteractiveMode {
 
 		// Main interactive loop
 		while (true) {
-			const { text: userInput, images } = await this.getUserInput();
+			const userInput = await this.getUserInput();
 			try {
-				let promptInput = userInput;
-				const lowerInput = userInput.toLowerCase();
-				const videoEditIntentTerms = [
-					"video edit",
-					"video düzenle",
-					"videoyu düzenle",
-					"videoyu kes",
-					"video kes",
-					"klip kes",
-					"kurgu yap",
-					"montaj yap",
-					"video yap",
-					"short yap",
-					"shorts yap",
-					"short videosu",
-					"tiktok videosu",
-					"reels yap",
-					"altyazı ekle",
-					"otomatik altyazı",
-					"seslendirme ekle",
-					"glitch efekti",
-					"vhs efekti",
-					"cinematic video",
-					"ffmpeg",
-					"render video",
-					"videoeditle",
-				];
-				const photoEditIntentTerms = [
-					"fotoğraf düzenle",
-					"fotoğrafı düzenle",
-					"fotoğraf edit",
-					"photo edit",
-					"resim düzenle",
-					"resmi düzenle",
-					"resmi editle",
-					"görsel düzenle",
-					"görsel editle",
-					"photoeditle",
-					"yüzdeki leke",
-					"lekeleri temizle",
-					"leke temizle",
-					"cildi yumuşat",
-					"cilt yumuşat",
-					"cildi doğal",
-					"gözleri netleştir",
-					"portre gibi",
-					"profesyonel portre",
-					"retouch",
-					"rötuş",
-					"arka planı sil",
-					"background remove",
-					"obje kaldır",
-					"nesne kaldır",
-					"inpaint",
-					"upscale",
-					"görseli kaydet",
-					"png olarak",
-					"jpg olarak",
-				];
-				const hasImageFileHint =
-					/\b(png|jpe?g|webp|gif|bmp|tiff?)\b/i.test(userInput) ||
-					lowerInput.includes("foto") ||
-					lowerInput.includes("resim") ||
-					lowerInput.includes("görsel");
-				const hasVideoFileHint =
-					/\b(mp4|mov|mkv|webm|avi|m4v)\b/i.test(userInput) ||
-					lowerInput.includes("video") ||
-					lowerInput.includes("klip");
-				const scratchEditIntentTerms = [
-					"scratch projesini düzenle",
-					"scratch düzenle",
-					"turbowarp projesini düzenle",
-					"turbowarp düzenle",
-					"scratch edit",
-					"turbowarp edit",
-					"scratch projesi",
-					"turbowarp projesi",
-					"scratch'i aç",
-					"turbowarp'ı aç",
-					"scratch bagla",
-					"turbowarp bagla",
-					"scratch bağla",
-					"turbowarp bağla",
-				];
-				const isVideo =
-					videoEditIntentTerms.some((term) => lowerInput.includes(term)) ||
-					(hasVideoFileHint &&
-						/\b(kes|cut|trim|split|altyazı|short|reels|render|efekt|filter|filtre)\b/i.test(userInput));
-				const isPhoto =
-					photoEditIntentTerms.some((term) => lowerInput.includes(term)) ||
-					(hasImageFileHint &&
-						/\b(leke|cilt|yüz|goz|göz|portre|retouch|rötuş|arka plan|obje|nesne|upscale|netleştir|yumuşat|temizle|renk|lut|kontrast|parlaklık)\b/i.test(
-							userInput,
-						));
-				const isScratch = scratchEditIntentTerms.some((term) => lowerInput.includes(term));
-
-				if (isVideo) {
-					await this.handleVideoEditCommand();
-					promptInput = `[Sistem: Kullanıcının talebi üzerine Astro-Agent Video Studio tarayıcıda otomatik olarak açıldı. Lütfen kullanıcıya video düzenleme konusunda nasıl yardımcı olabileceğini sor ve rehberlik et. Dosya konumları, kesme/cut, efektler, keyframe, altyazı vb. işlemler yapabileceğini ve Browser Bridge üzerinden tarayıcı sekmesini kontrol edebildiğini belirt.]\n\n${userInput}`;
-				} else if (isPhoto) {
-					await this.handlePhotoEditCommand();
-					promptInput = `[Sistem: Kullanıcının mesajı profesyonel fotoğraf düzenleme/retouch niyeti taşıyor; Astro-Agent Photo Studio tarayıcıda otomatik açıldı. Komut yazmasını bekleme. Önce klasördeki uygun görsel dosyayı bul (png/jpg/webp vb.), sonra Photo Studio ve Browser Bridge üzerinden yükleme/işlem akışını yürüt. İstenen işlem örn. yüz lekesi temizleme, cilt yumuşatma, göz netleştirme, profesyonel portre, arka plan/obje kaldırma, LUT/curves/upscale/export olabilir. Gerekirse yalnızca eksik dosya yolu veya export hedefi sor.]\n\n${userInput}`;
-				} else if (isScratch) {
-					const scratchConfig = this.getScratchMcpConfig();
-					if (fs.existsSync(scratchConfig.args[0])) {
-						try {
-							this.showStatus("Scratch/TurboWarp MCP otomatik bağlanıyor...");
-							const tools = await this.activateMcpServer("scratch", scratchConfig);
-							const scratchTools = tools.filter((t) => t.startsWith("scratch_"));
-							this.showStatus(`Scratch MCP bağlandı. ${scratchTools.length || tools.length} araç aktif.`);
-						} catch (err) {
-							this.showWarning(
-								`Scratch MCP otomatik bağlanamadı: ${err instanceof Error ? err.message : String(err)}`,
-							);
-						}
-					}
-					promptInput = `[Sistem: Kullanıcının talebi üzerine Scratch/TurboWarp MCP entegrasyonu (scratch_*) otomatik olarak bağlandı/aktif edildi. Lütfen projedeki sprite'ları, sahneleri, blokları, değişkenleri ve listeleri scratch_* araçları ile kontrol et ve düzenlemeleri yap. Chrome extension'ın yüklü ve aktif olduğundan emin olun.]\n\n${userInput}`;
-				}
-
-				// Store original user text before Fable/Fusion modify promptInput
-				this._displayUserText = userInput;
-
-				// --- FABLE MODE PLAN GENERATION ---
-				const fableSettings = this.settingsManager.getFableMode();
-				if (fableSettings.enabled) {
-					const { runFable } = await import("../../core/fable-mode-engine.js");
-					const fableResult = await runFable(
-						{ task: promptInput, tier: fableSettings.tier || "sonnet" },
-						{
-							modelRegistry: {
-								find: (p, id) => this.session.modelRegistry.find(p, id) as any,
-								authStorage: {
-									get: (p) => ({ key: (this.session.modelRegistry.authStorage.get(p) as any)?.key || "" }),
-								},
-							},
-							onStatus: (msg) => this.showStatus(msg),
-							onPlan: (plan) => {
-								const stageList = plan.stages
-									.map((s) => `  ${s.number}. ${s.name} → ${s.expectedOutput} (verify: ${s.failableCheck})`)
-									.join("\n");
-								this.showStatus(`Fable execution plan:\n${stageList}`);
-							},
-						},
-					);
-					if (fableResult) {
-						promptInput = fableResult.prompt;
-					}
-				}
-
-				// --- FUSION MODE ---
-				const fusionState = this.settingsManager.getFusionMode();
-				const fusionResult = await runFusionThink(
-					{
-						enabled: fusionState.enabled,
-						thinkModel: fusionState.thinkModel ?? null,
-						codeModel: fusionState.codeModel ?? null,
-					},
-					promptInput,
-					{
-						modelRegistry: {
-							find: (p, id) => this.session.modelRegistry.find(p, id) as any,
-							authStorage: {
-								get: (p) => ({ key: (this.session.modelRegistry.authStorage.get(p) as any)?.key || "" }),
-							},
-						},
-						onStatus: (msg) => this.showStatus(msg),
-					},
-				);
-				if (fusionResult) {
-					promptInput = `<plan>\n${fusionResult.plan}\n</plan>\n\n${promptInput}`;
-				}
-				// ----------------------------
-
-				await this.session.prompt(promptInput, { images });
+				await this.session.prompt(userInput);
 			} catch (error: unknown) {
-				const errorMessage = error instanceof Error ? error.message : "Bilinmeyen bir hata oluştu";
+				const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
 				this.showError(errorMessage);
 			}
 		}
@@ -1307,7 +1107,7 @@ export class InteractiveMode {
 		}
 
 		if (extendedKeysFormat === "xterm") {
-			return "tmux extended-keys-format is xterm. Moon works best with csi-u. Add `set -g extended-keys-format csi-u` to ~/.tmux.conf and restart tmux.";
+			return "tmux extended-keys-format is xterm. Pi works best with csi-u. Add `set -g extended-keys-format csi-u` to ~/.tmux.conf and restart tmux.";
 		}
 
 		return undefined;
@@ -1338,7 +1138,7 @@ export class InteractiveMode {
 		if (newEntries.length > 0) {
 			this.settingsManager.setLastChangelogVersion(VERSION);
 			this.reportInstallTelemetry(VERSION);
-			return newEntries.map((e) => e.content).join("\n\n");
+			return newEntries.map((e) => normalizeChangelogLinks(e.content, e)).join("\n\n");
 		}
 
 		return undefined;
@@ -1353,16 +1153,12 @@ export class InteractiveMode {
 			return;
 		}
 
-		void fetch(
-			`https://github.com/theayzek01/Astro-Agent/api/report-install?version=${encodeURIComponent(version)}`,
-			{
-				method: "POST",
-				headers: {
-					"User-Engine": getAstroUserEngine(version),
-				},
-				signal: AbortSignal.timeout(5000),
+		void fetch(`https://opencode.ai/api/report-install?version=${encodeURIComponent(version)}`, {
+			headers: {
+				"User-Agent": getAstroUserEngine(version),
 			},
-		)
+			signal: AbortSignal.timeout(5000),
+		})
 			.then(() => undefined)
 			.catch(() => undefined);
 	}
@@ -1399,15 +1195,9 @@ export class InteractiveMode {
 	private formatContextPath(p: string): string {
 		const cwd = path.resolve(this.sessionManager.getCwd());
 		const absolutePath = path.isAbsolute(p) ? path.resolve(p) : path.resolve(cwd, p);
-		const relativePath = path.relative(cwd, absolutePath);
-		const isInsideCwd =
-			relativePath === "" ||
-			(!relativePath.startsWith("..") &&
-				!relativePath.startsWith(`..${path.sep}`) &&
-				!path.isAbsolute(relativePath));
-
-		if (isInsideCwd) {
-			return relativePath || ".";
+		const relativePath = getCwdRelativePath(absolutePath, cwd);
+		if (relativePath !== undefined) {
+			return relativePath;
 		}
 
 		return this.formatDisplayPath(absolutePath);
@@ -1754,6 +1544,9 @@ export class InteractiveMode {
 		force?: boolean;
 		showDiagnosticsWhenQuiet?: boolean;
 	}): void {
+		// Resource rendering is idempotent; chat clears no longer clear this separate container.
+		this.loadedResourcesContainer.clear();
+
 		const showListing = options?.force || this.options.verbose || !this.settingsManager.getQuietStartup();
 		const showDiagnostics = showListing || options?.showDiagnosticsWhenQuiet === true;
 		if (!showListing && !showDiagnostics) {
@@ -1781,8 +1574,8 @@ export class InteractiveMode {
 				0,
 				0,
 			);
-			this.chatContainer.addChild(section);
-			this.chatContainer.addChild(new Spacer(1));
+			this.loadedResourcesContainer.addChild(section);
+			this.loadedResourcesContainer.addChild(new Spacer(1));
 		};
 
 		const skillsResult = this.session.resourceLoader.getSkills();
@@ -1817,9 +1610,9 @@ export class InteractiveMode {
 		}
 
 		if (showListing) {
-			const contextFiles = this.session.resourceLoader.getEnginesFiles().enginesFiles;
+			const contextFiles = this.session.resourceLoader.getAgentsFiles().agentsFiles;
 			if (contextFiles.length > 0) {
-				this.chatContainer.addChild(new Spacer(1));
+				this.loadedResourcesContainer.addChild(new Spacer(1));
 				const contextList = contextFiles
 					.map((f) => theme.fg("dim", `  ${this.formatDisplayPath(f.path)}`))
 					.join("\n");
@@ -1902,19 +1695,19 @@ export class InteractiveMode {
 			const skillDiagnostics = skillsResult.diagnostics;
 			if (skillDiagnostics.length > 0) {
 				const warningLines = this.formatDiagnostics(skillDiagnostics, sourceInfos);
-				this.chatContainer.addChild(
-					new Text(`${theme.fg("warning", "[Yetenek çakışmaları]")}\n${warningLines}`, 0, 0),
+				this.loadedResourcesContainer.addChild(
+					new Text(`${theme.fg("warning", "[Skill conflicts]")}\n${warningLines}`, 0, 0),
 				);
-				this.chatContainer.addChild(new Spacer(1));
+				this.loadedResourcesContainer.addChild(new Spacer(1));
 			}
 
 			const promptDiagnostics = promptsResult.diagnostics;
 			if (promptDiagnostics.length > 0) {
 				const warningLines = this.formatDiagnostics(promptDiagnostics, sourceInfos);
-				this.chatContainer.addChild(
-					new Text(`${theme.fg("warning", "[İstem çakışmaları]")}\n${warningLines}`, 0, 0),
+				this.loadedResourcesContainer.addChild(
+					new Text(`${theme.fg("warning", "[Prompt conflicts]")}\n${warningLines}`, 0, 0),
 				);
-				this.chatContainer.addChild(new Spacer(1));
+				this.loadedResourcesContainer.addChild(new Spacer(1));
 			}
 
 			const extensionDiagnostics: ResourceDiagnostic[] = [];
@@ -1934,19 +1727,19 @@ export class InteractiveMode {
 
 			if (extensionDiagnostics.length > 0) {
 				const warningLines = this.formatDiagnostics(extensionDiagnostics, sourceInfos);
-				this.chatContainer.addChild(
-					new Text(`${theme.fg("warning", "[Uzantı sorunları]")}\n${warningLines}`, 0, 0),
+				this.loadedResourcesContainer.addChild(
+					new Text(`${theme.fg("warning", "[Extension issues]")}\n${warningLines}`, 0, 0),
 				);
-				this.chatContainer.addChild(new Spacer(1));
+				this.loadedResourcesContainer.addChild(new Spacer(1));
 			}
 
 			const themeDiagnostics = themesResult.diagnostics;
 			if (themeDiagnostics.length > 0) {
 				const warningLines = this.formatDiagnostics(themeDiagnostics, sourceInfos);
-				this.chatContainer.addChild(
-					new Text(`${theme.fg("warning", "[Tema çakışmaları]")}\n${warningLines}`, 0, 0),
+				this.loadedResourcesContainer.addChild(
+					new Text(`${theme.fg("warning", "[Theme conflicts]")}\n${warningLines}`, 0, 0),
 				);
-				this.chatContainer.addChild(new Spacer(1));
+				this.loadedResourcesContainer.addChild(new Spacer(1));
 			}
 		}
 	}
@@ -1958,21 +1751,16 @@ export class InteractiveMode {
 		const uiContext = this.createExtensionUIContext();
 		await this.session.bindExtensions({
 			uiContext,
+			mode: "tui",
+			abortHandler: () => {
+				this.restoreQueuedMessagesToEditor({ abort: true });
+			},
 			commandContextActions: {
-				waitForIdle: () => this.session.engine.waitForIdle(),
+				waitForIdle: () => this.session.waitForIdle(),
 				newSession: async (options) => {
-					if (this.loadingAnimation) {
-						this.loadingAnimation.stop();
-						this.loadingAnimation = undefined;
-					}
-					this.statusContainer.clear();
+					this.clearStatusIndicator();
 					try {
-						const result = await this.runtimeHost.newSession(options);
-						if (!result.cancelled) {
-							this.renderCurrentSessionState();
-							this.ui.requestRender();
-						}
-						return result;
+						return await this.runtimeHost.newSession(options);
 					} catch (error: unknown) {
 						return this.handleFatalRuntimeError("Failed to create session", error);
 					}
@@ -1981,9 +1769,8 @@ export class InteractiveMode {
 					try {
 						const result = await this.runtimeHost.fork(entryId, options);
 						if (!result.cancelled) {
-							this.renderCurrentSessionState();
 							this.editor.setText(result.selectedText ?? "");
-							this.showStatus("Yeni oturuma çatallandı");
+							this.showStatus("Forked to new session");
 						}
 						return { cancelled: result.cancelled };
 					} catch (error: unknown) {
@@ -2006,7 +1793,7 @@ export class InteractiveMode {
 					if (result.editorText && !this.editor.getText().trim()) {
 						this.editor.setText(result.editorText);
 					}
-					this.showStatus("Seçilen noktaya gidildi");
+					this.showStatus("Navigated to selected point");
 					void this.flushCompactionQueue({ willRetry: false });
 					return { cancelled: false };
 				},
@@ -2019,7 +1806,7 @@ export class InteractiveMode {
 			},
 			shutdownHandler: () => {
 				this.shutdownRequested = true;
-				if (!this.session.isStreaming) {
+				if (this.session.isIdle) {
 					void this.shutdown();
 				}
 			},
@@ -2033,48 +1820,23 @@ export class InteractiveMode {
 
 		const extensionRunner = this.session.extensionRunner;
 		this.setupExtensionShortcuts(extensionRunner);
-		void this.autoConnectDefaultMcpServers();
 		this.showLoadedResources({ force: false, showDiagnosticsWhenQuiet: true });
 		this.showStartupNoticesIfNeeded();
 	}
 
-	private async autoConnectDefaultMcpServers(): Promise<void> {
-		try {
-			const scratchConfig = this.getScratchMcpConfig();
-			const existingMcpServers = this.settingsManager.getMcpServers();
-			for (const name of Object.keys(existingMcpServers)) {
-				if (name.toLowerCase().startsWith("scratch") && name !== "scratch") {
-					this.settingsManager.removeMcpServer(name);
-				}
-			}
-			if (scratchConfig) {
-				this.settingsManager.setMcpServer("scratch", scratchConfig);
-			}
-			// Remove stale blender config to prevent auto-connect on startup
-			if (existingMcpServers.blender) {
-				this.settingsManager.removeMcpServer("blender");
-			}
-			await this.settingsManager.flush();
-			const tools = await this.session.connectConfiguredMcpServers();
-			const mcpToolCount = tools.filter((tool) => tool.startsWith("scratch_") || tool.startsWith("blender_")).length;
-			if (mcpToolCount > 0) {
-				this.showStatus(`MCP auto-connected. ${mcpToolCount} tools active.`);
-			}
-			this.footer.setSession(this.session);
-			this.ui.requestRender();
-		} catch (error) {
-			this.showWarning(`MCP auto-connect failed: ${error instanceof Error ? error.message : String(error)}`);
-		}
-	}
-
 	private applyRuntimeSettings(): void {
+		configureHttpDispatcher(this.settingsManager.getHttpIdleTimeoutMs());
 		this.footer.setSession(this.session);
-		// workspacePanel removed
 		this.footer.setAutoCompactEnabled(this.session.autoCompactionEnabled);
 		this.footerDataProvider.setCwd(this.sessionManager.getCwd());
 		this.hideThinkingBlock = this.settingsManager.getHideThinkingBlock();
+		this.outputPad = this.settingsManager.getOutputPad();
 		this.ui.setShowHardwareCursor(this.settingsManager.getShowHardwareCursor());
-		this.ui.setClearOnShrink(this.settingsManager.getClearOnShrink());
+		const clearOnShrink = this.settingsManager.getClearOnShrink();
+		this.ui.setClearOnShrink(clearOnShrink);
+		if (!clearOnShrink && !this.activeStatusIndicator) {
+			this.statusContainer.clear();
+		}
 		const editorPaddingX = this.settingsManager.getEditorPaddingX();
 		const autocompleteMaxVisible = this.settingsManager.getAutocompleteMaxVisible();
 		this.defaultEditor.setPaddingX(editorPaddingX);
@@ -2085,12 +1847,18 @@ export class InteractiveMode {
 		}
 	}
 
-	private async rebindCurrentSession(): Promise<void> {
+	private async rebindCurrentSession(options: { renderBeforeBind?: boolean } = {}): Promise<void> {
 		this.unsubscribe?.();
 		this.unsubscribe = undefined;
 		this.applyRuntimeSettings();
-		await this.bindCurrentSessionExtensions();
-		this.subscribeToEngine();
+		if (options.renderBeforeBind) {
+			this.renderCurrentSessionState();
+			this.subscribeToAgent();
+			await this.bindCurrentSessionExtensions();
+		} else {
+			await this.bindCurrentSessionExtensions();
+			this.subscribeToAgent();
+		}
 		await this.updateAvailableProviderCount();
 		this.updateEditorBorderColor();
 		this.updateTerminalTitle();
@@ -2105,13 +1873,13 @@ export class InteractiveMode {
 	}
 
 	private renderCurrentSessionState(): void {
+		this.loadedResourcesContainer.clear();
 		this.chatContainer.clear();
 		this.pendingMessagesContainer.clear();
 		this.compactionQueuedMessages = [];
 		this.streamingComponent = undefined;
 		this.streamingMessage = undefined;
 		this.pendingTools.clear();
-		this.currentToolBatch = undefined;
 		this.renderInitialMessages();
 	}
 
@@ -2132,14 +1900,18 @@ export class InteractiveMode {
 		// Create a context for shortcut handlers
 		const createContext = (): ExtensionContext => ({
 			ui: this.createExtensionUIContext(),
+			mode: "tui",
 			hasUI: true,
 			cwd: this.sessionManager.getCwd(),
 			sessionManager: this.sessionManager,
 			modelRegistry: this.session.modelRegistry,
 			model: this.session.model,
-			isIdle: () => !this.session.isStreaming,
-			signal: this.session.engine.signal,
-			abort: () => this.session.abort(),
+			isIdle: () => this.session.isIdle,
+			isProjectTrusted: () => this.settingsManager.isProjectTrusted(),
+			signal: this.session.agent.signal,
+			abort: () => {
+				this.restoreQueuedMessagesToEditor({ abort: true });
+			},
 			hasPendingMessages: () => this.session.pendingMessageCount > 0,
 			shutdown: () => {
 				this.shutdownRequested = true;
@@ -2183,53 +1955,50 @@ export class InteractiveMode {
 		this.ui.requestRender();
 	}
 
-	private getWorkingLoaderMessage(): string {
-		return this.workingMessage ?? this.defaultWorkingMessage;
-	}
-
-	private createWorkingLoader(): Loader {
-		return new Loader(
-			this.ui,
-			(spinner) => theme.fg("accent", spinner),
-			(text) => theme.fg("muted", text),
-			this.getWorkingLoaderMessage(),
-			this.workingIndicatorOptions ?? { frames: ASTRO_WORKING_FRAMES, intervalMs: 180 },
-		);
-	}
-
-	private setWorkingMessage(message: string | undefined): void {
-		this.workingMessage = message;
-		if (this.loadingAnimation) {
-			this.loadingAnimation.setMessage(message ?? this.defaultWorkingMessage);
-		}
-	}
-
-	private stopWorkingLoader(): void {
-		if (this.loadingAnimation) {
-			this.loadingAnimation.stop();
-			this.loadingAnimation = undefined;
-		}
+	private showStatusIndicator(indicator: StatusIndicator): void {
+		this.activeStatusIndicator?.dispose();
+		this.activeStatusIndicator = indicator;
 		this.statusContainer.clear();
+		this.statusContainer.addChild(indicator);
+	}
+
+	private clearStatusIndicator(kind?: StatusIndicator["kind"]): void {
+		if (kind && this.activeStatusIndicator?.kind !== kind) {
+			return;
+		}
+		const hadActiveStatusIndicator = this.activeStatusIndicator !== undefined;
+		this.activeStatusIndicator?.dispose();
+		this.activeStatusIndicator = undefined;
+		this.statusContainer.clear();
+		if (hadActiveStatusIndicator && this.ui.getClearOnShrink()) {
+			this.statusContainer.addChild(this.idleStatus);
+		}
 	}
 
 	private setWorkingVisible(visible: boolean): void {
 		this.workingVisible = visible;
 		if (!visible) {
-			this.stopWorkingLoader();
+			this.clearStatusIndicator("working");
 			this.ui.requestRender();
 			return;
 		}
-		if (this.session.isStreaming && !this.loadingAnimation) {
-			this.statusContainer.clear();
-			this.loadingAnimation = this.createWorkingLoader();
-			this.statusContainer.addChild(this.loadingAnimation);
+		if (this.session.isStreaming && this.activeStatusIndicator?.kind !== "working") {
+			this.showStatusIndicator(
+				new WorkingStatusIndicator(
+					this.ui,
+					this.workingMessage ?? this.defaultWorkingMessage,
+					this.workingIndicatorOptions,
+				),
+			);
 		}
 		this.ui.requestRender();
 	}
 
-	private setWorkingIndicator(options?: LoaderIndicatorOptions): void {
+	private setWorkingIndicator(options?: WorkingIndicatorOptions): void {
 		this.workingIndicatorOptions = options;
-		this.loadingAnimation?.setIndicator(options);
+		if (this.activeStatusIndicator?.kind === "working") {
+			this.activeStatusIndicator.setIndicator(options);
+		}
 		this.ui.requestRender();
 	}
 
@@ -2278,7 +2047,7 @@ export class InteractiveMode {
 				container.addChild(new Text(line, 1, 0));
 			}
 			if (content.length > InteractiveMode.MAX_WIDGET_LINES) {
-				container.addChild(new Text(theme.fg("muted", "... (widget kesildi)"), 1, 0));
+				container.addChild(new Text(theme.fg("muted", "... (widget truncated)"), 1, 0));
 			}
 			component = container;
 		} else {
@@ -2328,8 +2097,10 @@ export class InteractiveMode {
 		this.workingMessage = undefined;
 		this.workingVisible = true;
 		this.setWorkingIndicator();
-		if (this.loadingAnimation) {
-			this.loadingAnimation.setMessage(`${this.defaultWorkingMessage} (durdurmak için ${keyText("app.interrupt")})`);
+		if (this.activeStatusIndicator?.kind === "working") {
+			this.activeStatusIndicator.setMessage(
+				`${this.defaultWorkingMessage} (${keyText("app.interrupt")} to interrupt)`,
+			);
 		}
 		this.setHiddenThinkingLabel();
 	}
@@ -2383,15 +2154,24 @@ export class InteractiveMode {
 			this.customFooter.dispose();
 		}
 
+		// Remove current footer from UI
+		if (this.customFooter) {
+			this.ui.removeChild(this.customFooter);
+		} else {
+			this.ui.removeChild(this.footer);
+		}
+
 		if (factory) {
-			// Create custom footer, passing the data provider. refreshLayout places it above the composer.
+			// Create and add custom footer, passing the data provider
 			this.customFooter = factory(this.ui, theme, this.footerDataProvider);
+			this.ui.addChild(this.customFooter);
 		} else {
 			// Restore built-in footer
 			this.customFooter = undefined;
+			this.ui.addChild(this.footer);
 		}
 
-		this.refreshLayout();
+		this.ui.requestRender();
 	}
 
 	/**
@@ -2459,6 +2239,21 @@ export class InteractiveMode {
 	/**
 	 * Create the ExtensionUIContext for extensions.
 	 */
+	private createProjectTrustContext(cwd: string): ProjectTrustContext {
+		const ui = this.createExtensionUIContext();
+		return {
+			cwd,
+			mode: "tui",
+			hasUI: true,
+			ui: {
+				select: ui.select,
+				confirm: ui.confirm,
+				input: ui.input,
+				notify: ui.notify,
+			},
+		};
+	}
+
 	private createExtensionUIContext(): ExtensionUIContext {
 		return {
 			select: (title, options, opts) => this.showExtensionSelector(title, options, opts),
@@ -2467,7 +2262,12 @@ export class InteractiveMode {
 			notify: (message, type) => this.showExtensionNotify(message, type),
 			onTerminalInput: (handler) => this.addExtensionTerminalInputListener(handler),
 			setStatus: (key, text) => this.setExtensionStatus(key, text),
-			setWorkingMessage: (message) => this.setWorkingMessage(message),
+			setWorkingMessage: (message) => {
+				this.workingMessage = message;
+				if (this.activeStatusIndicator?.kind === "working") {
+					this.activeStatusIndicator.setMessage(message ?? this.defaultWorkingMessage);
+				}
+			},
 			setWorkingVisible: (visible) => this.setWorkingVisible(visible),
 			setWorkingIndicator: (options) => this.setWorkingIndicator(options),
 			setHiddenThinkingLabel: (label) => this.setHiddenThinkingLabel(label),
@@ -2493,16 +2293,13 @@ export class InteractiveMode {
 			getTheme: (name) => getThemeByName(name),
 			setTheme: (themeOrName) => {
 				if (themeOrName instanceof Theme) {
-					setThemeInstance(themeOrName);
-					this.ui.requestRender();
-					return { success: true };
+					return this.themeController.setThemeInstance(themeOrName);
 				}
-				const result = setTheme(themeOrName, true);
+				const result = this.themeController.setThemeName(themeOrName);
 				if (result.success) {
 					if (this.settingsManager.getTheme() !== themeOrName) {
 						this.settingsManager.setTheme(themeOrName);
 					}
-					this.ui.requestRender();
 				}
 				return result;
 			},
@@ -2544,7 +2341,7 @@ export class InteractiveMode {
 					this.hideExtensionSelector();
 					resolve(undefined);
 				},
-				{ tui: this.ui, timeout: opts?.timeout },
+				{ tui: this.ui, timeout: opts?.timeout, onToggleToolsExpanded: () => this.toggleToolOutputExpansion() },
 			);
 
 			this.editorContainer.clear();
@@ -2567,41 +2364,6 @@ export class InteractiveMode {
 	}
 
 	/**
-	 * Show the multi-step wizard selector, triggered by :::wizard blocks.
-	 */
-	private showWizardSelector(steps: import("./components/wizard-selector.js").WizardStep[]): void {
-		this.hideWizardSelector();
-		this.wizardSelector = new WizardSelectorComponent(
-			steps,
-			(result) => {
-				this.hideWizardSelector();
-				// Feed answers back as user message
-				if (result.completed) {
-					const answersText = steps.map((step, i) => `${step.title}: ${result.answers[i] ?? "—"}`).join("\n");
-					this.editor.setText(answersText);
-					this.ui.setFocus(this.editor);
-				}
-			},
-			() => {
-				this.hideWizardSelector();
-			},
-		);
-		this.editorContainer.clear();
-		this.editorContainer.addChild(this.wizardSelector);
-		this.ui.setFocus(this.wizardSelector);
-		this.ui.requestRender();
-	}
-
-	private hideWizardSelector(): void {
-		this.wizardSelector?.dispose();
-		this.wizardSelector = undefined;
-		this.editorContainer.clear();
-		this.editorContainer.addChild(this.editor);
-		this.ui.setFocus(this.editor);
-		this.ui.requestRender();
-	}
-
-	/**
 	 * Show a confirmation dialog for extensions.
 	 */
 	private async showExtensionConfirm(
@@ -2609,13 +2371,13 @@ export class InteractiveMode {
 		message: string,
 		opts?: ExtensionUIDialogOptions,
 	): Promise<boolean> {
-		const result = await this.showExtensionSelector(`${title}\n${message}`, ["Evet", "Hayır"], opts);
-		return result === "Evet";
+		const result = await this.showExtensionSelector(`${title}\n${message}`, ["Yes", "No"], opts);
+		return result === "Yes";
 	}
 
 	private async promptForMissingSessionCwd(error: MissingSessionCwdError): Promise<string | undefined> {
 		const confirmed = await this.showExtensionConfirm(
-			"Oturum çalışma dizini bulunamadı",
+			"Session cwd not found",
 			formatMissingSessionCwdPrompt(error.issue),
 		);
 		return confirmed ? error.issue.fallbackCwd : undefined;
@@ -2694,6 +2456,8 @@ export class InteractiveMode {
 					this.hideExtensionEditor();
 					resolve(undefined);
 				},
+				undefined,
+				this.settingsManager.getExternalEditorCommand(),
 			);
 
 			this.editorContainer.clear();
@@ -2946,32 +2710,9 @@ export class InteractiveMode {
 		this.defaultEditor.onAction("app.tools.expand", () => this.toggleToolOutputExpansion());
 		this.defaultEditor.onAction("app.thinking.toggle", () => this.toggleThinkingBlockVisibility());
 		this.defaultEditor.onAction("app.editor.external", () => this.openExternalEditor());
+		this.defaultEditor.onAction("app.message.copy", () => void this.handleCopyCommand());
 		this.defaultEditor.onAction("app.message.followUp", () => this.handleFollowUp());
 		this.defaultEditor.onAction("app.message.dequeue", () => this.handleDequeue());
-		this.defaultEditor.onAction("app.message.executeBash", () => this.handleExecuteLastBash());
-		this.defaultEditor.onAction("app.clipboard.copy", () => this.handleCopyCommand());
-		this.defaultEditor.onAction("app.chat.scrollUp", () => {
-			this.chatContainer.scrollBy(-1);
-			this.ui.requestRender();
-		});
-		this.defaultEditor.onAction("app.chat.scrollDown", () => {
-			this.chatContainer.scrollBy(1);
-			this.ui.requestRender();
-		});
-		this.defaultEditor.onAction("app.chat.scrollPageUp", () => {
-			const pageSize = Math.max(1, (process.stdout.rows || 40) - this.chatContainer.staticOverhead - 5);
-			this.chatContainer.scrollBy(-pageSize);
-			this.ui.requestRender();
-		});
-		this.defaultEditor.onAction("app.chat.scrollPageDown", () => {
-			const pageSize = Math.max(1, (process.stdout.rows || 40) - this.chatContainer.staticOverhead - 5);
-			this.chatContainer.scrollBy(pageSize);
-			this.ui.requestRender();
-		});
-		this.defaultEditor.onAction("app.chat.scrollToBottom", () => {
-			this.chatContainer.scrollToBottom();
-			this.ui.requestRender();
-		});
 		this.defaultEditor.onAction("app.session.new", () => this.handleClearCommand());
 		this.defaultEditor.onAction("app.session.tree", () => this.showTreeSelector());
 		this.defaultEditor.onAction("app.session.fork", () => this.showUserMessageSelector());
@@ -2985,525 +2726,228 @@ export class InteractiveMode {
 			}
 		};
 
-		// Handle clipboard image paste (triggered on Ctrl+V)
+		// Handle clipboard paste (triggered on Ctrl+V). Images are attached by path;
+		// otherwise, paste plain text from the system clipboard.
 		this.defaultEditor.onPasteImage = () => {
-			this.handleClipboardImagePaste();
+			void this.handleClipboardPaste();
 		};
 	}
 
-	private async handleClipboardImagePaste(): Promise<void> {
+	private async handleClipboardPaste(): Promise<void> {
 		try {
 			const image = await readClipboardImage();
-			if (!image) {
+			if (image) {
+				const tmpDir = os.tmpdir();
+				const ext = extensionForImageMimeType(image.mimeType) ?? "png";
+				const fileName = `astro-clipboard-${crypto.randomUUID()}.${ext}`;
+				const filePath = path.join(tmpDir, fileName);
+				fs.writeFileSync(filePath, Buffer.from(image.bytes));
+
+				this.editor.insertTextAtCursor?.(filePath);
+				this.ui.requestRender();
 				return;
 			}
 
-			// Write to temp file
-			const tmpDir = os.tmpdir();
-			const ext = extensionForImageMimeType(image.mimeType) ?? "png";
-			const fileName = `Moon-clipboard-${crypto.randomUUID()}.${ext}`;
-			const filePath = path.join(tmpDir, fileName);
-			fs.writeFileSync(filePath, Buffer.from(image.bytes));
-
-			// Insert file path directly
-			this.editor.insertTextAtCursor?.(filePath);
-			this.ui.requestRender();
+			const text = await readClipboardText();
+			if (text) {
+				this.editor.insertTextAtCursor?.(text);
+				this.ui.requestRender();
+			}
 		} catch {
 			// Silently ignore clipboard errors (may not have permission, etc.)
 		}
 	}
 
-	private parseAndExtractImages(text: string): { cleanedText: string; images?: ImageContent[] } {
-		const images: ImageContent[] = [];
-		const matches = text.match(/(?:[a-zA-Z]:)?[\\/][^"'`\n\r\t<>|:*?]+\.(?:png|jpg|jpeg|webp|gif)/gi) || [];
-
-		let cleanedText = text;
-		for (let p of matches) {
-			p = p.trim();
-			p = p.replace(/^["'(]+|["')]+$/g, "");
-			if (fs.existsSync(p)) {
-				try {
-					const data = fs.readFileSync(p).toString("base64");
-					const ext = path.extname(p).toLowerCase().slice(1);
-					const mimeType = ext === "jpg" ? "image/jpeg" : `image/${ext}`;
-					images.push({ type: "image", data, mimeType });
-					cleanedText = cleanedText.replace(p, `[Attached Image: ${path.basename(p)}]`);
-				} catch {
-					// ignore
-				}
-			}
-		}
-		return { cleanedText, images: images.length > 0 ? images : undefined };
-	}
-
 	private setupEditorSubmitHandler(): void {
 		this.defaultEditor.onSubmit = async (text: string) => {
+			text = text.trim();
+			if (!text) return;
+
+			// Handle commands
+			if (text === "/settings") {
+				this.showSettingsSelector();
+				this.editor.setText("");
+				return;
+			}
+			if (text === "/scoped-models") {
+				this.editor.setText("");
+				await this.showModelsSelector();
+				return;
+			}
+			if (text === "/model" || text.startsWith("/model ")) {
+				const searchTerm = text.startsWith("/model ") ? text.slice(7).trim() : undefined;
+				this.editor.setText("");
+				await this.handleModelCommand(searchTerm);
+				return;
+			}
+			if (text === "/export" || text.startsWith("/export ")) {
+				await this.handleExportCommand(text);
+				this.editor.setText("");
+				return;
+			}
+			if (text === "/import" || text.startsWith("/import ")) {
+				await this.handleImportCommand(text);
+				this.editor.setText("");
+				return;
+			}
+			if (text === "/share") {
+				await this.handleShareCommand();
+				this.editor.setText("");
+				return;
+			}
+			if (text === "/copy") {
+				await this.handleCopyCommand();
+				this.editor.setText("");
+				return;
+			}
+			if (text === "/name" || text.startsWith("/name ")) {
+				this.handleNameCommand(text);
+				this.editor.setText("");
+				return;
+			}
+			if (text === "/session") {
+				this.handleSessionCommand();
+				this.editor.setText("");
+				return;
+			}
+			if (text === "/changelog") {
+				this.handleChangelogCommand();
+				this.editor.setText("");
+				return;
+			}
+			if (text === "/hotkeys") {
+				this.handleHotkeysCommand();
+				this.editor.setText("");
+				return;
+			}
+			if (text === "/fork") {
+				this.showUserMessageSelector();
+				this.editor.setText("");
+				return;
+			}
+			if (text === "/clone") {
+				this.editor.setText("");
+				await this.handleCloneCommand();
+				return;
+			}
+			if (text === "/tree") {
+				this.showTreeSelector();
+				this.editor.setText("");
+				return;
+			}
+			if (text === "/trust") {
+				this.showTrustSelector();
+				this.editor.setText("");
+				return;
+			}
+			if (text === "/login" || text.startsWith("/login ")) {
+				const providerRef = text.startsWith("/login ") ? text.slice(7).trim() : undefined;
+				this.editor.setText("");
+				await this.handleLoginCommand(providerRef);
+				return;
+			}
+			if (text === "/logout") {
+				this.showOAuthSelector("logout");
+				this.editor.setText("");
+				return;
+			}
+			if (text === "/new") {
+				this.editor.setText("");
+				await this.handleClearCommand();
+				return;
+			}
+			if (text === "/compact" || text.startsWith("/compact ")) {
+				const customInstructions = text.startsWith("/compact ") ? text.slice(9).trim() : undefined;
+				this.editor.setText("");
+				await this.handleCompactCommand(customInstructions);
+				return;
+			}
+			if (text === "/reload") {
+				this.editor.setText("");
+				await this.handleReloadCommand();
+				return;
+			}
+			if (text === "/debug") {
+				this.handleDebugCommand();
+				this.editor.setText("");
+				return;
+			}
+			if (text === "/arminsayshi") {
+				this.handleArminSaysHi();
+				this.editor.setText("");
+				return;
+			}
+			if (text === "/dementedelves") {
+				this.handleDementedDelves();
+				this.editor.setText("");
+				return;
+			}
+			if (text === "/resume") {
+				this.showSessionSelector();
+				this.editor.setText("");
+				return;
+			}
+			if (text === "/quit") {
+				this.editor.setText("");
+				await this.shutdown();
+				return;
+			}
+
+			// Handle bash command (! for normal, !! for excluded from context)
+			if (text.startsWith("!")) {
+				const isExcluded = text.startsWith("!!");
+				const command = isExcluded ? text.slice(2).trim() : text.slice(1).trim();
+				if (command) {
+					if (this.session.isBashRunning) {
+						this.showWarning("A bash command is already running. Press Esc to cancel it first.");
+						this.editor.setText(text);
+						return;
+					}
+					this.editor.addToHistory?.(text);
+					await this.handleBashCommand(command, isExcluded);
+					this.isBashMode = false;
+					this.updateEditorBorderColor();
+					return;
+				}
+			}
+
+			// Queue input during compaction (extension commands execute immediately)
+			if (this.session.isCompacting) {
+				if (this.isExtensionCommand(text)) {
+					this.editor.addToHistory?.(text);
+					this.editor.setText("");
+					await this.session.prompt(text);
+				} else {
+					this.queueCompactionMessage(text, "steer");
+				}
+				return;
+			}
+
+			// If streaming, use prompt() with steer behavior
+			// This handles extension commands (execute immediately), prompt template expansion, and queueing
+			if (this.session.isStreaming) {
+				this.editor.addToHistory?.(text);
+				this.editor.setText("");
+				await this.session.prompt(text, { streamingBehavior: "steer" });
+				this.updatePendingMessagesDisplay();
+				this.ui.requestRender();
+				return;
+			}
+
+			// Normal message submission
+			// First, move any pending bash components to chat
+			this.flushPendingBashComponents();
+
 			if (this.isSubmitting) return;
 			this.isSubmitting = true;
 			try {
-				text = text.trim();
-				if (!text) return;
-
-				// Handle commands
-				if (text === "/app") {
-					this.editor.setText("");
-					await this.handleAppCommand();
-					return;
-				}
-				if (text === "/status") {
-					this.editor.setText("");
-					await this.handleStatusDiagnosticsCommand();
-					return;
-				}
-				if (text === "/help") {
-					this.editor.setText("");
-					this.handleHelpCommand();
-					return;
-				}
-				if (text === "/metrics") {
-					if (this.activeMetricsChart) {
-						this.activeMetricsChart.stop();
-						this.chatContainer.removeChild(this.activeMetricsChart);
-					}
-					// Mock data generation for now
-					const memData = Array.from({ length: 40 }, () => Math.random() * 50 + 50);
-					const tokenData = Array.from({ length: 40 }, () => Math.random() * 1000);
-					this.activeMetricsChart = new MetricsChartComponent(memData, tokenData);
-					this.chatContainer.addChild(this.activeMetricsChart);
-					this.ui.requestRender();
-					this.editor.setText("");
-					return;
-				}
-				if (text === "/zen") {
-					this.toggleZenMode();
-					this.editor.setText("");
-					return;
-				}
-				if (text === "/taskmode") {
-					this.isTaskMode = !this.isTaskMode;
-					this.refreshLayout();
-					this.showStatus(this.isTaskMode ? "task panel on" : "task panel off");
-					this.editor.setText("");
-					return;
-				}
-				if (text === "/settings") {
-					this.showSettingsSelector();
-					this.editor.setText("");
-					return;
-				}
-				if (text === "/mcp") {
-					await this.handleMcpCommand();
-					this.editor.setText("");
-					return;
-				}
-				if (text === "/brain") {
-					this.editor.setText("");
-					await this.handleWebPanelRoute("/brain", "Brain panel");
-					return;
-				}
-				if (text === "/doctor" || text === "/health") {
-					this.editor.setText("");
-					this.handleDoctorCommand();
-					return;
-				}
-				if (text === "/clearbrain") {
-					this.editor.setText("");
-					await this.handleClearBrainCommand();
-					return;
-				}
-				if (text === "/session") {
-					this.editor.setText("");
-					await this.handleWebPanelRoute("/session", "Session panel");
-					return;
-				}
-				if (text === "/scoped-models") {
-					this.editor.setText("");
-					await this.showModelsSelector();
-					return;
-				}
-				if (text === "/models" || text.startsWith("/models ")) {
-					const searchTerm = text.startsWith("/models ") ? text.slice(8).trim() : undefined;
-					this.editor.setText("");
-					await this.handleModelsCommand(searchTerm);
-					return;
-				}
-				if (text === "/export" || text.startsWith("/export ")) {
-					await this.handleExportCommand(text);
-					this.editor.setText("");
-					return;
-				}
-				if (text === "/import" || text.startsWith("/import ")) {
-					await this.handleImportCommand(text);
-					this.editor.setText("");
-					return;
-				}
-				if (text === "/share") {
-					await this.handleShareCommand();
-					this.editor.setText("");
-					return;
-				}
-				if (text === "/copy") {
-					await this.handleCopyCommand();
-					this.editor.setText("");
-					return;
-				}
-				if (text === "/name" || text.startsWith("/name ")) {
-					this.handleNameCommand(text);
-					this.editor.setText("");
-					return;
-				}
-				if (text === "/session") {
-					this.handleSessionCommand();
-					this.editor.setText("");
-					return;
-				}
-				if (text === "/changelog") {
-					this.handleChangelogCommand();
-					this.editor.setText("");
-					return;
-				}
-				if (text === "/hotkeys") {
-					this.handleHotkeysCommand();
-					this.editor.setText("");
-					return;
-				}
-				if (text === "/fork") {
-					this.showUserMessageSelector();
-					this.editor.setText("");
-					return;
-				}
-				if (text === "/swarm" || text.startsWith("/swarm ")) {
-					const arg = text.startsWith("/swarm ") ? text.slice(7).trim() : "";
-					this.editor.setText("");
-					await this.handleSwarmCommand(arg);
-					return;
-				}
-				if (text === "/fix" || text.startsWith("/fix ")) {
-					const arg = text.startsWith("/fix ") ? text.slice(5).trim() : "";
-					this.editor.setText("");
-					await this.handleFixCommand(arg);
-					return;
-				}
-				if (text === "/evolve") {
-					this.editor.setText("");
-					await this.handleEvolveCommand();
-					return;
-				}
-				if (
-					text === "/shark" ||
-					text.startsWith("/shark ") ||
-					text === "/impossible" ||
-					text.startsWith("/impossible ")
-				) {
-					const arg = text.startsWith("/shark ")
-						? text.slice(7).trim()
-						: text.startsWith("/impossible ")
-							? text.slice(12).trim()
-							: "";
-					this.editor.setText("");
-					await this.handleSharkCommand(arg);
-					return;
-				}
-				if (text === "/clone") {
-					this.editor.setText("");
-					await this.handleCloneCommand();
-					return;
-				}
-				if (text === "/tree") {
-					this.showTreeSelector();
-					this.editor.setText("");
-					return;
-				}
-				if (text === "/fusion") {
-					this.editor.setText("");
-					this.showFusionModeSelector();
-					return;
-				}
-				if (text === "/fable" || text.startsWith("/fable ")) {
-					this.editor.setText("");
-					const parts = text.split(/\s+/);
-					const tier = parts[1] as "opus" | "sonnet" | "haiku" | undefined;
-					const _fableSettings = this.settingsManager.getFableMode();
-					if (text === "/fable off" || text === "/fable disable") {
-						this.settingsManager.setFableModeEnabled(false);
-						this.showInfo("Fable mode disabled.");
-					} else {
-						this.settingsManager.setFableModeEnabled(true);
-						if (tier && ["opus", "sonnet", "haiku"].includes(tier)) {
-							this.settingsManager.setFableTier(tier);
-						}
-						const activeTier = this.settingsManager.getFableMode().tier || "sonnet";
-						this.showInfo(`Fable mode enabled (tier: ${activeTier}).`);
-					}
-					this.render();
-					return;
-				}
-				if (text === "/login") {
-					this.editor.setText("");
-					await this.handleAuthPanelCommand("/login");
-					return;
-				}
-				if (text === "/panel") {
-					this.editor.setText("");
-					await this.handleAuthPanelCommand("/panel");
-					return;
-				}
-				if (text === "/logout") {
-					this.showOAuthSelector("logout");
-					this.editor.setText("");
-					return;
-				}
-				if (text === "/new") {
-					this.editor.setText("");
-					await this.handleClearCommand();
-					return;
-				}
-				if (text === "/compact" || text.startsWith("/compact ")) {
-					const customInstructions = text.startsWith("/compact ") ? text.slice(9).trim() : undefined;
-					this.editor.setText("");
-					await this.handleCompactCommand(customInstructions);
-					return;
-				}
-				if (text === "/reload") {
-					this.editor.setText("");
-					await this.handleReloadCommand();
-					return;
-				}
-				if (text === "/agentmode" || text.startsWith("/agentmode ")) {
-					const args = text.startsWith("/agentmode ") ? text.slice(11).trim() : "";
-					this.editor.setText("");
-					this.handleAgentModeCommand(args);
-					return;
-				}
-				if (text === "/agents" || text.startsWith("/agents ")) {
-					const args = text.startsWith("/agents ") ? text.slice(8).trim() : "";
-					this.editor.setText("");
-					this.handleAgentsCommand(args);
-					return;
-				}
-				if (text === "/workspace") {
-					this.editor.setText("");
-					this.handleWorkspaceCommand();
-					return;
-				}
-				if (text === "/mood" || text.startsWith("/mood ")) {
-					const args = text.startsWith("/mood ") ? text.slice(6).trim() : "";
-					this.editor.setText("");
-					this.handleMoodCommand(args);
-					return;
-				}
-				if (text === "/browser") {
-					this.editor.setText("");
-					this.handleBrowserCommand();
-					return;
-				}
-				if (text === "/interface") {
-					this.editor.setText("");
-					await this.handleInterfaceCommand();
-					return;
-				}
-				if (text === "/videoedit") {
-					this.editor.setText("");
-					await this.handleVideoEditCommand();
-					return;
-				}
-				if (text === "/photoedit") {
-					this.editor.setText("");
-					await this.handlePhotoEditCommand();
-					return;
-				}
-				if (text === "/robotics" || text.startsWith("/robotics ")) {
-					const args = text.startsWith("/robotics ") ? text.slice(10).trim() : "";
-					this.editor.setText("");
-					await this.handleRoboticsCommand(args);
-					return;
-				}
-				if (text === "/discord" || text.startsWith("/discord ")) {
-					const args = text.startsWith("/discord ") ? text.slice(9).trim() : "";
-					this.editor.setText("");
-					await this.handleDiscordCommand(args);
-					return;
-				}
-				if (text === "/telegram" || text.startsWith("/telegram ")) {
-					const args = text.startsWith("/telegram ") ? text.slice(10).trim() : "";
-					this.editor.setText("");
-					await this.handleTelegramCommand(args);
-					return;
-				}
-				if (
-					text === "/update" ||
-					text.startsWith("/update ") ||
-					text === "/upgrade" ||
-					text.startsWith("/upgrade ")
-				) {
-					const args = text.startsWith("/upgrade ")
-						? text.slice(9).trim()
-						: text.startsWith("/update ")
-							? text.slice(8).trim()
-							: "";
-					this.editor.setText("");
-					await this.handleUpdateCommand(args);
-					return;
-				}
-				if (text === "/impmodel" || text.startsWith("/impmodel ")) {
-					// Redirect to /ollama pull <model>
-					const args = text.startsWith("/impmodel ") ? text.slice(10).trim() : "";
-					this.editor.setText("");
-					await this.handleOllamaSlashCommand(args ? `pull ${args}` : "models");
-					return;
-				}
-				if (text === "/index" || text.startsWith("/index ")) {
-					this.editor.setText("");
-					await this.handleIndexCommand(text.startsWith("/index ") ? text.slice(7).trim() : "");
-					return;
-				}
-				if (text === "/ship" || text.startsWith("/ship ")) {
-					this.editor.setText("");
-					await this.handleShipCommand(text.startsWith("/ship ") ? text.slice(6).trim() : "");
-					return;
-				}
-				if (text === "/git" || text.startsWith("/git ")) {
-					this.editor.setText("");
-					await this.handleGitCommand(text.startsWith("/git ") ? text.slice(5).trim() : "status");
-					return;
-				}
-				if (text === "/ollama" || text.startsWith("/ollama ")) {
-					this.editor.setText("");
-					await this.handleOllamaSlashCommand(text.startsWith("/ollama ") ? text.slice(8).trim() : "models");
-					return;
-				}
-				if (text === "/diff") {
-					this.editor.setText("");
-					await this.handleDiffCommand();
-					return;
-				}
-				if (text === "/web" || text.startsWith("/web ")) {
-					this.editor.setText("");
-					await this.handleWebCommand();
-					return;
-				}
-				if (text === "/marketplace" || text.startsWith("/marketplace ")) {
-					this.editor.setText("");
-					await this.handleMarketplaceCommand(text.startsWith("/marketplace ") ? text.slice(13).trim() : "");
-					return;
-				}
-				if (text === "/debug") {
-					this.handleDebugCommand();
-					this.editor.setText("");
-					return;
-				}
-				if (text === "/arminsayshi") {
-					this.handleArminSaysHi();
-					this.editor.setText("");
-					return;
-				}
-				if (text === "/dementedelves") {
-					this.handleDementedDelves();
-					this.editor.setText("");
-					return;
-				}
-				if (text === "/resume") {
-					this.showSessionSelector();
-					this.editor.setText("");
-					return;
-				}
-				if (text === "/quit") {
-					this.editor.setText("");
-					await this.shutdown();
-					return;
-				}
-				if (text === "/context") {
-					this.handleContextCommand();
-					this.editor.setText("");
-					return;
-				}
-				if (text === "/hub") {
-					this.handleHubCommand();
-					this.editor.setText("");
-					return;
-				}
-				if (text === "/plan" || text.startsWith("/plan ")) {
-					const arg = text.startsWith("/plan ") ? text.slice(6).trim() : "";
-					this.editor.setText("");
-					this.handlePlanCommand(arg);
-					return;
-				}
-				if (text === "/autothink" || text.startsWith("/autothink ")) {
-					const arg = text.startsWith("/autothink ") ? text.slice(11).trim() : "";
-					this.editor.setText("");
-					this.handleAutoThinkCommand(arg);
-					return;
-				}
-				if (text === "/routing" || text.startsWith("/routing ")) {
-					const arg = text.startsWith("/routing ") ? text.slice(9).trim() : "";
-					this.editor.setText("");
-					this.handleRoutingCommand(arg);
-					return;
-				}
-				if (text === "/automation" || text.startsWith("/automation ")) {
-					const arg = text.startsWith("/automation ") ? text.slice(12).trim() : "";
-					this.editor.setText("");
-					this.handleAutomationCommand(arg);
-					return;
-				}
-				if (text === "/init") {
-					this.editor.setText("");
-					await this.handleInitCommand();
-					return;
-				}
-
-				// Handle bash command (! for normal, !! for excluded from context)
-				if (text.startsWith("!")) {
-					const isExcluded = text.startsWith("!!");
-					const command = isExcluded ? text.slice(2).trim() : text.slice(1).trim();
-					if (command) {
-						if (this.session.isBashRunning) {
-							this.showWarning("Bir bash komutu zaten çalışıyor. Cancel etmek için önce Esc tuşuna basın.");
-							this.editor.setText(text);
-							return;
-						}
-						this.editor.addToHistory?.(text);
-						await this.handleBashCommand(command, isExcluded);
-						this.isBashMode = false;
-						this.updateEditorBorderColor();
-						return;
-					}
-				}
-
-				// Queue input during compaction (extension commands execute immediately)
-				if (this.session.isCompacting) {
-					if (this.isExtensionCommand(text)) {
-						this.editor.addToHistory?.(text);
-						this.editor.setText("");
-						await this.session.prompt(text);
-					} else {
-						this.queueCompactionMessage(text, "steer");
-					}
-					return;
-				}
-
-				// If streaming, use prompt() with steer behavior
-				// This handles extension commands (execute immediately), prompt template expansion, and queueing
-				if (this.session.isStreaming) {
-					this.editor.addToHistory?.(text);
-					this.editor.setText("");
-					const { cleanedText, images } = this.parseAndExtractImages(text);
-					await this.session.prompt(cleanedText, { streamingBehavior: "steer", images });
-					this.updatePendingMessagesDisplay();
-					this.ui.requestRender();
-					return;
-				}
-
-				// Normal message submission
-				// First, move any pending bash components to chat
-				this.flushPendingBashComponents();
+				const { cleanedText, images } = this.parseAndExtractImages(text);
 
 				// Initialize task in Omega Kernel
 				const kernel = OmegaKernel.getInstance();
-				await kernel.initializeTask(text, this.sessionManager.getCwd());
+				await kernel.initializeTask(cleanedText, this.sessionManager.getCwd());
 
 				if (this.onInputCallback) {
-					const { cleanedText, images } = this.parseAndExtractImages(text);
 					this.onInputCallback(cleanedText, images);
 				}
 				this.editor.addToHistory?.(text);
@@ -3513,7 +2957,41 @@ export class InteractiveMode {
 		};
 	}
 
-	private subscribeToEngine(): void {
+	private parseAndExtractImages(text: string): { cleanedText: string; images: ImageContent[] } {
+		// Extract image paths from the text
+		const images: ImageContent[] = [];
+
+		// Match file paths that look like images
+		const imageRegex = /([\w/\\\-.]+\.(png|jpg|jpeg|gif|webp|bmp|svg))/gi;
+		let match: RegExpExecArray | null = imageRegex.exec(text);
+
+		while (match !== null) {
+			const imagePath = match[1];
+			const fullPath = path.resolve(this.sessionManager.getCwd(), imagePath);
+			try {
+				if (fs.existsSync(fullPath)) {
+					const data = fs.readFileSync(fullPath);
+					const base64Data = data.toString("base64");
+					const ext = match[2].toLowerCase();
+					const mimeType = extensionForImageMimeType(ext) ?? `image/${ext}`;
+					images.push({
+						type: "image",
+						source: { type: "base64", media_type: mimeType, data: base64Data },
+					});
+				}
+			} catch {
+				// Ignore invalid paths
+			}
+			match = imageRegex.exec(text);
+		}
+
+		// Remove image paths from text to avoid sending them as text
+		const cleanedText = text.replace(imageRegex, "").trim();
+
+		return { cleanedText, images };
+	}
+
+	private subscribeToAgent(): void {
 		this.unsubscribe = this.session.subscribe(async (event) => {
 			await this.handleEvent(event);
 		});
@@ -3525,14 +3003,15 @@ export class InteractiveMode {
 		}
 
 		this.chatContainer.invalidate();
-		this.updateWorkingMessageContextually?.(event);
 		this.footer.invalidate();
 
 		switch (event.type) {
 			case "engine_start":
+				this.pendingTools.clear();
 				if (this.settingsManager.getShowTerminalProgress()) {
 					this.ui.terminal.setProgress(true);
 				}
+				addXp(10, "prompt submitted");
 				// Restore main escape handler if retry handler is still active
 				// (retry success event fires later, but we need main handler now)
 				if (this.retryEscapeHandler) {
@@ -3547,10 +3026,16 @@ export class InteractiveMode {
 					this.retryLoader.stop();
 					this.retryLoader = undefined;
 				}
-				this.stopWorkingLoader();
 				if (this.workingVisible) {
-					this.loadingAnimation = this.createWorkingLoader();
-					this.statusContainer.addChild(this.loadingAnimation);
+					this.showStatusIndicator(
+						new WorkingStatusIndicator(
+							this.ui,
+							this.workingMessage ?? this.defaultWorkingMessage,
+							this.workingIndicatorOptions,
+						),
+					);
+				} else {
+					this.clearStatusIndicator();
 				}
 				this.ui.requestRender();
 				break;
@@ -3558,6 +3043,13 @@ export class InteractiveMode {
 			case "queue_update":
 				this.updatePendingMessagesDisplay();
 				this.ui.requestRender();
+				break;
+
+			case "entry_appended":
+				if (event.entry.type === "custom") {
+					this.addCustomEntryToChat(event.entry);
+					this.ui.requestRender();
+				}
 				break;
 
 			case "session_info_changed":
@@ -3578,21 +3070,14 @@ export class InteractiveMode {
 				} else if (event.message.role === "user") {
 					this.addMessageToChat(event.message);
 					this.updatePendingMessagesDisplay();
-					addXp(10, "prompt submitted");
-					this.footer.invalidate();
 					this.ui.requestRender();
 				} else if (event.message.role === "assistant") {
-					if (this.chatContainer.children.length > 0) {
-						this.chatContainer.addChild(new Spacer(1));
-					}
-					// Reset tool batch for new assistant turn
-					this.currentToolBatch = undefined;
 					this.streamingComponent = new AssistantMessageComponent(
 						undefined,
 						this.hideThinkingBlock,
 						this.getMarkdownThemeWithSettings(),
 						this.hiddenThinkingLabel,
-						this.settingsManager.isFusionModeEnabled(),
+						this.outputPad,
 					);
 					this.streamingMessage = event.message;
 					this.chatContainer.addChild(this.streamingComponent);
@@ -3605,40 +3090,6 @@ export class InteractiveMode {
 				if (this.streamingComponent && event.message.role === "assistant") {
 					this.streamingMessage = event.message;
 					this.streamingComponent.updateContent(this.streamingMessage);
-
-					// Parse roadmap steps from message text (markdown checklist)
-					const messageText = this.streamingMessage.content.find((c) => c.type === "text")?.text || "";
-					if (messageText) {
-						const taskMatches = [...messageText.matchAll(/[-*]\s*\[([ x/])\]\s*(.+)/g)];
-						if (taskMatches.length > 0) {
-							this.currentSteps = taskMatches.map((match, i) => {
-								const state = match[1].toLowerCase();
-								const label = match[2].trim();
-								let status: "pending" | "active" | "completed" = "pending";
-								if (state === "x") status = "completed";
-								else if (state === "/") status = "active";
-
-								return {
-									id: `step-${i}`,
-									label,
-									status,
-								};
-							});
-							this.roadmap.setSteps(this.currentSteps);
-							this.roadmap.setEta(
-								Math.ceil(this.currentSteps.filter((s) => s.status !== "completed").length * 2),
-							);
-							if (this.taskPanel) {
-								const taskItems: TaskItem[] = this.currentSteps.map((s) => ({
-									id: s.id,
-									label: s.label,
-									status: s.status === "completed" ? "done" : s.status === "active" ? "active" : "pending",
-								}));
-								this.taskPanel.setTasks(taskItems);
-							}
-							this.refreshLayout();
-						}
-					}
 
 					for (const content of this.streamingMessage.content) {
 						if (content.type === "toolCall") {
@@ -3656,12 +3107,7 @@ export class InteractiveMode {
 									this.sessionManager.getCwd(),
 								);
 								component.setExpanded(this.toolOutputExpanded);
-								// Add to batch group instead of directly to chat
-								if (!this.currentToolBatch) {
-									this.currentToolBatch = new ToolBatchComponent();
-									this.chatContainer.addChild(this.currentToolBatch);
-								}
-								this.currentToolBatch.addTool(component);
+								this.chatContainer.addChild(component);
 								this.pendingTools.set(content.id, component);
 							} else {
 								const component = this.pendingTools.get(content.id);
@@ -3701,31 +3147,22 @@ export class InteractiveMode {
 							});
 						}
 						this.pendingTools.clear();
-						this.currentToolBatch = undefined;
 					} else {
 						// Args are now complete - trigger diff computation for edit tools
 						for (const [, component] of this.pendingTools.entries()) {
 							component.setArgsComplete();
 						}
+						this.maybeShowCacheMissNotice(this.streamingMessage);
 					}
 					this.streamingComponent = undefined;
 					this.streamingMessage = undefined;
-					addXp(30, "response completed");
 					this.footer.invalidate();
 				}
 				this.ui.requestRender();
-
-				// Detect :::wizard block and show picker
-				if (event.message.role === "assistant") {
-					const msgText = event.message.content.find((c: any) => c.type === "text")?.text ?? "";
-					const wizardSteps = parseWizardBlock(msgText);
-					if (wizardSteps && wizardSteps.length > 0) {
-						this.showWizardSelector(wizardSteps);
-					}
-				}
 				break;
 
 			case "tool_execution_start": {
+				addXp(15, `tool starting: ${event.toolName}`);
 				let component = this.pendingTools.get(event.toolCallId);
 				if (!component) {
 					component = new ToolExecutionComponent(
@@ -3741,24 +3178,10 @@ export class InteractiveMode {
 						this.sessionManager.getCwd(),
 					);
 					component.setExpanded(this.toolOutputExpanded);
-					// Add to batch group
-					if (!this.currentToolBatch) {
-						this.currentToolBatch = new ToolBatchComponent();
-						this.chatContainer.addChild(this.currentToolBatch);
-					}
-					this.currentToolBatch.addTool(component);
+					this.chatContainer.addChild(component);
 					this.pendingTools.set(event.toolCallId, component);
 				}
 				component.markExecutionStarted();
-				addXp(15, `tool starting: ${event.toolName}`);
-				this.footer.invalidate();
-
-				// Update roadmap step based on tool name
-				const activeStepIndex = this.currentSteps.findIndex((s) => s.status === "active");
-				if (activeStepIndex !== -1 && this.currentSteps[activeStepIndex]) {
-					this.roadmap.updateStepStatus(this.currentSteps[activeStepIndex].id, "active");
-				}
-
 				this.ui.requestRender();
 				break;
 			}
@@ -3777,75 +3200,31 @@ export class InteractiveMode {
 				if (component) {
 					component.updateResult({ ...event.result, isError: event.isError });
 					this.pendingTools.delete(event.toolCallId);
-
 					if (event.isError) {
 						addXp(5, `tool failed: ${event.toolName}`);
 					} else {
 						addXp(25, `tool success: ${event.toolName}`);
 					}
-					this.footer.invalidate();
-
-					// Move to next roadmap step
-					const activeIndex = this.currentSteps.findIndex((s) => s.status === "active");
-					if (activeIndex !== -1) {
-						this.currentSteps[activeIndex].status = "completed";
-						this.roadmap.updateStepStatus(this.currentSteps[activeIndex].id, "completed");
-
-						if (this.currentSteps[activeIndex + 1]) {
-							this.currentSteps[activeIndex + 1].status = "active";
-							this.roadmap.updateStepStatus(this.currentSteps[activeIndex + 1].id, "active");
-						}
-
-						const remaining = this.currentSteps.filter((s) => s.status !== "completed").length;
-						this.roadmap.setEta(Math.ceil(remaining * 0.5));
-					}
-
 					this.ui.requestRender();
 				}
 				break;
 			}
 
-			case "engine_end": {
+			case "engine_end":
 				if (this.settingsManager.getShowTerminalProgress()) {
 					this.ui.terminal.setProgress(false);
 				}
-				if (this.loadingAnimation) {
-					this.loadingAnimation.stop();
-					this.loadingAnimation = undefined;
-					this.statusContainer.clear();
-				}
+				addXp(30, "response completed");
+				this.clearStatusIndicator("working");
 				if (this.streamingComponent) {
 					this.chatContainer.removeChild(this.streamingComponent);
 					this.streamingComponent = undefined;
 					this.streamingMessage = undefined;
 				}
 				this.pendingTools.clear();
-				this.currentToolBatch = undefined;
-
-				// Trigger verification and certificate creation in Omega Kernel asynchronously
-				const oKernel = OmegaKernel.getInstance();
-				if (oKernel.currentIntent && oKernel.currentIntent.effortMode !== "S0") {
-					const cwd = this.sessionManager.getCwd();
-					oKernel
-						.verifyTask(cwd)
-						.then((verResult) => {
-							oKernel.buildPatchCertificate("", [], verResult);
-							this.ui.requestRender();
-						})
-						.catch(() => {});
-				}
-
-				// Clear roadmap and task panel for next task
-				this.currentSteps = [];
-				this.roadmap.setSteps([]);
-				this.roadmap.setEta(0);
-				this.taskPanel?.clearTasks();
-
-				await this.checkShutdownRequested();
 
 				this.ui.requestRender();
 				break;
-			}
 
 			case "compaction_start": {
 				if (this.settingsManager.getShowTerminalProgress()) {
@@ -3856,17 +3235,7 @@ export class InteractiveMode {
 				this.defaultEditor.onEscape = () => {
 					this.session.abortCompaction();
 				};
-				this.statusContainer.clear();
-				if (event.reason === "manual") {
-					const cancelHint = `(${keyText("app.interrupt")} to cancel)`;
-					this.autoCompactionLoader = new Loader(
-						this.ui,
-						(spinner) => theme.fg("accent", spinner),
-						(text) => theme.fg("muted", text),
-						`Compacting context... ${cancelHint}`,
-					);
-					this.statusContainer.addChild(this.autoCompactionLoader);
-				}
+				this.showStatusIndicator(new CompactionStatusIndicator(this.ui, event.reason));
 				this.ui.requestRender();
 				break;
 			}
@@ -3879,16 +3248,13 @@ export class InteractiveMode {
 					this.defaultEditor.onEscape = this.autoCompactionEscapeHandler;
 					this.autoCompactionEscapeHandler = undefined;
 				}
-				if (this.autoCompactionLoader) {
-					this.autoCompactionLoader.stop();
-					this.autoCompactionLoader = undefined;
-					this.statusContainer.clear();
-				}
+				this.clearStatusIndicator("compaction");
+				addXp(50, "context compacted");
 				if (event.aborted) {
 					if (event.reason === "manual") {
-						this.showError("Sıkıştırma cancel edildi");
+						this.showError("Compaction cancelled");
 					} else {
-						this.showStatus("Otomatik sıkıştırma cancel edildi");
+						this.showStatus("Auto-compaction cancelled");
 					}
 				} else if (event.result) {
 					this.chatContainer.clear();
@@ -3900,15 +3266,13 @@ export class InteractiveMode {
 							new Date().toISOString(),
 						),
 					);
-					addXp(50, "context compacted");
 					this.footer.invalidate();
 				} else if (event.errorMessage) {
-					const friendlyMsg = this.getFriendlyErrorMessage(event.errorMessage);
 					if (event.reason === "manual") {
 						this.showError(event.errorMessage);
 					} else {
 						this.chatContainer.addChild(new Spacer(1));
-						this.chatContainer.addChild(new Text(theme.fg("error", `⚠️ ${friendlyMsg}`), 1, 0));
+						this.chatContainer.addChild(new Text(theme.fg("error", event.errorMessage), 1, 0));
 					}
 				}
 				void this.flushCompactionQueue({ willRetry: event.willRetry });
@@ -3922,28 +3286,9 @@ export class InteractiveMode {
 				this.defaultEditor.onEscape = () => {
 					this.session.abortRetry();
 				};
-				// Show retry indicator
-				this.statusContainer.clear();
-				this.retryCountdown?.dispose();
-				const retryMessage = (seconds: number) =>
-					`Yeniden deneniyor (${event.attempt}/${event.maxAttempts}), ${seconds}s içinde... (cancel: ${keyText("app.interrupt")})`;
-				this.retryLoader = new Loader(
-					this.ui,
-					(spinner) => theme.fg("warning", spinner),
-					(text) => theme.fg("muted", text),
-					retryMessage(Math.ceil(event.delayMs / 1000)),
+				this.showStatusIndicator(
+					new RetryStatusIndicator(this.ui, event.attempt, event.maxAttempts, event.delayMs),
 				);
-				this.retryCountdown = new CountdownTimer(
-					event.delayMs,
-					this.ui,
-					(seconds) => {
-						this.retryLoader?.setMessage(retryMessage(seconds));
-					},
-					() => {
-						this.retryCountdown = undefined;
-					},
-				);
-				this.statusContainer.addChild(this.retryLoader);
 				this.ui.requestRender();
 				break;
 			}
@@ -3954,21 +3299,10 @@ export class InteractiveMode {
 					this.defaultEditor.onEscape = this.retryEscapeHandler;
 					this.retryEscapeHandler = undefined;
 				}
-				if (this.retryCountdown) {
-					this.retryCountdown.dispose();
-					this.retryCountdown = undefined;
-				}
-				// Stop loader
-				if (this.retryLoader) {
-					this.retryLoader.stop();
-					this.retryLoader = undefined;
-					this.statusContainer.clear();
-				}
+				this.clearStatusIndicator("retry");
 				// Show error only on final failure (success shows normal response)
 				if (!event.success) {
-					this.showError(
-						`Yeniden deneme ${event.attempt} denemeden sonra başarısız oldu: ${event.finalError || "Bilinmeyen hata"}`,
-					);
+					this.showError(`Retry failed after ${event.attempt} attempts: ${event.finalError || "Unknown error"}`);
 				}
 				this.ui.requestRender();
 				break;
@@ -3986,55 +3320,25 @@ export class InteractiveMode {
 		return textBlocks.map((c) => (c as { text: string }).text).join("");
 	}
 
-	private updateWorkingMessageContextually(event: EngineSessionEvent): void {
-		switch (event.type) {
-			case "engine_start":
-				this.setWorkingMessage("Hazirlaniyor...");
-				break;
-			case "message_update":
-				if (event.message.role === "assistant") {
-					const assistantMsg = event.message as AssistantMessage;
-					const content = assistantMsg.content;
+	/**
+	 * Show a status message in the chat.
+	 *
+	 * If multiple status messages are emitted back-to-back (without anything else being added to the chat),
+	 * we update the previous status line instead of appending new ones to avoid log spam.
+	 */
+	private showStatus(message: string): void {
+		const children = this.chatContainer.children;
+		const last = children.length > 0 ? children[children.length - 1] : undefined;
+		const secondLast = children.length > 1 ? children[children.length - 2] : undefined;
 
-					// Check for tool calls first (highest priority)
-					const hasToolCall = content.some((c) => c.type === "toolCall");
-					if (hasToolCall) {
-						const lastTool = content.filter((c) => c.type === "toolCall").pop() as ToolCall;
-						if (lastTool) {
-							this.setWorkingMessage(`${lastTool.name} hazirlaniyor...`);
-							return;
-						}
-					}
-
-					// Check for thinking/reasoning
-					const isThinking = content.some((c) => c.type === "thinking");
-					const hasText = content.some((c) => c.type === "text" && c.text.trim().length > 0);
-
-					if (isThinking && !hasText) {
-						this.setWorkingMessage("Dusunuyor...");
-						return;
-					}
-
-					// Default to writing code if there's text or we're just generally responding
-					this.setWorkingMessage("Kodu yaziyor...");
-				}
-				break;
-			case "tool_execution_start":
-				this.setWorkingMessage(`${event.toolName} calistiriliyor...`);
-				break;
-			case "engine_end":
-				this.setWorkingMessage(undefined);
-				this.notifyCompletion();
-				break;
+		if (last && secondLast && last === this.lastStatusText && secondLast === this.lastStatusSpacer) {
+			this.lastStatusText.setText(theme.fg("dim", message));
+			this.ui.requestRender();
+			return;
 		}
-	}
-
-	private notifyCompletion(): void {
-		// Terminal bell for quick background/other-tab awareness.
-		process.stdout.write("\u0007");
 
 		const spacer = new Spacer(1);
-		const text = new Text(theme.fg("success", "◈ İşlem tamamlandı."), 1, 0);
+		const text = new Text(theme.fg("dim", message), 1, 0);
 		this.chatContainer.addChild(spacer);
 		this.chatContainer.addChild(text);
 		this.lastStatusSpacer = spacer;
@@ -4042,24 +3346,26 @@ export class InteractiveMode {
 		this.ui.requestRender();
 	}
 
-	/**
-	 * Show a status message in the status bar area (above the editor, not in the chat).
-	 *
-	 * If multiple status messages are emitted back-to-back, we update the previous status line
-	 * instead of appending new ones to avoid log spam.
-	 */
-	private showStatus(message: string): void {
-		if (this._statusText && this._statusText.parent === this.statusContainer) {
-			this._statusText.setText(theme.fg("dim", message));
-			this.ui.requestRender();
+	private addCustomEntryToChat(entry: Extract<SessionEntry, { type: "custom" }>): void {
+		const renderer = this.session.extensionRunner.getEntryRenderer(entry.customType);
+		if (!renderer) {
+			return;
+		}
+		const component = new CustomEntryComponent(entry, renderer);
+		component.setExpanded(this.toolOutputExpanded);
+		if (!component.hasContent()) {
 			return;
 		}
 
-		this.statusContainer.clear();
-		const text = new Text(theme.fg("dim", message), 1, 0);
-		this.statusContainer.addChild(text);
-		this._statusText = text;
-		this.ui.requestRender();
+		if (this.streamingComponent) {
+			const streamingIndex = this.chatContainer.children.indexOf(this.streamingComponent);
+			if (streamingIndex >= 0) {
+				this.chatContainer.children.splice(streamingIndex, 0, component);
+				return;
+			}
+		}
+
+		this.chatContainer.addChild(component);
 	}
 
 	private addMessageToChat(message: EngineMessage, options?: { populateHistory?: boolean }): void {
@@ -4102,9 +3408,7 @@ export class InteractiveMode {
 				break;
 			}
 			case "user": {
-				// Use stored original user text if available (e.g., after Fable/Fusion modified promptInput)
-				const textContent = this._displayUserText ?? this.getUserMessageText(message);
-				this._displayUserText = undefined;
+				const textContent = this.getUserMessageText(message);
 				if (textContent) {
 					if (this.chatContainer.children.length > 0) {
 						this.chatContainer.addChild(new Spacer(1));
@@ -4120,35 +3424,22 @@ export class InteractiveMode {
 						this.chatContainer.addChild(component);
 						// Render user message separately if present
 						if (skillBlock.userMessage) {
+							this.chatContainer.addChild(new Spacer(1));
 							const userComponent = new UserMessageComponent(
 								skillBlock.userMessage,
 								this.getMarkdownThemeWithSettings(),
+								this.outputPad,
 							);
 							this.chatContainer.addChild(userComponent);
 						}
 					} else {
-						const userComponent = new UserMessageComponent(textContent, this.getMarkdownThemeWithSettings());
+						const userComponent = new UserMessageComponent(
+							textContent,
+							this.getMarkdownThemeWithSettings(),
+							this.outputPad,
+						);
 						this.chatContainer.addChild(userComponent);
 					}
-
-					// Render attached images directly in the TUI chat!
-					const images = Array.isArray(message.content) ? message.content.filter((c) => c.type === "image") : [];
-					const caps = getCapabilities();
-					const showImages = this.settingsManager.getShowImages();
-					const imageWidthCells = this.settingsManager.getImageWidthCells();
-					for (const img of images) {
-						if (caps.images && showImages && img.data && img.mimeType) {
-							this.chatContainer.addChild(new Spacer(1));
-							const imageComponent = new Image(
-								img.data,
-								img.mimeType,
-								{ fallbackColor: (s) => theme.fg("toolOutput", s) },
-								{ maxWidthCells: imageWidthCells },
-							);
-							this.chatContainer.addChild(imageComponent);
-						}
-					}
-
 					if (options?.populateHistory) {
 						this.editor.addToHistory?.(textContent);
 					}
@@ -4156,15 +3447,12 @@ export class InteractiveMode {
 				break;
 			}
 			case "assistant": {
-				if (this.chatContainer.children.length > 0) {
-					this.chatContainer.addChild(new Spacer(1));
-				}
 				const assistantComponent = new AssistantMessageComponent(
 					message,
 					this.hideThinkingBlock,
 					this.getMarkdownThemeWithSettings(),
 					this.hiddenThinkingLabel,
-					this.settingsManager.isFusionModeEnabled(),
+					this.outputPad,
 				);
 				this.chatContainer.addChild(assistantComponent);
 				break;
@@ -4179,30 +3467,33 @@ export class InteractiveMode {
 		}
 	}
 
-	/**
-	 * Render session context to chat. Used for initial load and rebuild after compaction.
-	 * @param sessionContext Session context to render
-	 * @param options.updateFooter Update footer state
-	 * @param options.populateHistory Add user messages to editor history
-	 */
-	private renderSessionContext(
-		sessionContext: SessionContext,
+	private renderSessionItems(
+		items: readonly RenderSessionItem[],
 		options: { updateFooter?: boolean; populateHistory?: boolean } = {},
 	): void {
 		this.pendingTools.clear();
-		this.currentToolBatch = undefined;
+		const renderedPendingTools = new Map<string, ToolExecutionComponent>();
+		// Cache-miss notices are not persisted; re-derive them from the full entry
+		// list and re-inject them after the assistant messages that paid for them.
+		const cacheMisses = this.settingsManager.getShowCacheMissNotices()
+			? collectCacheMisses(this.sessionManager.getEntries(), this.session.modelRegistry)
+			: new Map<AssistantMessage, CacheMiss>();
 
 		if (options.updateFooter) {
 			this.footer.invalidate();
 			this.updateEditorBorderColor();
 		}
 
-		for (const message of sessionContext.messages) {
+		for (const item of items) {
+			if (isCustomSessionEntry(item)) {
+				this.addCustomEntryToChat(item);
+				continue;
+			}
+
+			const message = item;
 			// Assistant messages need special handling for tool calls
 			if (message.role === "assistant") {
 				this.addMessageToChat(message);
-				// Reset batch for each assistant message in history
-				let historyBatch: ToolBatchComponent | undefined;
 				// Render tool call components
 				for (const content of message.content) {
 					if (content.type === "toolCall") {
@@ -4219,34 +3510,35 @@ export class InteractiveMode {
 							this.sessionManager.getCwd(),
 						);
 						component.setExpanded(this.toolOutputExpanded);
-						// Group into batch
-						if (!historyBatch) {
-							historyBatch = new ToolBatchComponent();
-							this.chatContainer.addChild(historyBatch);
-						}
-						historyBatch.addTool(component);
+						this.chatContainer.addChild(component);
 
 						if (message.stopReason === "aborted" || message.stopReason === "error") {
 							let errorMessage: string;
 							if (message.stopReason === "aborted") {
 								const retryAttempt = this.session.retryAttempt;
 								errorMessage =
-									retryAttempt > 0 ? `${retryAttempt} denemeden sonra cancel edildi` : "Operation cancelled";
+									retryAttempt > 0
+										? `Aborted after ${retryAttempt} retry attempt${retryAttempt > 1 ? "s" : ""}`
+										: "Operation aborted";
 							} else {
 								errorMessage = message.errorMessage || "Error";
 							}
 							component.updateResult({ content: [{ type: "text", text: errorMessage }], isError: true });
 						} else {
-							this.pendingTools.set(content.id, component);
+							renderedPendingTools.set(content.id, component);
 						}
 					}
 				}
+				if (message.stopReason !== "aborted" && message.stopReason !== "error") {
+					const miss = cacheMisses.get(message);
+					if (miss) this.addCacheMissNotice(miss);
+				}
 			} else if (message.role === "toolResult") {
 				// Match tool results to pending tool components
-				const component = this.pendingTools.get(message.toolCallId);
+				const component = renderedPendingTools.get(message.toolCallId);
 				if (component) {
 					component.updateResult(message);
-					this.pendingTools.delete(message.toolCallId);
+					renderedPendingTools.delete(message.toolCallId);
 				}
 			} else {
 				// All other messages use standard rendering
@@ -4254,43 +3546,114 @@ export class InteractiveMode {
 			}
 		}
 
-		this.pendingTools.clear();
-		this.currentToolBatch = undefined;
+		for (const [toolCallId, component] of renderedPendingTools) {
+			this.pendingTools.set(toolCallId, component);
+		}
 		this.ui.requestRender();
 	}
 
-	renderInitialMessages(): void {
-		// macOS Style Intro
-		const intro = buildWelcomeMessage();
-		if (intro?.text && this.session.isNewSession) {
-			this.chatContainer.addChild(new Text(intro.text, 0, 1));
-			this.chatContainer.addChild(new DynamicBorder());
-		}
+	/**
+	 * Render session entries to chat. Used for initial load and rebuild after compaction.
+	 * @param entries Compaction-aware session entries to render
+	 * @param options.updateFooter Update footer state
+	 * @param options.populateHistory Add user messages to editor history
+	 */
+	private renderSessionEntries(
+		entries: SessionEntry[],
+		options: { updateFooter?: boolean; populateHistory?: boolean } = {},
+	): void {
+		const items = entries.flatMap((entry): RenderSessionItem[] => {
+			if (entry.type === "custom") {
+				return [entry];
+			}
+			return sessionEntryToContextMessages(entry);
+		});
+		this.renderSessionItems(items, options);
+	}
 
-		// Get aligned messages and entries from session context
-		const context = this.sessionManager.buildSessionContext();
-		this.renderSessionContext(context, {
+	/**
+	 * Show a transcript notice when a completed assistant message paid for a
+	 * significant cache miss. Only states observable facts: the miss itself,
+	 * a model switch, or an idle gap past the cache TTL.
+	 */
+	private maybeShowCacheMissNotice(message: AssistantMessage): void {
+		if (!this.settingsManager.getShowCacheMissNotices()) return;
+
+		// Entries don't contain `message` yet: message_end fires before persistence.
+		const miss = detectCacheMiss(this.sessionManager.getEntries(), message, this.session.modelRegistry);
+		if (miss) this.addCacheMissNotice(miss);
+	}
+
+	private addCacheMissNotice(miss: CacheMiss): void {
+		if (miss.missedTokens < 20_000 && miss.missedCost < 0.1) return;
+
+		const cost = miss.missedCost >= 0.01 ? ` (~$${miss.missedCost.toFixed(2)})` : "";
+		const reBilled = `${formatTokens(miss.missedTokens)} tokens re-billed${cost}`;
+		let label = "Cache miss";
+		if (miss.modelChanged) {
+			label = "Cache miss after model switch";
+		} else if (miss.idleMs >= CACHE_TTL_MS) {
+			label = `Cache miss after ${Math.round(miss.idleMs / 60_000)}m idle`;
+		}
+		const text = theme.fg("warning", `${label}: ${reBilled}`);
+		this.chatContainer.addChild(new Spacer(1));
+		this.chatContainer.addChild(new Text(text, 1, 0));
+	}
+
+	renderInitialMessages(): void {
+		const entries = this.sessionManager.getEntries();
+		this.renderSessionEntries(entries, {
 			updateFooter: true,
 			populateHistory: true,
 		});
+		this.renderProjectTrustWarningIfNeeded();
 
-		// Compaction is already represented inline in the chat history.
-		// Avoid adding an extra status line so the session feels quieter and more corporate.
+		// Show compaction info if session was compacted
+		const allEntries = this.sessionManager.getEntries();
+		const compactionCount = allEntries.filter((e) => e.type === "compaction").length;
+		if (compactionCount > 0) {
+			const times = compactionCount === 1 ? "1 time" : `${compactionCount} times`;
+			this.showStatus(`Session compacted ${times}`);
+		}
 	}
 
-	async getUserInput(): Promise<{ text: string; images?: ImageContent[] }> {
+	private renderProjectTrustWarningIfNeeded(): void {
+		if (this.settingsManager.isProjectTrusted() || !hasTrustRequiringProjectResources(this.sessionManager.getCwd())) {
+			return;
+		}
+
+		if (this.chatContainer.children.length > 0) {
+			this.chatContainer.addChild(new Spacer(1));
+		}
+		this.chatContainer.addChild(
+			new Text(
+				theme.fg(
+					"warning",
+					`This project is not trusted. Project ${CONFIG_DIR_NAME} resources and packages are ignored. Use /trust to save a trust decision, then restart astro.`,
+				),
+				1,
+				0,
+			),
+		);
+	}
+
+	async getUserInput(): Promise<string> {
+		const queuedInput = this.pendingUserInputs.shift();
+		if (queuedInput !== undefined) {
+			return queuedInput;
+		}
+
 		return new Promise((resolve) => {
-			this.onInputCallback = (text: string, images?: ImageContent[]) => {
+			this.onInputCallback = (text: string) => {
 				this.onInputCallback = undefined;
-				resolve({ text, images });
+				resolve(text);
 			};
 		});
 	}
 
 	private rebuildChatFromMessages(): void {
 		this.chatContainer.clear();
-		const context = this.sessionManager.buildSessionContext();
-		this.renderSessionContext(context);
+		this.renderSessionEntries(this.sessionManager.getEntries());
 	}
 
 	// =========================================================================
@@ -4308,79 +3671,99 @@ export class InteractiveMode {
 	}
 
 	private handleCtrlD(): void {
-		// Diff preview shortcut; if there is no diff, keep the old empty-editor exit behavior.
-		void (async () => {
-			try {
-				const { getFullDiff } = await import("../../core/git-utils.js");
-				const diff = await getFullDiff(this.sessionManager.getCwd());
-				if (diff && diff !== "No diff.") {
-					await this.handleDiffCommand();
-					return;
-				}
-			} catch {}
-			await this.shutdown();
-		})();
+		// Only called when editor is empty (enforced by CustomEditor)
+		void this.shutdown();
 	}
 
 	/**
-	 * Gracefully shutdown the engine.
+	 * Gracefully shutdown the agent.
 	 * Stops the TUI before emitting shutdown events so extension UI cleanup cannot
 	 * repaint the final frame while the process is exiting.
 	 */
 	private isShuttingDown = false;
 
-	private async shutdown(): Promise<void> {
+	private async shutdown(options?: { fromSignal?: boolean }): Promise<void> {
 		if (this.isShuttingDown) return;
 		this.isShuttingDown = true;
-		this.unregisterSignalHandlers();
+		// Keep signal handlers registered until terminal cleanup has completed.
+		// `signal-exit` checks the listener list during the same SIGTERM/SIGHUP
+		// dispatch and re-sends the signal if only its own listeners remain.
 
+		if (options?.fromSignal) {
+			// Signal-triggered shutdown (SIGTERM/SIGHUP). Emit extension cleanup
+			// (session_shutdown) BEFORE touching the terminal. Extension teardown
+			// such as removing sockets does not write to the tty, so it must not be
+			// skipped if a later terminal-restore write fails on a dead or stalled
+			// terminal. If the terminal is gone, the restore writes below emit EIO,
+			// which the stdout/stderr error handler turns into emergencyTerminalExit;
+			// the render loop is already idle, so this cannot hot-spin (see #4144).
+			await this.runtimeHost.dispose();
+			this.themeController.disableAutoSync();
+			await this.ui.terminal.drainInput(1000);
+			this.stop();
+			process.exit(0);
+		}
+
+		// Interactive quit (Ctrl+D, Ctrl+C, /quit, extension shutdown()). Stop the
+		// TUI before emitting shutdown events so extension UI cleanup cannot repaint
+		// the final frame while the process is exiting.
 		// Drain any in-flight Kitty key release events before stopping.
 		// This prevents escape sequences from leaking to the parent shell over slow SSH.
+		this.themeController.disableAutoSync();
 		await this.ui.terminal.drainInput(1000);
 
 		this.stop();
 		await this.runtimeHost.dispose();
+
+		const resumeCommand = formatResumeCommand(this.sessionManager);
+		if (resumeCommand) {
+			process.stdout.write(`${chalk.dim("To resume this session:")} ${resumeCommand}\n`);
+		}
+
 		process.exit(0);
 	}
 
+	private emergencyTerminalExit(): never {
+		this.isShuttingDown = true;
+		this.unregisterSignalHandlers();
+		killTrackedDetachedChildren();
+		// The terminal is gone. Do not run normal shutdown because TUI and
+		// extension cleanup can write restore sequences and re-trigger EIO.
+		process.exit(129);
+	}
+
 	/**
-	 * Check if shutdown was requested and perform shutdown if so.
+	 * Last-resort handler for uncaught exceptions. The TUI puts stdin into raw
+	 * mode and hides the cursor; without this handler, an uncaught throw from
+	 * anywhere (e.g. an extension's async `ChildProcess.on("exit")` callback)
+	 * tears down the process while leaving the terminal in raw mode with no
+	 * cursor, requiring `stty sane && reset` to recover.
+	 *
+	 * Unlike emergencyTerminalExit, the terminal is still alive here, so we
+	 * call ui.stop() to restore cooked mode, the cursor, and disable bracketed
+	 * paste / Kitty / modifyOtherKeys sequences.
 	 */
-	private async checkShutdownRequested(): Promise<void> {
-		if (!this.shutdownRequested) return;
-		await this.shutdown();
+	private uncaughtCrash(error: Error): never {
+		if (this.isShuttingDown) {
+			process.exit(1);
+		}
+		this.isShuttingDown = true;
+		try {
+			this.unregisterSignalHandlers();
+		} catch {}
+		try {
+			killTrackedDetachedChildren();
+		} catch {}
+		try {
+			this.ui.stop();
+		} catch {}
+		console.error("pi exiting due to uncaughtException:");
+		console.error(error);
+		process.exit(1);
 	}
 
 	private registerSignalHandlers(): void {
 		this.unregisterSignalHandlers();
-
-		// Global error handlers to prevent background stack traces from corrupting the TUI
-		const uncaughtHandler = (err: Error) => {
-			try {
-				this.showWarning(`Sistem hatası: ${err.message}`);
-				this.ui.requestRender();
-			} catch (_e) {
-				console.error("Crash before theme initialized. Original error:", err);
-				process.exit(1);
-			}
-		};
-		const unhandledRejectionHandler = (reason: unknown) => {
-			const msg = reason instanceof Error ? reason.message : String(reason);
-			try {
-				this.showWarning(`Arka plan hatası: ${msg}`);
-				this.ui.requestRender();
-			} catch (_e) {
-				console.error("Background error before theme init:", reason);
-			}
-		};
-
-		process.on("uncaughtException", uncaughtHandler);
-		process.on("unhandledRejection", unhandledRejectionHandler);
-
-		this.signalCleanupHandlers.push(() => {
-			process.off("uncaughtException", uncaughtHandler);
-			process.off("unhandledRejection", unhandledRejectionHandler);
-		});
 
 		const signals: NodeJS.Signals[] = ["SIGTERM"];
 		if (process.platform !== "win32") {
@@ -4389,12 +3772,34 @@ export class InteractiveMode {
 
 		for (const signal of signals) {
 			const handler = () => {
+				// SIGHUP no longer hard-exits: graceful shutdown emits session_shutdown
+				// first, then attempts terminal restore. A genuinely dead terminal
+				// surfaces as an EIO on the restore writes, which the stdout/stderr
+				// error handler converts into emergencyTerminalExit (see #4144, #5080).
 				killTrackedDetachedChildren();
-				void this.shutdown();
+				void this.shutdown({ fromSignal: true });
 			};
-			process.on(signal, handler);
+			process.prependListener(signal, handler);
 			this.signalCleanupHandlers.push(() => process.off(signal, handler));
 		}
+
+		const terminalErrorHandler = (error: Error) => {
+			if (isDeadTerminalError(error)) {
+				this.emergencyTerminalExit();
+			}
+			throw error;
+		};
+		process.stdout.on("error", terminalErrorHandler);
+		process.stderr.on("error", terminalErrorHandler);
+		this.signalCleanupHandlers.push(() => process.stdout.off("error", terminalErrorHandler));
+		this.signalCleanupHandlers.push(() => process.stderr.off("error", terminalErrorHandler));
+
+		// Restore the terminal before the process dies on any uncaught throw.
+		// Without this, an unhandled exception from extension code (or anywhere
+		// in pi) leaves the terminal in raw mode with no cursor.
+		const uncaughtExceptionHandler = (error: Error) => this.uncaughtCrash(error);
+		process.prependListener("uncaughtException", uncaughtExceptionHandler);
+		this.signalCleanupHandlers.push(() => process.off("uncaughtException", uncaughtExceptionHandler));
 	}
 
 	private unregisterSignalHandlers(): void {
@@ -4406,7 +3811,7 @@ export class InteractiveMode {
 
 	private handleCtrlZ(): void {
 		if (process.platform === "win32") {
-			this.showStatus("Arka plana alma Windows'ta desteklenmiyor");
+			this.showStatus("Suspend to background is not supported on Windows");
 			return;
 		}
 
@@ -4457,7 +3862,7 @@ export class InteractiveMode {
 			return;
 		}
 
-		// Alt+Enter queues a follow-up message (waits until engine finishes)
+		// Alt+Enter queues a follow-up message (waits until agent finishes)
 		// This handles extension commands (execute immediately), prompt template expansion, and queueing
 		if (this.session.isStreaming) {
 			this.editor.addToHistory?.(text);
@@ -4476,9 +3881,9 @@ export class InteractiveMode {
 	private handleDequeue(): void {
 		const restored = this.restoreQueuedMessagesToEditor();
 		if (restored === 0) {
-			this.showStatus("Geri yuklenecek kuyruklanmis mesaj yok");
+			this.showStatus("No queued messages to restore");
 		} else {
-			this.showStatus(`${restored} kuyruklanmis mesaj editoru geri yuklendi`);
+			this.showStatus(`Restored ${restored} queued message${restored > 1 ? "s" : ""} to editor`);
 		}
 	}
 
@@ -4495,11 +3900,11 @@ export class InteractiveMode {
 	private cycleThinkingLevel(): void {
 		const newLevel = this.session.cycleThinkingLevel();
 		if (newLevel === undefined) {
-			this.showStatus("Mevcut model dusunmeyi desteklemiyor");
+			this.showStatus("Current model does not support thinking");
 		} else {
 			this.footer.invalidate();
 			this.updateEditorBorderColor();
-			this.showStatus(`Dusunme seviyesi: ${newLevel}`);
+			this.showStatus(`Thinking level: ${newLevel}`);
 		}
 	}
 
@@ -4514,7 +3919,7 @@ export class InteractiveMode {
 				this.updateEditorBorderColor();
 				const thinkingStr =
 					result.model.reasoning && result.thinkingLevel !== "off" ? ` (thinking: ${result.thinkingLevel})` : "";
-				this.showStatus(`${result.model.name || result.model.id} modeline gecildi${thinkingStr}`);
+				this.showStatus(`Switched to ${result.model.name || result.model.id}${thinkingStr}`);
 				void this.maybeWarnAboutAnthropicSubscriptionAuth(result.model);
 			}
 		} catch (error) {
@@ -4532,9 +3937,11 @@ export class InteractiveMode {
 		if (isExpandable(activeHeader)) {
 			activeHeader.setExpanded(expanded);
 		}
-		for (const child of this.chatContainer.children) {
-			if (isExpandable(child)) {
-				child.setExpanded(expanded);
+		for (const container of [this.loadedResourcesContainer, this.chatContainer]) {
+			for (const child of container.children) {
+				if (isExpandable(child)) {
+					child.setExpanded(expanded);
+				}
 			}
 		}
 		this.ui.requestRender();
@@ -4555,19 +3962,18 @@ export class InteractiveMode {
 			this.chatContainer.addChild(this.streamingComponent);
 		}
 
-		this.showStatus(`Dusunme bloklari: ${this.hideThinkingBlock ? "gizli" : "gorunur"}`);
+		this.showStatus(`Thinking blocks: ${this.hideThinkingBlock ? "hidden" : "visible"}`);
 	}
 
-	private openExternalEditor(): void {
-		// Determine editor (respect $VISUAL, then $EDITOR)
-		const editorCmd = process.env.VISUAL || process.env.EDITOR;
+	private async openExternalEditor(): Promise<void> {
+		const editorCmd = this.settingsManager.getExternalEditorCommand();
 		if (!editorCmd) {
-			this.showWarning("Düzenleyici yapılandırılmamış. $VISUAL veya $EDITOR ortam değişkenini ayarlayın.");
+			this.showWarning("No editor configured. Set externalEditor in settings.json or $VISUAL/$EDITOR.");
 			return;
 		}
 
 		const currentText = this.editor.getExpandedText?.() ?? this.editor.getText();
-		const tmpFile = path.join(os.tmpdir(), `Moon-editor-${Date.now()}.Moon.md`);
+		const tmpFile = path.join(os.tmpdir(), `astro-editor-${Date.now()}.astro.md`);
 
 		try {
 			// Write current content to temp file
@@ -4579,14 +3985,22 @@ export class InteractiveMode {
 			// Split by space to support editor arguments (e.g., "code --wait")
 			const [editor, ...editorArgs] = editorCmd.split(" ");
 
-			// Spawn editor synchronously with inherited stdio for interactive editing
-			const result = spawnSync(editor, [...editorArgs, tmpFile], {
-				stdio: "inherit",
-				shell: process.platform === "win32",
+			process.stdout.write(`Launching external editor: ${editorCmd}\nPi will resume when the editor exits.\n`);
+
+			// Do not use spawnSync here. On Windows, synchronous child_process calls can keep
+			// Node/libuv's console input read active after ui.stop() pauses stdin, racing
+			// vim/nvim for the console input buffer until Ctrl+C cancels the pending read.
+			const status = await new Promise<number | null>((resolve) => {
+				const child = spawn(editor, [...editorArgs, tmpFile], {
+					stdio: "inherit",
+					shell: process.platform === "win32",
+				});
+				child.on("error", () => resolve(null));
+				child.on("close", (code) => resolve(code));
 			});
 
 			// On successful exit (status 0), replace editor content
-			if (result.status === 0) {
+			if (status === 0) {
 				const newContent = fs.readFileSync(tmpFile, "utf-8").replace(/\n$/, "");
 				this.editor.setText(newContent);
 			}
@@ -4616,36 +4030,9 @@ export class InteractiveMode {
 	}
 
 	showError(errorMessage: string): void {
-		const friendlyMessage = this.getFriendlyErrorMessage(errorMessage);
 		this.chatContainer.addChild(new Spacer(1));
-		this.chatContainer.addChild(new Text(theme.fg("error", `⚠️ ${friendlyMessage}`), 1, 0));
+		this.chatContainer.addChild(new Text(theme.fg("error", `Error: ${errorMessage}`), 1, 0));
 		this.ui.requestRender();
-	}
-
-	private getFriendlyErrorMessage(msg: string): string {
-		if (
-			msg.includes("model output must contain") ||
-			msg.includes("output text or tool calls") ||
-			msg.includes("both be empty")
-		) {
-			return "Model geçici olarak boş yanıt üretemedi. Lütfen mesajınızı tekrar gönderin.";
-		}
-		if (msg.includes("empty response") || msg.includes("boş yanıt")) {
-			return msg;
-		}
-		if (msg.includes("API error (429)") || msg.includes("rate limit") || msg.includes("quota")) {
-			return `Hız sınırına ulaşıldı. Birkaç saniye bekleyip tekrar deneyin. (${msg})`;
-		}
-		if (msg.includes("API error (503)") || msg.includes("overloaded") || msg.includes("unavailable")) {
-			return "Sunucu şu an yoğun. Lütfen birkaç saniye bekleyip tekrar deneyin.";
-		}
-		if (msg.includes("network error") || msg.includes("Network error") || msg.includes("fetch failed")) {
-			return "Ağ bağlantısı kesildi. İnternet bağlantınızı kontrol edin ve tekrar deneyin.";
-		}
-		if (msg.includes("aborted") || msg.includes("AbortError")) {
-			return "İşlem iptal edildi.";
-		}
-		return msg;
 	}
 
 	showWarning(warningMessage: string): void {
@@ -4654,40 +4041,45 @@ export class InteractiveMode {
 		this.ui.requestRender();
 	}
 
-	showNewVersionNotification(newVersion: string): void {
+	showNewVersionNotification(release: LatestAstroAgentRelease): void {
 		const action = theme.fg("accent", `${APP_NAME} update`);
-		const updateInstruction =
-			theme.fg("muted", `Yeni sürüm ${newVersion} mevcut. Güncellemek için şunu çalıştırın: `) + action;
-		const changelogUrl = theme.fg(
-			"accent",
-			"https://github.com/theayzek01/Astro-Agent/blob/main/packages/cli/CHANGELOG.md",
-		);
-		const changelogLine = theme.fg("muted", "Değişiklik Günlüğü: ") + changelogUrl;
+		const updateInstruction = theme.fg("muted", `New version ${release.version} is available. Run `) + action;
+		const changelogUrl = "https://opencode.ai/changelog";
+		const changelogLink = getCapabilities().hyperlinks
+			? hyperlink(theme.fg("accent", changelogUrl), changelogUrl)
+			: theme.fg("accent", changelogUrl);
+		const changelogLine = theme.fg("muted", "Changelog: ") + changelogLink;
+		const note = release.note?.trim();
 
 		this.chatContainer.addChild(new Spacer(1));
 		this.chatContainer.addChild(new DynamicBorder((text) => theme.fg("warning", text)));
 		this.chatContainer.addChild(
-			new Text(
-				`${theme.bold(theme.fg("warning", "Güncelleme Mevcut"))}\n${updateInstruction}\n${changelogLine}`,
-				1,
-				0,
-			),
+			new Text(`${theme.bold(theme.fg("warning", "Update Available"))}\n${updateInstruction}`, 1, 0),
 		);
+		if (note) {
+			this.chatContainer.addChild(new Spacer(1));
+			this.chatContainer.addChild(
+				new Markdown(note, 1, 0, this.getMarkdownThemeWithSettings(), {
+					color: (text) => theme.fg("muted", text),
+				}),
+			);
+			this.chatContainer.addChild(new Spacer(1));
+		}
+		this.chatContainer.addChild(new Text(changelogLine, 1, 0));
 		this.chatContainer.addChild(new DynamicBorder((text) => theme.fg("warning", text)));
 		this.ui.requestRender();
 	}
 
 	showPackageUpdateNotification(packages: string[]): void {
-		const action = theme.fg("accent", `${APP_NAME} update`);
-		const updateInstruction =
-			theme.fg("muted", "Paket güncellemeleri mevcut. Güncellemek için şunu çalıştırın: ") + action;
+		const action = theme.fg("accent", `${APP_NAME} update --extensions`);
+		const updateInstruction = theme.fg("muted", "Package updates are available. Run ") + action;
 		const packageLines = packages.map((pkg) => `- ${pkg}`).join("\n");
 
 		this.chatContainer.addChild(new Spacer(1));
 		this.chatContainer.addChild(new DynamicBorder((text) => theme.fg("warning", text)));
 		this.chatContainer.addChild(
 			new Text(
-				`${theme.bold(theme.fg("warning", "Paket Güncellemeleri Mevcut"))}\n${updateInstruction}\n${theme.fg("muted", "Paketler:")}\n${packageLines}`,
+				`${theme.bold(theme.fg("warning", "Package Updates Available"))}\n${updateInstruction}\n${theme.fg("muted", "Packages:")}\n${packageLines}`,
 				1,
 				0,
 			),
@@ -4738,15 +4130,15 @@ export class InteractiveMode {
 		if (steeringMessages.length > 0 || followUpMessages.length > 0) {
 			this.pendingMessagesContainer.addChild(new Spacer(1));
 			for (const message of steeringMessages) {
-				const text = theme.fg("dim", `Yönlendirme: ${message}`);
+				const text = theme.fg("dim", `Steering: ${message}`);
 				this.pendingMessagesContainer.addChild(new TruncatedText(text, 1, 0));
 			}
 			for (const message of followUpMessages) {
-				const text = theme.fg("dim", `Takip: ${message}`);
+				const text = theme.fg("dim", `Follow-up: ${message}`);
 				this.pendingMessagesContainer.addChild(new TruncatedText(text, 1, 0));
 			}
 			const dequeueHint = this.getAppKeyDisplay("app.message.dequeue");
-			const hintText = theme.fg("dim", `↳ Tüm kuyruğa alınmış mesajları düzenlemek için ${dequeueHint}`);
+			const hintText = theme.fg("dim", `↳ ${dequeueHint} to edit all queued messages`);
 			this.pendingMessagesContainer.addChild(new TruncatedText(hintText, 1, 0));
 		}
 	}
@@ -4757,7 +4149,7 @@ export class InteractiveMode {
 		if (allQueued.length === 0) {
 			this.updatePendingMessagesDisplay();
 			if (options?.abort) {
-				this.engine.abort();
+				this.agent.abort();
 			}
 			return 0;
 		}
@@ -4767,7 +4159,7 @@ export class InteractiveMode {
 		this.editor.setText(combinedText);
 		this.updatePendingMessagesDisplay();
 		if (options?.abort) {
-			this.engine.abort();
+			this.agent.abort();
 		}
 		return allQueued.length;
 	}
@@ -4777,7 +4169,7 @@ export class InteractiveMode {
 		this.editor.addToHistory?.(text);
 		this.editor.setText("");
 		this.updatePendingMessagesDisplay();
-		this.showStatus("Sıkıştırma sonrası için mesaj kuyruklandı");
+		this.showStatus("Queued message for after compaction");
 	}
 
 	private isExtensionCommand(text: string): boolean {
@@ -4885,10 +4277,7 @@ export class InteractiveMode {
 	 * @param create Factory that receives a `done` callback and returns the component and focus target
 	 */
 	private showSelector(create: (done: () => void) => { component: Component; focus: Component }): void {
-		let isDone = false;
 		const done = () => {
-			if (isDone) return;
-			isDone = true;
 			this.editorContainer.clear();
 			this.editorContainer.addChild(this.editor);
 			this.ui.setFocus(this.editor);
@@ -4913,9 +4302,11 @@ export class InteractiveMode {
 					steeringMode: this.session.steeringMode,
 					followUpMode: this.session.followUpMode,
 					transport: this.settingsManager.getTransport(),
+					httpIdleTimeoutMs: this.settingsManager.getHttpIdleTimeoutMs(),
 					thinkingLevel: this.session.thinkingLevel,
 					availableThinkingLevels: this.session.getAvailableThinkingLevels(),
-					currentTheme: this.settingsManager.getTheme() || "dark",
+					currentTheme: this.settingsManager.getThemeSetting() || "dark",
+					terminalTheme: this.themeController.getTerminalTheme(),
 					availableThemes: getAvailableThemes(),
 					hideThinkingBlock: this.hideThinkingBlock,
 					collapseChangelog: this.settingsManager.getCollapseChangelog(),
@@ -4923,7 +4314,10 @@ export class InteractiveMode {
 					doubleEscapeAction: this.settingsManager.getDoubleEscapeAction(),
 					treeFilterMode: this.settingsManager.getTreeFilterMode(),
 					showHardwareCursor: this.settingsManager.getShowHardwareCursor(),
+					showCacheMissNotices: this.settingsManager.getShowCacheMissNotices(),
+					defaultProjectTrust: this.settingsManager.getDefaultProjectTrust(),
 					editorPaddingX: this.settingsManager.getEditorPaddingX(),
+					outputPad: this.settingsManager.getOutputPad(),
 					autocompleteMaxVisible: this.settingsManager.getAutocompleteMaxVisible(),
 					quietStartup: this.settingsManager.getQuietStartup(),
 					clearOnShrink: this.settingsManager.getClearOnShrink(),
@@ -4969,28 +4363,23 @@ export class InteractiveMode {
 					},
 					onTransportChange: (transport) => {
 						this.settingsManager.setTransport(transport);
-						this.session.engine.transport = transport;
+						this.session.agent.transport = transport;
+					},
+					onHttpIdleTimeoutMsChange: (timeoutMs) => {
+						this.settingsManager.setHttpIdleTimeoutMs(timeoutMs);
+						configureHttpDispatcher(timeoutMs);
+						this.showStatus(`HTTP idle timeout: ${formatHttpIdleTimeoutMs(timeoutMs)}`);
 					},
 					onThinkingLevelChange: (level) => {
 						this.session.setThinkingLevel(level);
 						this.footer.invalidate();
 						this.updateEditorBorderColor();
 					},
-					onThemeChange: (themeName) => {
-						const result = setTheme(themeName, true);
-						this.settingsManager.setTheme(themeName);
-						this.ui.invalidate();
-						if (!result.success) {
-							this.showError(`Failed to load theme "${themeName}": ${result.error}\nFell back to dark theme.`);
-						}
+					onThemeChange: (themeSetting) => {
+						this.settingsManager.setTheme(themeSetting);
+						void this.themeController.applyFromSettings();
 					},
-					onThemePreview: (themeName) => {
-						const result = setTheme(themeName, true);
-						if (result.success) {
-							this.ui.invalidate();
-							this.ui.requestRender();
-						}
-					},
+					onThemePreview: (themeName) => this.themeController.preview(themeName),
 					onHideThinkingBlockChange: (hidden) => {
 						this.hideThinkingBlock = hidden;
 						this.settingsManager.setHideThinkingBlock(hidden);
@@ -5002,6 +4391,10 @@ export class InteractiveMode {
 						this.chatContainer.clear();
 						this.rebuildChatFromMessages();
 					},
+					onShowCacheMissNoticesChange: (shown) => {
+						this.settingsManager.setShowCacheMissNotices(shown);
+						this.rebuildChatFromMessages();
+					},
 					onCollapseChangelogChange: (collapsed) => {
 						this.settingsManager.setCollapseChangelog(collapsed);
 					},
@@ -5010,6 +4403,9 @@ export class InteractiveMode {
 					},
 					onQuietStartupChange: (enabled) => {
 						this.settingsManager.setQuietStartup(enabled);
+					},
+					onDefaultProjectTrustChange: (defaultProjectTrust) => {
+						this.settingsManager.setDefaultProjectTrust(defaultProjectTrust);
 					},
 					onDoubleEscapeActionChange: (action) => {
 						this.settingsManager.setDoubleEscapeAction(action);
@@ -5028,6 +4424,23 @@ export class InteractiveMode {
 							this.editor.setPaddingX(padding);
 						}
 					},
+					onOutputPadChange: (padding) => {
+						this.settingsManager.setOutputPad(padding);
+						this.outputPad = padding;
+						if (this.streamingComponent || this.session.isStreaming) {
+							for (const child of this.chatContainer.children) {
+								if (child instanceof AssistantMessageComponent || child instanceof UserMessageComponent) {
+									child.setOutputPad(padding);
+								}
+							}
+							if (this.streamingComponent) {
+								this.streamingComponent.setOutputPad(padding);
+							}
+							this.ui.requestRender();
+							return;
+						}
+						this.rebuildChatFromMessages();
+					},
 					onAutocompleteMaxVisibleChange: (maxVisible) => {
 						this.settingsManager.setAutocompleteMaxVisible(maxVisible);
 						this.defaultEditor.setAutocompleteMaxVisible(maxVisible);
@@ -5038,6 +4451,9 @@ export class InteractiveMode {
 					onClearOnShrinkChange: (enabled) => {
 						this.settingsManager.setClearOnShrink(enabled);
 						this.ui.setClearOnShrink(enabled);
+						if (!enabled && !this.activeStatusIndicator) {
+							this.statusContainer.clear();
+						}
 					},
 					onShowTerminalProgressChange: (enabled) => {
 						this.settingsManager.setShowTerminalProgress(enabled);
@@ -5055,9 +4471,9 @@ export class InteractiveMode {
 		});
 	}
 
-	private async handleModelsCommand(searchTerm?: string): Promise<void> {
+	private async handleModelCommand(searchTerm?: string): Promise<void> {
 		if (!searchTerm) {
-			this.showSingleModelSelector();
+			this.showModelSelector();
 			return;
 		}
 
@@ -5076,7 +4492,7 @@ export class InteractiveMode {
 			return;
 		}
 
-		this.showSingleModelSelector(searchTerm);
+		this.showModelSelector(searchTerm);
 	}
 
 	private async findExactModelMatch(searchTerm: string): Promise<Model<any> | undefined> {
@@ -5136,7 +4552,58 @@ export class InteractiveMode {
 		}
 	}
 
-	private showSingleModelSelector(initialSearchInput?: string): void {
+	private maybeSaveImplicitProjectTrustAfterReload(): boolean {
+		const cwd = this.sessionManager.getCwd();
+		if (this.autoTrustOnReloadCwd !== cwd) {
+			return false;
+		}
+		if (!this.settingsManager.isProjectTrusted() || !hasTrustRequiringProjectResources(cwd)) {
+			return false;
+		}
+
+		const trustStore = new ProjectTrustStore(this.runtimeHost.services.engineDir);
+		try {
+			if (trustStore.get(cwd) !== null) {
+				this.autoTrustOnReloadCwd = undefined;
+				return false;
+			}
+			trustStore.set(cwd, true);
+			this.autoTrustOnReloadCwd = undefined;
+			return true;
+		} catch (error) {
+			this.showWarning(
+				`Could not save project trust after reload: ${error instanceof Error ? error.message : String(error)}`,
+			);
+			return false;
+		}
+	}
+
+	private showTrustSelector(): void {
+		const cwd = this.sessionManager.getCwd();
+		const trustStore = new ProjectTrustStore(this.runtimeHost.services.engineDir);
+		const savedDecision = trustStore.getEntry(cwd);
+		this.showSelector((done) => {
+			const selector = new TrustSelectorComponent({
+				cwd,
+				savedDecision,
+				projectTrusted: this.settingsManager.isProjectTrusted(),
+				onSelect: (selection) => {
+					trustStore.setMany(selection.updates);
+					done();
+					this.showStatus(
+						`Saved trust decision: ${selection.trusted ? "trusted" : "untrusted"}. Restart pi for this to take effect.`,
+					);
+				},
+				onCancel: () => {
+					done();
+					this.ui.requestRender();
+				},
+			});
+			return { component: selector, focus: selector };
+		});
+	}
+
+	private showModelSelector(initialSearchInput?: string): void {
 		this.showSelector((done) => {
 			const selector = new ModelSelectorComponent(
 				this.ui,
@@ -5150,7 +4617,7 @@ export class InteractiveMode {
 						this.footer.invalidate();
 						this.updateEditorBorderColor();
 						done();
-						this.showStatus(`Model seçildi: ${model.id}`);
+						this.showStatus(`Model: ${model.id}`);
 						void this.maybeWarnAboutAnthropicSubscriptionAuth(model);
 						this.checkDaxnutsEasterEgg(model);
 					} catch (error) {
@@ -5174,7 +4641,7 @@ export class InteractiveMode {
 		const allModels = this.session.modelRegistry.getAvailable();
 
 		if (allModels.length === 0) {
-			this.showStatus("Kullanılabilir model yok");
+			this.showStatus("No models available");
 			return;
 		}
 
@@ -5233,7 +4700,7 @@ export class InteractiveMode {
 								? undefined // All enabled = clear filter
 								: enabledIds;
 						this.settingsManager.setEnabledModels(newPatterns ? [...newPatterns] : undefined);
-						this.showStatus("Model seçimi ayarlara kaydedildi");
+						this.showStatus("Model selection saved to settings");
 					},
 					onCancel: () => {
 						done();
@@ -5249,7 +4716,7 @@ export class InteractiveMode {
 		const userMessages = this.session.getUserMessagesForForking();
 
 		if (userMessages.length === 0) {
-			this.showStatus("Çatallanacak mesaj yok");
+			this.showStatus("No messages to fork from");
 			return;
 		}
 
@@ -5259,20 +4726,17 @@ export class InteractiveMode {
 			const selector = new UserMessageSelectorComponent(
 				userMessages.map((m) => ({ id: m.entryId, text: m.text })),
 				async (entryId) => {
+					done();
 					try {
 						const result = await this.runtimeHost.fork(entryId);
 						if (result.cancelled) {
-							done();
 							this.ui.requestRender();
 							return;
 						}
 
-						this.renderCurrentSessionState();
 						this.editor.setText(result.selectedText ?? "");
-						done();
-						this.showStatus("Yeni oturuma çatallandı");
+						this.showStatus("Forked to new session");
 					} catch (error: unknown) {
-						done();
 						this.showError(error instanceof Error ? error.message : String(error));
 					}
 				},
@@ -5289,7 +4753,7 @@ export class InteractiveMode {
 	private async handleCloneCommand(): Promise<void> {
 		const leafId = this.sessionManager.getLeafId();
 		if (!leafId) {
-			this.showStatus("Henüz kopyalanacak bir şey yok");
+			this.showStatus("Nothing to clone yet");
 			return;
 		}
 
@@ -5300,9 +4764,8 @@ export class InteractiveMode {
 				return;
 			}
 
-			this.renderCurrentSessionState();
 			this.editor.setText("");
-			this.showStatus("Yeni oturuma kopyalandı");
+			this.showStatus("Cloned to new session");
 		} catch (error: unknown) {
 			this.showError(error instanceof Error ? error.message : String(error));
 		}
@@ -5314,7 +4777,7 @@ export class InteractiveMode {
 		const initialFilterMode = this.settingsManager.getTreeFilterMode();
 
 		if (tree.length === 0) {
-			this.showStatus("No input in this session");
+			this.showStatus("No entries in session");
 			return;
 		}
 
@@ -5327,7 +4790,7 @@ export class InteractiveMode {
 					// Selecting the current leaf is a no-op (already there)
 					if (entryId === realLeafId) {
 						done();
-						this.showStatus("Zaten bu noktadasınız");
+						this.showStatus("Already at this point");
 						return;
 					}
 
@@ -5341,10 +4804,10 @@ export class InteractiveMode {
 					// Check if we should skip the prompt (user preference to always default to no summary)
 					if (!this.settingsManager.getBranchSummarySkipPrompt()) {
 						while (true) {
-							const summaryChoice = await this.showExtensionSelector("Dal özetlensin mi?", [
-								"Özet yok",
-								"Özetle",
-								"Özel istem ile özetle",
+							const summaryChoice = await this.showExtensionSelector("Summarize branch?", [
+								"No summary",
+								"Summarize",
+								"Summarize with custom prompt",
 							]);
 
 							if (summaryChoice === undefined) {
@@ -5353,10 +4816,10 @@ export class InteractiveMode {
 								return;
 							}
 
-							wantsSummary = summaryChoice !== "Özet yok";
+							wantsSummary = summaryChoice !== "No summary";
 
-							if (summaryChoice === "Özel istem ile özetle") {
-								customInstructions = await this.showExtensionEditor("Özel özetleme talimatları");
+							if (summaryChoice === "Summarize with custom prompt") {
+								customInstructions = await this.showExtensionEditor("Custom summarization instructions");
 								if (customInstructions === undefined) {
 									// User cancelled - loop back to summary selector
 									continue;
@@ -5368,8 +4831,8 @@ export class InteractiveMode {
 						}
 					}
 
-					// Set up escape handler and loader if summarizing
-					let summaryLoader: Loader | undefined;
+					// Set up escape handler and status indicator if summarizing
+					let showingSummaryIndicator = false;
 					const originalOnEscape = this.defaultEditor.onEscape;
 
 					if (wantsSummary) {
@@ -5377,13 +4840,8 @@ export class InteractiveMode {
 							this.session.abortBranchSummary();
 						};
 						this.chatContainer.addChild(new Spacer(1));
-						summaryLoader = new Loader(
-							this.ui,
-							(spinner) => theme.fg("accent", spinner),
-							(text) => theme.fg("muted", text),
-							`Dal özetleniyor... (cancel etmek için ${keyText("app.interrupt")})`,
-						);
-						this.statusContainer.addChild(summaryLoader);
+						this.showStatusIndicator(new BranchSummaryStatusIndicator(this.ui));
+						showingSummaryIndicator = true;
 						this.ui.requestRender();
 					}
 
@@ -5395,12 +4853,12 @@ export class InteractiveMode {
 
 						if (result.aborted) {
 							// Summarization aborted - re-show tree selector with same selection
-							this.showStatus("Dal özetleme cancel edildi");
+							this.showStatus("Branch summarization cancelled");
 							this.showTreeSelector(entryId);
 							return;
 						}
 						if (result.cancelled) {
-							this.showStatus("Gezinti cancel edildi");
+							this.showStatus("Navigation cancelled");
 							return;
 						}
 
@@ -5410,14 +4868,13 @@ export class InteractiveMode {
 						if (result.editorText && !this.editor.getText().trim()) {
 							this.editor.setText(result.editorText);
 						}
-						this.showStatus("Seçilen noktaya gidildi");
+						this.showStatus("Navigated to selected point");
 						void this.flushCompactionQueue({ willRetry: false });
 					} catch (error) {
 						this.showError(error instanceof Error ? error.message : String(error));
 					} finally {
-						if (summaryLoader) {
-							summaryLoader.stop();
-							this.statusContainer.clear();
+						if (showingSummaryIndicator) {
+							this.clearStatusIndicator("branchSummary");
 						}
 						this.defaultEditor.onEscape = originalOnEscape;
 					}
@@ -5433,6 +4890,18 @@ export class InteractiveMode {
 				initialSelectedId,
 				initialFilterMode,
 			);
+			selector.onCopy = async (text) => {
+				if (!text) {
+					this.showError("Selected entry has no text to copy");
+					return;
+				}
+				try {
+					await copyToClipboard(text);
+					this.showStatus("Copied selected message to clipboard");
+				} catch (error) {
+					this.showError(error instanceof Error ? error.message : String(error));
+				}
+			};
 			return { component: selector, focus: selector };
 		});
 	}
@@ -5442,7 +4911,10 @@ export class InteractiveMode {
 			const selector = new SessionSelectorComponent(
 				(onProgress) =>
 					SessionManager.list(this.sessionManager.getCwd(), this.sessionManager.getSessionDir(), onProgress),
-				SessionManager.listAll,
+				(onProgress) =>
+					this.sessionManager.usesDefaultSessionDir()
+						? SessionManager.listAll(onProgress)
+						: SessionManager.listAll(this.sessionManager.getSessionDir(), onProgress),
 				async (sessionPath) => {
 					done();
 					await this.handleResumeSession(sessionPath);
@@ -5476,37 +4948,33 @@ export class InteractiveMode {
 		sessionPath: string,
 		options?: Parameters<ExtensionCommandContext["switchSession"]>[1],
 	): Promise<{ cancelled: boolean }> {
-		if (this.loadingAnimation) {
-			this.loadingAnimation.stop();
-			this.loadingAnimation = undefined;
-		}
-		this.statusContainer.clear();
+		this.clearStatusIndicator();
 		try {
 			const result = await this.runtimeHost.switchSession(sessionPath, {
 				withSession: options?.withSession,
+				projectTrustContextFactory: (cwd) => this.createProjectTrustContext(cwd),
 			});
 			if (result.cancelled) {
 				return result;
 			}
-			this.renderCurrentSessionState();
-			this.showStatus("Resuming session");
+			this.showStatus("Resumed session");
 			return result;
 		} catch (error: unknown) {
 			if (error instanceof MissingSessionCwdError) {
 				const selectedCwd = await this.promptForMissingSessionCwd(error);
 				if (!selectedCwd) {
-					this.showStatus("Devam etme cancel edildi");
+					this.showStatus("Resume cancelled");
 					return { cancelled: true };
 				}
 				const result = await this.runtimeHost.switchSession(sessionPath, {
 					cwdOverride: selectedCwd,
 					withSession: options?.withSession,
+					projectTrustContextFactory: (cwd) => this.createProjectTrustContext(cwd),
 				});
 				if (result.cancelled) {
 					return result;
 				}
-				this.renderCurrentSessionState();
-				this.showStatus("Mevcut calisma dizininde oturuma devam ediliyor");
+				this.showStatus("Resumed session in current cwd");
 				return result;
 			}
 			return this.handleFatalRuntimeError("Failed to resume session", error);
@@ -5558,16 +5026,94 @@ export class InteractiveMode {
 		return options.sort((a, b) => a.name.localeCompare(b.name));
 	}
 
-	private showLoginAuthTypeSelector(): void {
-		const subscriptionLabel = "Abonelik kullan";
-		const apiKeyLabel = "API anahtarı kullan";
+	private findLoginProviderOptions(providerRef: string): AuthSelectorProvider[] {
+		const normalizedProviderRef = providerRef.trim().toLowerCase();
+		if (!normalizedProviderRef) {
+			return [];
+		}
+
+		return this.getLoginProviderOptions().filter(
+			(provider) =>
+				provider.id.toLowerCase() === normalizedProviderRef ||
+				provider.name.toLowerCase() === normalizedProviderRef,
+		);
+	}
+
+	private async handleLoginCommand(providerRef?: string): Promise<void> {
+		if (!providerRef) {
+			this.showLoginAuthTypeSelector();
+			return;
+		}
+
+		const providerOptions = this.findLoginProviderOptions(providerRef);
+		if (providerOptions.length === 1) {
+			await this.startProviderLogin(providerOptions[0]!);
+			return;
+		}
+
+		if (providerOptions.length > 1) {
+			const providerIds = new Set(providerOptions.map((provider) => provider.id));
+			if (providerIds.size === 1) {
+				this.showLoginAuthTypeSelector(providerOptions);
+				return;
+			}
+		}
+
+		this.showLoginProviderSelector(undefined, providerRef);
+	}
+
+	private async startProviderLogin(providerOption: AuthSelectorProvider): Promise<void> {
+		if (providerOption.authType === "oauth") {
+			await this.showLoginDialog(providerOption.id, providerOption.name);
+		} else {
+			await this.showApiKeyLoginDialog(providerOption.id, providerOption.name);
+		}
+	}
+
+	private showLoginAuthTypeSelector(providerOptions?: AuthSelectorProvider[]): void {
+		const subscriptionLabel = "Use a subscription";
+		const apiKeyLabel = "Use an API key";
+		const availableAuthTypes = providerOptions
+			? new Set(providerOptions.map((provider) => provider.authType))
+			: new Set<AuthSelectorProvider["authType"]>(["oauth", "api_key"]);
+		const options: string[] = [];
+		if (availableAuthTypes.has("oauth")) {
+			options.push(subscriptionLabel);
+		}
+		if (availableAuthTypes.has("api_key")) {
+			options.push(apiKeyLabel);
+		}
+
+		if (options.length === 0) {
+			this.showStatus("No login methods available.");
+			return;
+		}
+
+		if (providerOptions && options.length === 1) {
+			const providerOption = providerOptions[0];
+			if (providerOption) {
+				void this.startProviderLogin(providerOption);
+			}
+			return;
+		}
+
+		const title = providerOptions?.[0]
+			? `Select authentication method for ${providerOptions[0].name}:`
+			: "Select authentication method:";
 		this.showSelector((done) => {
 			const selector = new ExtensionSelectorComponent(
-				"Kimlik doğrulama yöntemi seçin:",
-				[subscriptionLabel, apiKeyLabel],
+				title,
+				options,
 				(option) => {
 					done();
 					const authType = option === subscriptionLabel ? "oauth" : "api_key";
+					if (providerOptions) {
+						const providerOption = providerOptions.find((provider) => provider.authType === authType);
+						if (providerOption) {
+							void this.startProviderLogin(providerOption);
+						}
+						return;
+					}
 					this.showLoginProviderSelector(authType);
 				},
 				() => {
@@ -5579,12 +5125,16 @@ export class InteractiveMode {
 		});
 	}
 
-	private showLoginProviderSelector(authType: "oauth" | "api_key"): void {
+	private showLoginProviderSelector(authType?: AuthSelectorProvider["authType"], initialSearchInput?: string): void {
 		const providerOptions = this.getLoginProviderOptions(authType);
 		if (providerOptions.length === 0) {
-			this.showStatus(
-				authType === "oauth" ? "Abonelik sağlayıcısı bulunamadı." : "API anahtarı sağlayıcısı bulunamadı.",
-			);
+			const message =
+				authType === "oauth"
+					? "No subscription providers available."
+					: authType === "api_key"
+						? "No API key providers available."
+						: "No login providers available.";
+			this.showStatus(message);
 			return;
 		}
 
@@ -5593,27 +5143,28 @@ export class InteractiveMode {
 				"login",
 				this.session.modelRegistry.authStorage,
 				providerOptions,
-				async (providerId: string) => {
+				async (providerId, selectedAuthType) => {
 					done();
 
-					const providerOption = providerOptions.find((provider) => provider.id === providerId);
+					const providerOption = providerOptions.find(
+						(provider) => provider.id === providerId && provider.authType === selectedAuthType,
+					);
 					if (!providerOption) {
 						return;
 					}
 
-					if (providerOption.authType === "oauth") {
-						await this.showLoginDialog(providerOption.id, providerOption.name);
-					} else if (providerOption.id === BEDROCK_PROVIDER_ID) {
-						this.showBedrockSetupDialog(providerOption.id, providerOption.name);
-					} else {
-						await this.showApiKeyLoginDialog(providerOption.id, providerOption.name);
-					}
+					await this.startProviderLogin(providerOption);
 				},
 				() => {
 					done();
-					this.showLoginAuthTypeSelector();
+					if (authType) {
+						this.showLoginAuthTypeSelector();
+					} else {
+						this.ui.requestRender();
+					}
 				},
 				(providerId) => this.session.modelRegistry.getProviderAuthStatus(providerId),
+				initialSearchInput,
 			);
 			return { component: selector, focus: selector };
 		});
@@ -5628,7 +5179,7 @@ export class InteractiveMode {
 		const providerOptions = this.getLogoutProviderOptions();
 		if (providerOptions.length === 0) {
 			this.showStatus(
-				"Kaldırılacak saklanmış kimlik bilgisi yok. /logout sadece /login ile kaydedilenleri kaldırır; ortam değişkenleri ve models.json ayarları değişmez.",
+				"No stored credentials to remove. /logout only removes credentials saved by /login; environment variables and models.json config are unchanged.",
 			);
 			return;
 		}
@@ -5652,8 +5203,8 @@ export class InteractiveMode {
 						await this.updateAvailableProviderCount();
 						const message =
 							providerOption.authType === "oauth"
-								? `${providerOption.name} oturumu kapatıldı`
-								: `${providerOption.name} için saklanan API anahtarı kaldırıldı. Ortam değişkenleri ve models.json yapılandırması değişmedi.`;
+								? `Logged out of ${providerOption.name}`
+								: `Removed stored API key for ${providerOption.name}. Environment variables and models.json config are unchanged.`;
 						this.showStatus(message);
 					} catch (error: unknown) {
 						this.showError(`Logout failed: ${error instanceof Error ? error.message : String(error)}`);
@@ -5676,30 +5227,29 @@ export class InteractiveMode {
 	): Promise<void> {
 		this.session.modelRegistry.refresh();
 
-		const actionLabel =
-			authType === "oauth" ? `${providerName} oturumu açıldı` : `${providerName} için API anahtarı kaydedildi`;
+		const actionLabel = authType === "oauth" ? `Logged in to ${providerName}` : `Saved API key for ${providerName}`;
 
 		let selectedModel: Model<any> | undefined;
 		let selectionError: string | undefined;
 		if (isUnknownModel(previousModel)) {
 			const availableModels = this.session.modelRegistry.getAvailable();
-			const providerModels = availableModels.filter((model) => model.provider === canonicalProviderId(providerId));
-			if (!hasDefaultModelProvider(canonicalProviderId(providerId))) {
-				selectionError = `${actionLabel}, ancak "${providerId}" sağlayıcısı için varsayılan model yapılandırılmamış. Model seçmek için /models komutunu kullanın.`;
+			const providerModels = availableModels.filter((model) => model.provider === providerId);
+			if (!hasDefaultModelProvider(providerId)) {
+				selectionError = `${actionLabel}, but no default model is configured for provider "${providerId}". Use /model to select a model.`;
 			} else if (providerModels.length === 0) {
-				selectionError = `${actionLabel}, ancak bu sağlayıcı için kullanılabilir model yok. Model seçmek için /models komutunu kullanın.`;
+				selectionError = `${actionLabel}, but no models are available for that provider. Use /model to select a model.`;
 			} else {
-				const defaultModelId = defaultModelPerProvider[canonicalProviderId(providerId)];
+				const defaultModelId = defaultModelPerProvider[providerId];
 				selectedModel = providerModels.find((model) => model.id === defaultModelId);
 				if (!selectedModel) {
-					selectionError = `${actionLabel}, ancak varsayılan model "${defaultModelId}" mevcut değil. Model seçmek için /models komutunu kullanın.`;
+					selectionError = `${actionLabel}, but its default model "${defaultModelId}" is not available. Use /model to select a model.`;
 				} else {
 					try {
 						await this.session.setModel(selectedModel);
 					} catch (error: unknown) {
 						selectedModel = undefined;
 						const errorMessage = error instanceof Error ? error.message : String(error);
-						selectionError = `${actionLabel}, ancak varsayılan model seçimi başarısız oldu: ${errorMessage}. Model seçmek için /models komutunu kullanın.`;
+						selectionError = `${actionLabel}, but selecting its default model failed: ${errorMessage}. Use /model to select a model.`;
 					}
 				}
 			}
@@ -5709,13 +5259,11 @@ export class InteractiveMode {
 		this.footer.invalidate();
 		this.updateEditorBorderColor();
 		if (selectedModel) {
-			this.showStatus(
-				`${actionLabel}. ${selectedModel.id} seçildi. Kimlik bilgileri şuraya kaydedildi: ${getAuthPath()}`,
-			);
+			this.showStatus(`${actionLabel}. Selected ${selectedModel.id}. Credentials saved to ${getAuthPath()}`);
 			void this.maybeWarnAboutAnthropicSubscriptionAuth(selectedModel);
 			this.checkDaxnutsEasterEgg(selectedModel);
 		} else {
-			this.showStatus(`${actionLabel}. Kimlik bilgileri şuraya kaydedildi: ${getAuthPath()}`);
+			this.showStatus(`${actionLabel}. Credentials saved to ${getAuthPath()}`);
 			if (selectionError) {
 				this.showError(selectionError);
 			} else {
@@ -5724,39 +5272,7 @@ export class InteractiveMode {
 		}
 	}
 
-	private showBedrockSetupDialog(providerId: string, providerName: string): void {
-		const restoreEditor = () => {
-			this.editorContainer.clear();
-			this.editorContainer.addChild(this.editor);
-			this.ui.setFocus(this.editor);
-			this.ui.requestRender();
-		};
-
-		const dialog = new LoginDialogComponent(
-			this.ui,
-			providerId,
-			() => restoreEditor(),
-			providerName,
-			"Amazon Bedrock setup",
-		);
-		dialog.showInfo([
-			theme.fg("text", "Amazon Bedrock, tek bir API anahtarı yerine AWS kimlik bilgilerini kullanır."),
-			theme.fg(
-				"text",
-				"Bir AWS profili, IAM anahtarları, taşıyıcı jeton (bearer token) veya rol tabanlı kimlik bilgileri yapılandırın.",
-			),
-			theme.fg("muted", "Bakınız:"),
-			theme.fg("accent", `  ${path.join(getDocsPath(), "providers.md")}`),
-		]);
-
-		this.editorContainer.clear();
-		this.editorContainer.addChild(dialog);
-		this.ui.setFocus(dialog);
-		this.ui.requestRender();
-	}
-
 	private async showApiKeyLoginDialog(providerId: string, providerName: string): Promise<void> {
-		const resolvedProviderId = canonicalProviderId(providerId);
 		const previousModel = this.session.model;
 
 		const dialog = new LoginDialogComponent(
@@ -5767,6 +5283,14 @@ export class InteractiveMode {
 			},
 			providerName,
 		);
+
+		if (providerId === "amazon-bedrock") {
+			dialog.showDetails([
+				theme.fg("text", "You can also use an AWS profile, IAM keys, or role-based credentials."),
+				theme.fg("muted", "See:"),
+				theme.fg("accent", `  ${path.join(getDocsPath(), "providers.md")}`),
+			]);
+		}
 
 		this.editorContainer.clear();
 		this.editorContainer.addChild(dialog);
@@ -5781,15 +5305,15 @@ export class InteractiveMode {
 		};
 
 		try {
-			const apiKey = (await dialog.showPrompt("API anahtarını girin:")).trim();
+			const apiKey = (await dialog.showPrompt("Enter API key:")).trim();
 			if (!apiKey) {
-				throw new Error("API anahtarı boş olamaz.");
+				throw new Error("API key cannot be empty.");
 			}
 
-			this.session.modelRegistry.authStorage.set(resolvedProviderId, { type: "api_key", key: apiKey });
+			this.session.modelRegistry.authStorage.set(providerId, { type: "api_key", key: apiKey });
 
 			restoreEditor();
-			await this.completeProviderAuthentication(resolvedProviderId, providerName, "api_key", previousModel);
+			await this.completeProviderAuthentication(providerId, providerName, "api_key", previousModel);
 		} catch (error: unknown) {
 			restoreEditor();
 			const errorMsg = error instanceof Error ? error.message : String(error);
@@ -5799,15 +5323,38 @@ export class InteractiveMode {
 		}
 	}
 
-	private async showLoginDialog(
-		providerId: string,
-		providerName: string,
-		options?: { panelServer?: any },
-	): Promise<void> {
-		const resolvedProviderId = canonicalProviderId(providerId);
+	private showOAuthLoginSelect(dialog: LoginDialogComponent, prompt: OAuthSelectPrompt): Promise<string | undefined> {
+		return new Promise((resolve) => {
+			const restoreDialog = () => {
+				this.editorContainer.clear();
+				this.editorContainer.addChild(dialog);
+				this.ui.setFocus(dialog);
+				this.ui.requestRender();
+			};
+			const labels = prompt.options.map((option) => option.label);
+			const selector = new ExtensionSelectorComponent(
+				prompt.message,
+				labels,
+				(optionLabel) => {
+					restoreDialog();
+					resolve(prompt.options.find((option) => option.label === optionLabel)?.id);
+				},
+				() => {
+					restoreDialog();
+					resolve(undefined);
+				},
+			);
+			this.editorContainer.clear();
+			this.editorContainer.addChild(selector);
+			this.ui.setFocus(selector);
+			this.ui.requestRender();
+		});
+	}
+
+	private async showLoginDialog(providerId: string, providerName: string): Promise<void> {
 		const providerInfo = this.session.modelRegistry.authStorage
 			.getOAuthProviders()
-			.find((provider) => provider.id === resolvedProviderId);
+			.find((provider) => provider.id === providerId);
 		const previousModel = this.session.model;
 
 		// Providers that use callback servers (can paste redirect URL)
@@ -5816,22 +5363,18 @@ export class InteractiveMode {
 		// Create login dialog component
 		const dialog = new LoginDialogComponent(
 			this.ui,
-			resolvedProviderId,
+			providerId,
 			(_success, _message) => {
 				// Completion handled below
 			},
 			providerName,
 		);
 
-		const usePanel = Boolean(options?.panelServer);
-		let panelAuthUrl: string | undefined;
-		let panelAuthInstructions: string | undefined;
-		if (!usePanel) {
-			this.editorContainer.clear();
-			this.editorContainer.addChild(dialog);
-			this.ui.setFocus(dialog);
-			this.ui.requestRender();
-		}
+		// Show dialog in editor container
+		this.editorContainer.clear();
+		this.editorContainer.addChild(dialog);
+		this.ui.setFocus(dialog);
+		this.ui.requestRender();
 
 		// Promise for manual code input (racing with callback server)
 		let manualCodeResolve: ((code: string) => void) | undefined;
@@ -5843,7 +5386,6 @@ export class InteractiveMode {
 
 		// Restore editor helper
 		const restoreEditor = () => {
-			if (usePanel) return;
 			this.editorContainer.clear();
 			this.editorContainer.addChild(this.editor);
 			this.ui.setFocus(this.editor);
@@ -5851,40 +5393,14 @@ export class InteractiveMode {
 		};
 
 		try {
-			await this.session.modelRegistry.authStorage.login(resolvedProviderId as OAuthProviderId, {
+			await this.session.modelRegistry.authStorage.login(providerId as OAuthProviderId, {
 				onAuth: (info: { url: string; instructions?: string }) => {
-					panelAuthUrl = info.url;
-					panelAuthInstructions = info.instructions;
-					if (options?.panelServer?.setAuthPanelOAuthEvent) {
-						options.panelServer.setAuthPanelOAuthEvent({
-							providerId: resolvedProviderId,
-							providerName,
-							url: info.url,
-							instructions: info.instructions,
-							status: "auth_url",
-						});
-					}
-					if (!usePanel) {
-						dialog.showAuth(info.url, info.instructions);
-					}
+					dialog.showAuth(info.url, info.instructions);
 
 					if (usesCallbackServer) {
-						if (usePanel) {
-							panelAuthInstructions =
-								info.instructions ||
-								"Tarayicida girisi tamamla; gerekirse yonlendirme URL'sini TUI'ya yapistir.";
-							options?.panelServer?.setAuthPanelOAuthEvent?.({
-								providerId: resolvedProviderId,
-								providerName,
-								url: panelAuthUrl,
-								instructions: panelAuthInstructions,
-								status: "auth_url",
-							});
-							return;
-						}
 						// Show input for manual paste, racing with callback
 						dialog
-							.showManualInput("Yönlendirme URL'sini aşağıya yapıştırın veya tarayıcıda girişi tamamlayın:")
+							.showManualInput("Paste redirect URL below, or complete login in browser:")
 							.then((value) => {
 								if (value && manualCodeResolve) {
 									manualCodeResolve(value);
@@ -5897,83 +5413,38 @@ export class InteractiveMode {
 									manualCodeReject = undefined;
 								}
 							});
-					} else if (resolvedProviderId === "github-copilot") {
-						// GitHub Copilot polls after onAuth
-						dialog.showWaiting("Tarayıcı kimlik doğrulaması bekleniyor...");
 					}
 					// For Anthropic: onPrompt is called immediately after
 				},
 
+				onDeviceCode: (info) => {
+					dialog.showDeviceCode(info);
+					dialog.showWaiting("Waiting for authentication...");
+				},
+
 				onPrompt: async (prompt: { message: string; placeholder?: string }) => {
-					if (usePanel) {
-						options?.panelServer?.setAuthPanelOAuthEvent?.({
-							providerId: resolvedProviderId,
-							providerName,
-							url: panelAuthUrl,
-							instructions: prompt.message,
-							status: "waiting_for_redirect",
-						});
-						return manualCodePromise;
-					}
 					return dialog.showPrompt(prompt.message, prompt.placeholder);
 				},
 
 				onProgress: (message: string) => {
-					if (usePanel) {
-						options?.panelServer?.setAuthPanelOAuthEvent?.({
-							providerId: resolvedProviderId,
-							providerName,
-							url: panelAuthUrl,
-							instructions: message,
-							status: "progress",
-						});
-						return;
-					}
 					dialog.showProgress(message);
 				},
-				onInfo: (lines: string[]) => {
-					if (usePanel) {
-						options?.panelServer?.setAuthPanelOAuthEvent?.({
-							providerId: resolvedProviderId,
-							providerName,
-							url: panelAuthUrl,
-							instructions: lines.join("\n"),
-							status: "info",
-						});
-						return;
-					}
-					dialog.showInfo(lines);
-				},
+
+				onSelect: (prompt: OAuthSelectPrompt) => this.showOAuthLoginSelect(dialog, prompt),
 
 				onManualCodeInput: () => manualCodePromise,
 
-				signal: usePanel ? undefined : dialog.signal,
+				signal: dialog.signal,
 			});
 
 			// Success
-			if (usePanel) {
-				options?.panelServer?.setAuthPanelOAuthEvent?.({
-					providerId: resolvedProviderId,
-					providerName,
-					status: "success",
-					instructions: `${providerName} login completed.`,
-				});
-			}
 			restoreEditor();
-			await this.completeProviderAuthentication(resolvedProviderId, providerName, "oauth", previousModel);
+			await this.completeProviderAuthentication(providerId, providerName, "oauth", previousModel);
 		} catch (error: unknown) {
 			restoreEditor();
 			const errorMsg = error instanceof Error ? error.message : String(error);
-			if (usePanel) {
-				options?.panelServer?.setAuthPanelOAuthEvent?.({
-					providerId: resolvedProviderId,
-					providerName,
-					error: errorMsg,
-					status: "error",
-				});
-			}
 			if (errorMsg !== "Login cancelled") {
-				this.showError(`Giriş başarısız: ${providerName}: ${errorMsg}`);
+				this.showError(`Failed to login to ${providerName}: ${errorMsg}`);
 			}
 		}
 	}
@@ -5982,1208 +5453,13 @@ export class InteractiveMode {
 	// Command handlers
 	// =========================================================================
 
-	private handleWorkspaceCommand(): void {
-		const model = this.session.model;
-		const text = renderCodingAgentsWorkspace(this.session.getAgentsSettings(), {
-			activeTools: this.session.getActiveToolNames(),
-			cwd: this.sessionManager.getCwd(),
-			modelName: model?.name ?? model?.id,
-		});
-		this.chatContainer.addChild(new Text(text, 1, 0));
-		this.ui.requestRender();
-	}
-
-	private handleBrowserCommand(): void {
-		const status = this.session.getBrowserBridgeStatus();
-		const extensionPath = path.join(getPackageDir(), "browser-extension", "chrome");
-		const text = [
-			"Chrome Browser Bridge",
-			`Durum: ${status.running ? "calisiyor" : "kapali"}`,
-			`Port: ${status.port}`,
-			`Bagli eklenti: ${status.clients}`,
-			...(status.lastClientSeen ? [`Son baglanti: ${new Date(status.lastClientSeen).toLocaleString()}`] : []),
-			...(status.error ? [`Error: ${status.error}`] : []),
-			"",
-			"Setup:",
-			"  1. Chrome > chrome://extensions",
-			"  2. Developer mode ac",
-			"  3. Load unpacked",
-			`  4. Klasor: ${extensionPath}`,
-			"",
-			"Araçlar: browser_tabs, browser_page",
-		].join("\n");
-		this.chatContainer.addChild(new Text(text, 1, 0));
-		this.ui.requestRender();
-	}
-
-	private handleDoctorCommand(): void {
-		const cwd = this.session.sessionManager?.getCwd?.() ?? process.cwd();
-		const model = this.session.state.model;
-		const browser = this.session.getBrowserBridgeStatus?.();
-		const mcpCount = this.session.mcpManager?.getClients?.().size ?? 0;
-		const providerCount = this.footerDataProvider.getAvailableProviderCount?.() ?? 0;
-		const ctx = this.session.getContextUsage?.();
-		const lines = [
-			"Astro-Agent Health",
-			`Model: ${model?.provider ?? "none"} / ${model?.id ?? "no-model"}`,
-			`Thinking: ${this.session.state.thinkingLevel ?? "off"}`,
-			`Context: ${ctx?.percent != null ? `${ctx.percent.toFixed(0)}%` : "0%"}`,
-			`CWD: ${cwd}`,
-			`Browser: ${browser?.running ? "running" : "stopped"}${browser?.clients ? ` (${browser.clients} client)` : ""}`,
-			`MCP: ${mcpCount} connected`,
-			`Providers: ${providerCount} available`,
-			"",
-			"Checks:",
-			`- ${browser?.running ? "browser bridge active" : "browser bridge inactive"}`,
-			`- ${mcpCount > 0 ? "MCP servers connected" : "MCP not connected"}`,
-			`- ${providerCount > 0 ? "model providers available" : "no providers available"}`,
-			`- ${this.session.isStreaming ? "agent currently working" : "agent idle"}`,
-		].join("\n");
-		this.showStatus(lines);
-	}
-
-	private async handleInterfaceCommand(): Promise<void> {
-		try {
-			const { getBrowserBridgeStatus } = await import("../../core/browser-bridge-server.js");
-			const bridgeStatus = getBrowserBridgeStatus();
-			let url = "http://127.0.0.1:3131";
-
-			if (bridgeStatus.isClientOnly) {
-				url = "http://127.0.0.1:3131";
-			} else {
-				if (!this.webUiProcess) {
-					const server = await import("../../core/web-ui-server.js");
-					this.webUiProcess = server.startWebUiServer({ port: 3131 });
-				}
-				url = this.webUiProcess.url || url;
-			}
-
-			const bridgeStatusText = bridgeStatus.running
-				? `BAGLI (${bridgeStatus.clients} eklenti aktif)`
-				: "BAĞLANTI BEKLENİYOR (Eklentiyi yükleyin)";
-
-			const interfaceWelcome = [
-				"┌────────────────────────────────────────────────────────┐",
-				"│         ✦  M O O N C O D E   O S   I N T E R F A C E ✦  │",
-				"├────────────────────────────────────────────────────────┤",
-				"│  Entegre Geliştirici Arayüzü: Astro-Agent OS              │",
-				"│  Yerel Adres: http://127.0.0.1:3131                    │",
-				"│                                                        │",
-				"│  Özellikler:                                           │",
-				"│  • Otonom Ajan Yönetimi & Kod Çıktı Takibi             │",
-				"│  • Canlı Workspace, CPU ve Bellek İzleyici             │",
-				"│  • Gelişmiş CSS Tema Editörü (Realtime Sync)           │",
-				"│                                                        │",
-				`│  Browser Bridge Durumu: ${bridgeStatusText.padEnd(31)}│`,
-				"└────────────────────────────────────────────────────────┘",
-				"",
-				"🚀 Yerel Astro-Agent OS varsayılan tarayıcınızda başlatılıyor...",
-			].join("\n");
-
-			this.chatContainer.addChild(new Text(interfaceWelcome, 1, 0));
-			this.ui.requestRender();
-
-			if (process.platform === "win32") {
-				spawnSync("cmd", ["/c", `start "" "${url}"`], { stdio: "ignore", shell: true });
-			} else if (process.platform === "darwin") {
-				spawnSync("open", [url], { stdio: "ignore" });
-			} else {
-				spawnSync("xdg-open", [url], { stdio: "ignore" });
-			}
-		} catch (err: any) {
-			this.showError(`Astro-Agent OS açma hatası: ${err.message}`);
-		}
-	}
-
-	private registerEditorActionListener(server: any): void {
-		if (this.editorActionListenerRegistered || !server?.editorActionsListeners) return;
-		this.editorActionListenerRegistered = true;
-
-		server.editorActionsListeners.add((data: { type: "video" | "photo"; action: string; params: any }) => {
-			const editorName = data.type === "video" ? "Video Studio" : "Photo Studio";
-			const payload = data.params || {};
-			const compactState = JSON.stringify(payload.state || {}, null, 2).slice(0, 4000);
-			const compactParams = JSON.stringify(payload.params || {}, null, 2).slice(0, 2000);
-			const prompt = [
-				`[Sistem: Astro-Agent ${editorName} tarayıcı arayüzünden profesyonel edit aksiyonu geldi.]`,
-				`Editör: ${data.type}`,
-				`Aksiyon: ${data.action}`,
-				`Parametreler: ${compactParams}`,
-				`Editör state özeti: ${compactState}`,
-				"Kullanıcının istediği işlemi ciddi bir video/fotoğraf edit projesi gibi ele al. Gerekirse dosya yollarını sor; ffmpeg/ImageMagick/yerel araçlar veya mevcut tool'larla uygulanabilir net adımları çıkar; export/render hedefini belirt; tarayıcı editöründeki durumu dikkate al.",
-			].join("\n");
-
-			this.chatContainer.addChild(new Text(`↳ ${editorName} aksiyonu alındı: ${data.action}`, 1, 0));
-			this.ui.requestRender();
-
-			void this.session.prompt(prompt).catch((err: any) => {
-				this.showError(`${editorName} aksiyon hatası: ${err?.message || err}`);
-			});
-		});
-	}
-
-	private buildAuthPanelState(): any {
-		const authStorage = this.session.modelRegistry.authStorage;
-		const oauthProviders = authStorage.getOAuthProviders();
-		const oauthIds = new Set(oauthProviders.map((provider: any) => provider.id));
-		const providerIds = new Set<string>([
-			...this.session.modelRegistry.getAll().map((model: Model<any>) => model.provider),
-			...oauthProviders.map((provider: any) => provider.id),
-		]);
-		const providers = [...providerIds]
-			.map((providerId) => {
-				const oauthProvider = oauthProviders.find((provider: any) => provider.id === providerId);
-				const models = this.session.modelRegistry
-					.getAll()
-					.filter((model: Model<any>) => model.provider === providerId);
-				return {
-					id: providerId,
-					name: this.session.modelRegistry.getProviderDisplayName(providerId),
-					supportsOAuth: oauthIds.has(providerId),
-					supportsApiKey: isApiKeyLoginProvider(providerId, oauthIds),
-					auth: this.session.modelRegistry.getProviderAuthStatus(providerId),
-					modelCount: models.length,
-					oauthName: oauthProvider?.name,
-				};
-			})
-			.sort((a, b) => a.name.localeCompare(b.name));
-
-		return {
-			providers,
-			accounts: authStorage.listManagedAccounts(),
-			models: {
-				total: this.session.modelRegistry.getAll().length,
-				available: this.session.modelRegistry.getAvailable().length,
-				current: this.session.model
-					? {
-							id: this.session.model.id,
-							name: this.session.model.name,
-							provider: this.session.model.provider,
-						}
-					: null,
-			},
-			authPath: getAuthPath(),
-			now: Date.now(),
-		};
-	}
-
-	private registerAuthPanel(server: any): void {
-		if (server?.setAuthPanelStateProvider) {
-			server.setAuthPanelStateProvider(() => this.buildAuthPanelState());
-		}
-		if (this.authPanelListenerRegistered || !server?.webUiAuthActionListeners) return;
-		this.authPanelListenerRegistered = true;
-		server.webUiAuthActionListeners.add(async (action: any) => {
-			const providerId = canonicalProviderId(String(action?.providerId || ""));
-			const label = typeof action?.label === "string" ? action.label.trim() : undefined;
-			if (action?.action === "oauth_login") {
-				const option = this.getLoginProviderOptions("oauth").find((provider) => provider.id === providerId);
-				if (!option) throw new Error("OAuth saglayici bulunamadi.");
-				await this.showLoginDialog(option.id, label || option.name, { panelServer: server });
-				return;
-			}
-			if (action?.action === "save_api_key") {
-				const option = this.getLoginProviderOptions("api_key").find((provider) => provider.id === providerId);
-				if (!option) throw new Error("API key saglayici bulunamadi.");
-				const apiKey = String(action?.apiKey || "").trim();
-				if (!apiKey) throw new Error("API anahtari bos olamaz.");
-				const previousModel = this.session.model;
-				this.session.modelRegistry.authStorage.upsertManagedAccount(
-					option.id,
-					{ type: "api_key", key: apiKey },
-					{
-						label: label || option.name,
-						activate: true,
-					},
-				);
-				this.session.modelRegistry.refresh();
-				await this.completeProviderAuthentication(option.id, option.name, "api_key", previousModel);
-				return;
-			}
-			if (action?.action === "set_active") {
-				const account = this.session.modelRegistry.authStorage.setActiveManagedAccount(
-					String(action?.accountId || ""),
-				);
-				if (!account) throw new Error("Account not found.");
-				this.session.modelRegistry.refresh();
-				await this.updateAvailableProviderCount();
-				this.showStatus(`${account.provider} aktif hesap: ${account.label}`);
-				return;
-			}
-			if (action?.action === "next_account") {
-				const account = this.session.modelRegistry.authStorage.activateNextManagedAccount(providerId);
-				if (!account) throw new Error("Siradaki hesap bulunamadi.");
-				this.session.modelRegistry.refresh();
-				await this.updateAvailableProviderCount();
-				this.showStatus(`${account.provider} siradaki aktif hesap: ${account.label}`);
-				return;
-			}
-			if (action?.action === "remove_account") {
-				if (!this.session.modelRegistry.authStorage.removeManagedAccount(String(action?.accountId || ""))) {
-					throw new Error("Account not found.");
-				}
-				this.session.modelRegistry.refresh();
-				await this.updateAvailableProviderCount();
-				this.showStatus("Account removed.");
-				return;
-			}
-			throw new Error("Bilinmeyen panel islemi.");
-		});
-	}
-
-	private async isAuthPanelEndpointReady(url: string): Promise<boolean> {
-		try {
-			const controller = new AbortController();
-			const timer = setTimeout(() => controller.abort(), 1200);
-			const res = await fetch(url, { signal: controller.signal });
-			clearTimeout(timer);
-			if (!res.ok) return false;
-			const text = await res.text();
-			return text.includes("Astro-Agent Control Panel") || text.includes("Choose how to sign in");
-		} catch {
-			return false;
-		}
-	}
-
-	private async ensureAuthPanelServer(server: any, route: "/panel" | "/login"): Promise<string> {
-		this.registerAuthPanel(server);
-		const ports = this.getWebUiCandidatePorts();
-		if (this.webUiProcess?.url) {
-			const url = `${this.webUiProcess.url}${route}`;
-			if (await this.isAuthPanelEndpointReady(url)) return url;
-			try {
-				this.webUiProcess.server?.close?.();
-			} catch {}
-			this.webUiProcess = undefined;
-		}
-		for (const port of ports) {
-			try {
-				const candidate = server.startWebUiServer({ port });
-				await new Promise((resolve) => setTimeout(resolve, 160));
-				this.registerAuthPanel(server);
-				const url = `${candidate.url}${route}`;
-				if (await this.isAuthPanelEndpointReady(url)) {
-					this.webUiProcess = candidate;
-					return url;
-				}
-				try {
-					candidate.server?.close?.();
-				} catch {}
-			} catch {
-				// Try next port.
-			}
-		}
-		throw new Error("Could not open Astro-Agent account panel. Check ports 3131-3140.");
-	}
-
-	private async isWebPanelEndpointReady(url: string, marker: string): Promise<boolean> {
-		try {
-			const controller = new AbortController();
-			const timer = setTimeout(() => controller.abort(), 1200);
-			const res = await fetch(url, { signal: controller.signal });
-			clearTimeout(timer);
-			if (!res.ok) return false;
-			const text = await res.text();
-			return text.includes(marker);
-		} catch {
-			return false;
-		}
-	}
-
-	private async ensureWebPanelServer(
-		server: any,
-		route: "/mcp" | "/session" | "/brain",
-		marker: string,
-	): Promise<string> {
-		if (route === "/mcp") this.registerMcpPanel(server);
-		const ports = this.getWebUiCandidatePorts();
-		if (this.webUiProcess?.url) {
-			const url = `${this.webUiProcess.url}${route}`;
-			if (await this.isWebPanelEndpointReady(url, marker)) return url;
-			try {
-				this.webUiProcess.server?.close?.();
-			} catch {}
-			this.webUiProcess = undefined;
-		}
-		for (const port of ports) {
-			try {
-				const candidate = server.startWebUiServer({ port });
-				await new Promise((resolve) => setTimeout(resolve, 160));
-				if (route === "/mcp") this.registerMcpPanel(server);
-				const url = `${candidate.url}${route}`;
-				if (await this.isWebPanelEndpointReady(url, marker)) {
-					this.webUiProcess = candidate;
-					return url;
-				}
-				try {
-					candidate.server?.close?.();
-				} catch {}
-			} catch {}
-		}
-		throw new Error(`Could not open ${route}. Check ports 3131-3140.`);
-	}
-
-	private async isEditorEndpointReady(url: string): Promise<boolean> {
-		try {
-			const controller = new AbortController();
-			const timer = setTimeout(() => controller.abort(), 1200);
-			const res = await fetch(url, { signal: controller.signal });
-			clearTimeout(timer);
-			if (!res.ok) return false;
-			const text = await res.text();
-			return (
-				text.includes("Astro-Agent Video Studio") ||
-				text.includes("Astro-Agent Photo Studio") ||
-				text.includes("Astro-Agent AI Video Studio") ||
-				text.includes("Astro-Agent AI Photo Studio")
-			);
-		} catch {
-			return false;
-		}
-	}
-
-	private async isAppEndpointReady(url: string): Promise<boolean> {
-		try {
-			const controller = new AbortController();
-			const timer = setTimeout(() => controller.abort(), 1200);
-			const res = await fetch(url, { signal: controller.signal });
-			clearTimeout(timer);
-			if (!res.ok) return false;
-			const text = await res.text();
-			return text.includes("Astro-Agent — Web Studio") || text.includes('id="message-form"');
-		} catch {
-			return false;
-		}
-	}
-
-	private getWebUiCandidatePorts(): number[] {
-		const bridgePort = Number(process.env.ASTRO_BROWSER_BRIDGE_PORT || 3133);
-		return [3131, 3132, 3133, 3134, 3135, 3136, 3137, 3138, 3139, 3140].filter(
-			(candidatePort) => candidatePort !== bridgePort,
-		);
-	}
-
-	private async ensureEditorServer(server: any, route: "/videoedit" | "/photoedit"): Promise<string> {
-		const ports = this.getWebUiCandidatePorts();
-
-		if (this.webUiProcess?.url) {
-			const url = `${this.webUiProcess.url}${route}`;
-			if (await this.isEditorEndpointReady(url)) return url;
-			try {
-				this.webUiProcess.server?.close?.();
-			} catch {}
-			this.webUiProcess = undefined;
-		}
-
-		for (const port of ports) {
-			try {
-				const candidate = server.startWebUiServer({ port });
-				await new Promise((resolve) => setTimeout(resolve, 180));
-				const url = `${candidate.url}${route}`;
-				if (await this.isEditorEndpointReady(url)) {
-					this.webUiProcess = candidate;
-					return url;
-				}
-				try {
-					candidate.server?.close?.();
-				} catch {}
-			} catch {
-				// Try next port.
-			}
-		}
-
-		throw new Error(`${route} için çalışan Astro-Agent Web UI bulunamadı. 3131-3140 portlarını kontrol edin.`);
-	}
-
-	private openEditorUrl(url: string): void {
-		if (process.platform === "win32") {
-			spawnSync("cmd", ["/c", `start "" "${url}"`], { stdio: "ignore", shell: true });
-		} else if (process.platform === "darwin") {
-			spawnSync("open", [url], { stdio: "ignore" });
-		} else {
-			spawnSync("xdg-open", [url], { stdio: "ignore" });
-		}
-	}
-
-	private async handleWebPanelRoute(route: "/mcp" | "/session" | "/brain", label: string): Promise<void> {
-		try {
-			const server = await import("../../core/web-ui-server.js");
-			const marker = route === "/mcp" ? "MCP Control" : "Astro-Agent";
-			const url = await this.ensureWebPanelServer(server, route, marker);
-			this.openEditorUrl(url);
-			this.showStatus(`${label} opened.`);
-		} catch (err: any) {
-			this.showError(`${label} error: ${err.message}`);
-		}
-	}
-
-	private async handleClearBrainCommand(): Promise<void> {
-		const targets = [
-			path.join(getEngineDir(), "memory-signals.json"),
-			path.join(getEngineDir(), "learning-experience.json"),
-			path.join(os.homedir(), ".astroagent", "omega-memory.json"),
-		];
-		let removed = 0;
-		for (const file of targets) {
-			try {
-				if (fs.existsSync(file)) {
-					fs.rmSync(file, { force: true });
-					removed++;
-				}
-			} catch {}
-		}
-		this.showStatus(`Brain memory cleared. Removed ${removed} memory file(s).`);
-	}
-
-	private async handleAuthPanelCommand(route: "/panel" | "/login" = "/panel"): Promise<void> {
-		try {
-			const server = await import("../../core/web-ui-server.js");
-			const url = await this.ensureAuthPanelServer(server, route);
-			this.openEditorUrl(url);
-			this.showStatus(`Astro-Agent account panel opened: ${url}`);
-		} catch (err: any) {
-			this.showError(`Account panel error: ${err.message}`);
-			if (route === "/login") {
-				this.showOAuthSelector("login");
-			}
-		}
-	}
-
-	private async handleVideoEditCommand(): Promise<void> {
-		try {
-			const { getBrowserBridgeStatus } = await import("../../core/browser-bridge-server.js");
-			const bridgeStatus = getBrowserBridgeStatus();
-			const server = await import("../../core/web-ui-server.js");
-			this.registerEditorActionListener(server);
-			const url = await this.ensureEditorServer(server, "/videoedit");
-
-			const bridgeStatusText = bridgeStatus.running
-				? `CONNECTED (${bridgeStatus.clients} extensions active)`
-				: "WAITING FOR CONNECTION (Install the extension)";
-
-			const videoWelcome = [
-				"┌────────────────────────────────────────────────────────┐",
-				"│        ✦  A S T R O   V I D E O   S T U D I O  ✦       │",
-				"├────────────────────────────────────────────────────────┤",
-				"│  Astro Agent Video Editor                              │",
-				`│  Local Address: ${url.padEnd(39)}│`,
-				"│                                                        │",
-				"│  Features:                                             │",
-				"│  • Multi-Timeline, Split/Cut, Trim                     │",
-				"│  • Effects & Filters (Vintage, Glitch, Cinematic)      │",
-				"│  • Audio Tracks, Background Music & SFX                │",
-				"│  • Shorts/TikTok (9:16) and YouTube (16:9) Formats     │",
-				"│  • Subtitles, Text Templates & Keyframes               │",
-				"│                                                        │",
-				`│  Browser Bridge Status: ${bridgeStatusText.padEnd(31)}│`,
-				"└────────────────────────────────────────────────────────┘",
-				"",
-				"🚀 Astro Video Studio is opening in your default browser...",
-			].join("\n");
-
-			this.chatContainer.addChild(new Text(videoWelcome, 1, 0));
-			this.ui.requestRender();
-			this.openEditorUrl(url);
-		} catch (err: any) {
-			this.showError(`Astro Video Studio error: ${err.message}`);
-		}
-	}
-
-	private async handlePhotoEditCommand(): Promise<void> {
-		try {
-			const { getBrowserBridgeStatus } = await import("../../core/browser-bridge-server.js");
-			const bridgeStatus = getBrowserBridgeStatus();
-			const server = await import("../../core/web-ui-server.js");
-			this.registerEditorActionListener(server);
-			const url = await this.ensureEditorServer(server, "/photoedit");
-
-			const bridgeStatusText = bridgeStatus.running
-				? `CONNECTED (${bridgeStatus.clients} extensions active)`
-				: "WAITING FOR CONNECTION (Install the extension)";
-
-			const photoWelcome = [
-				"┌────────────────────────────────────────────────────────┐",
-				"│        ✦  A S T R O   P H O T O   S T U D I O  ✦       │",
-				"├────────────────────────────────────────────────────────┤",
-				"│  Astro Agent Professional Photo/Graphic Suite          │",
-				`│  Local Address: ${url.padEnd(39)}│`,
-				"│                                                        │",
-				"│  Features:                                             │",
-				"│  • Layer Management, Opacity & Blend Modes             │",
-				"│  • Smart Retouch, Color Grading (LUTs/Curves)          │",
-				"│  • Background Removal & Object Eraser                  │",
-				"│  • Pro Filters, Lighting & Contrast Adjustments        │",
-				"│  • Text Layers, Brush Tool & Canvas Resizing           │",
-				"│                                                        │",
-				`│  Browser Bridge Status: ${bridgeStatusText.padEnd(31)}│`,
-				"└────────────────────────────────────────────────────────┘",
-				"",
-				"🚀 Astro Photo Studio is opening in your default browser...",
-			].join("\n");
-
-			this.chatContainer.addChild(new Text(photoWelcome, 1, 0));
-			this.ui.requestRender();
-			this.openEditorUrl(url);
-		} catch (err: any) {
-			this.showError(`Astro-Agent Photo Studio açma hatası: ${err.message}`);
-		}
-	}
-
-	private async handleAppCommand(): Promise<void> {
-		try {
-			const server = await import("../../core/web-ui-server.js");
-			const url = await this.ensureAppServer(server);
-
-			// Set active session ID for the web app to load
-			server.setActiveSessionId(this.session.id);
-
-			let cleanup: (() => void) | undefined;
-
-			// Web arayüzünden gelen mesajları canlı olarak motora besleyen dinleyici
-			const messageListener = (msg) => {
-				if (this.onInputCallback) {
-					this.onInputCallback(msg);
-				}
-			};
-
-			// Web arayüzünden kilit açma (Unlock) tetiklendiğinde çalışan dinleyici
-			const unlockListener = () => {
-				if (cleanup) cleanup();
-			};
-
-			// Dinleyicileri web sunucusuna kayıt edelim
-			server.webUiMessageListeners.add(messageListener);
-			server.webUiUnlockListeners.add(unlockListener);
-
-			let isUnlocked = false;
-			const unlockTui = () => {
-				if (isUnlocked) return;
-				isUnlocked = true;
-
-				// Bellek sızıntılarını önlemek için dinleyicileri temizleyelim
-				server.webUiMessageListeners.delete(messageListener);
-				server.webUiUnlockListeners.delete(unlockListener);
-
-				// Sunucudaki aktif oturum bilgisini sıfırlayalım
-				server.setActiveSessionId(null);
-			};
-			cleanup = unlockTui;
-
-			// TUI üzerinde editörü gizleyip premium kilit ekranı bileşenini gösterelim
-			this.showSelector((done) => {
-				const lockComp = new AppLockComponent(() => {
-					unlockTui();
-					done();
-					this.ui.requestRender();
-				}, url);
-
-				// Hem yerel tuşlar hem de uzaktan kilit açma için ortak temizleme rutini
-				cleanup = () => {
-					unlockTui();
-					done();
-					this.ui.requestRender();
-				};
-
-				return { component: lockComp, focus: lockComp };
-			});
-
-			this.ui.requestRender();
-			this.openEditorUrl(url);
-		} catch (err) {
-			this.showError(`Web arayüzü başlatılamadı: ${err.message}`);
-		}
-	}
-
-	private async ensureAppServer(server) {
-		const ports = this.getWebUiCandidatePorts();
-
-		if (this.webUiProcess?.url) {
-			const url = `${this.webUiProcess.url}/app`;
-			if (await this.isAppEndpointReady(url)) return url;
-			try {
-				this.webUiProcess.server?.close?.();
-			} catch {}
-			this.webUiProcess = undefined;
-		}
-
-		for (const port of ports) {
-			try {
-				const candidate = server.startWebUiServer({ port });
-				await new Promise((resolve) => setTimeout(resolve, 180));
-				const url = `${candidate.url}/app`;
-				if (await this.isAppEndpointReady(url)) {
-					this.webUiProcess = candidate;
-					return url;
-				}
-				try {
-					candidate.server?.close?.();
-				} catch {}
-			} catch {
-				// Sonraki porta geç
-			}
-		}
-
-		throw new Error("Çalışan Astro-Agent Web UI sunucusu bulunamadı. Web UI portlarını kontrol edin.");
-	}
-
-	private handleMoodCommand(args: string): void {
-		const parts = args.split(/\s+/).filter(Boolean);
-		const cmd = parts[0]?.toLowerCase();
-
-		if (!cmd || cmd === "status") {
-			this.chatContainer.addChild(new Text(this.session.getAffectiveStatus(), 1, 0));
-			this.ui.requestRender();
-			return;
-		}
-
-		if (cmd === "explain") {
-			this.chatContainer.addChild(new Text(this.session.getAffectiveExplanation(), 1, 0));
-			this.ui.requestRender();
-			return;
-		}
-
-		if (cmd === "help") {
-			this.chatContainer.addChild(new Text(this.renderMoodHelp(), 1, 0));
-			this.ui.requestRender();
-			return;
-		}
-
-		if (cmd === "on" || cmd === "enable") {
-			this.session.enableAffectiveMode();
-			this.showStatus("Affective state layer acildi.");
-			return;
-		}
-
-		if (cmd === "off" || cmd === "disable") {
-			this.session.disableAffectiveMode();
-			this.showStatus("Affective state layer kapatildi.");
-			return;
-		}
-
-		if (cmd === "reset") {
-			this.session.resetAffectiveState();
-			this.showStatus("Affective state sifirlandi.");
-			return;
-		}
-
-		if (cmd === "mode") {
-			const mode = parts[1]?.toLowerCase();
-			if (mode !== "subtle" && mode !== "active") {
-				this.showError("Gecersiz mood mode. Kullanim: /mood mode subtle|active");
-				return;
-			}
-			this.session.setAffectiveMode(mode);
-			this.showStatus(`Affective mode guncellendi: ${mode}`);
-			return;
-		}
-
-		this.showError(`Bilinmeyen mood komutu: ${cmd}`);
-	}
-
-	private renderMoodHelp(): string {
-		return [
-			"Affective State Layer",
-			"Kalici ic durum sinyalleri cevap stratejisini etkiler: guven, sicaklik, merak, dikkat, yorgunluk, gerilim, odak.",
-			"Bu bilinc iddiasi degildir; davranisi yoneten durumsal kontrol katmanidir.",
-			"",
-			"Komutlar:",
-			"  /mood status",
-			"  /mood explain",
-			"  /mood on",
-			"  /mood off",
-			"  /mood mode subtle|active",
-			"  /mood reset",
-		].join("\n");
-	}
-
-	private handleAgentModeCommand(args: string): void {
-		const mode = args.trim().toLowerCase();
-		if (mode === "on") {
-			this.session.enableAgentsMode();
-			this.showStatus("Agent mode acildi. Artik kompleks islerde sirket gibi calisir.");
-			return;
-		}
-		if (mode === "off") {
-			this.session.disableAgentsMode();
-			this.showStatus("Agent mode kapatildi.");
-			return;
-		}
-
-		const settings = this.session.getAgentsSettings();
-		const enabled = settings.enabled !== false && settings.mode !== "off";
-		this.showStatus(`Kullanim: /agentmode on|off (su an: ${enabled ? "on" : "off"})`);
-	}
-
-	private handleAgentsCommand(args: string): void {
-		const parts = args.split(/\s+/).filter(Boolean);
-		const cmd = parts[0]?.toLowerCase();
-		const settings = this.session.getAgentsSettings();
-
-		if (!cmd || cmd === "help") {
-			this.chatContainer.addChild(new Text(this.renderAgentsHelp(), 1, 0));
-			this.ui.requestRender();
-			return;
-		}
-
-		if (cmd === "status") {
-			const enabled = settings.enabled !== false && settings.mode !== "off";
-			this.chatContainer.addChild(
-				new Text(
-					[
-						"Agent Sistemi",
-						`Durum: ${enabled ? "acik" : "kapali"}`,
-						`Mode: ${settings.mode ?? "auto"}`,
-						`Gorunum: ${settings.verbosity ?? "summary"}`,
-						"Kullanim: /agents enable | disable | mode auto|always|off | verbosity quiet|summary|verbose",
-					].join("\n"),
-					1,
-					0,
-				),
-			);
-			this.ui.requestRender();
-			return;
-		}
-
-		if (cmd === "enable" || cmd === "on") {
-			this.session.enableAgentsMode();
-			this.showStatus("Agent sistemi acildi. Artik kompleks kod islerinde Patron + uzman ekip gibi ilerleyecek.");
-			return;
-		}
-
-		if (cmd === "disable" || cmd === "off") {
-			this.session.disableAgentsMode();
-			this.showStatus("Agent sistemi kapatildi.");
-			return;
-		}
-
-		if (cmd === "mode") {
-			const mode = parts[1]?.toLowerCase();
-			if (mode !== "auto" && mode !== "always" && mode !== "off") {
-				this.showError("Gecersiz agent mode. Kullanim: /agents mode auto|always|off");
-				return;
-			}
-			this.session.setAgentsMode(mode);
-			this.showStatus(`Agent mode guncellendi: ${mode}`);
-			return;
-		}
-
-		if (cmd === "verbosity" || cmd === "visible") {
-			const verbosity = parts[1]?.toLowerCase();
-			if (verbosity !== "quiet" && verbosity !== "summary" && verbosity !== "verbose") {
-				this.showError("Gecersiz agent gorunumu. Kullanim: /agents verbosity quiet|summary|verbose");
-				return;
-			}
-			this.session.setAgentsVerbosity(verbosity);
-			this.showStatus(`Agent gorunumu guncellendi: ${verbosity}`);
-			return;
-		}
-
-		this.showError(`Bilinmeyen agents komutu: ${cmd}`);
-	}
-
-	private renderAgentsHelp(): string {
-		return [
-			"Agent Sistemi",
-			"Astro-Agent kod islerini kucuk bir yazilim sirketi gibi organize eder.",
-			"Patron kapsami belirler; Mimar, Backend, Frontend, QA, Security ve Integrator kendi alanindan kontrol eder.",
-			"",
-			"Komutlar:",
-			"  /agentmode on",
-			"  /agentmode off",
-			"  /workspace",
-			"  /agents status",
-			"  /agents enable",
-			"  /agents disable",
-			"  /agents mode auto|always|off",
-			"  /agents verbosity quiet|summary|verbose",
-			"",
-			"Oneri: auto + summary. Basit islerde susar, kompleks projede ekip gibi calisir.",
-		].join("\n");
-	}
-
-	private async handleRoboticsCommand(args: string): Promise<void> {
-		const parts = args.split(" ");
-		const cmd = parts[0]?.toLowerCase();
-
-		const { RoboticsView } = await import("./components/robotics-view.js");
-		const { VisionPipeline, ImageCapture } = await import("../../core/robotics/index.js");
-
-		if (!cmd || cmd === "help") {
-			const text = RoboticsView.renderHelp();
-			this.chatContainer.addChild(new Text(text, 1, 0));
-			this.ui.requestRender();
-			return;
-		}
-
-		if (cmd === "enable") {
-			this.session.enableRoboticsMode();
-			const config = this.settingsManager.getRoboticsSettings();
-			const text = RoboticsView.renderBanner(config.visionModel || "unknown", config.visionBaseUrl || "unknown");
-			this.chatContainer.addChild(new Text(text, 1, 0));
-			this.ui.requestRender();
-			return;
-		}
-
-		if (cmd === "disable") {
-			this.session.disableRoboticsMode();
-			this.chatContainer.addChild(new Text(RoboticsView.renderSuccess("Robotics mode kapatildi."), 1, 0));
-			this.ui.requestRender();
-			return;
-		}
-
-		if (cmd === "status") {
-			const config = this.settingsManager.getRoboticsSettings();
-			const text = RoboticsView.renderStatus({
-				enabled: config.enabled ?? false,
-				visionModel: config.visionModel || "unknown",
-				visionBaseUrl: config.visionBaseUrl || "unknown",
-				outputOverlay: config.outputOverlay ?? true,
-				robotApiFunctionsPath: config.robotApiFunctionsPath,
-				lastImagePath: config.lastImagePath,
-			});
-			this.chatContainer.addChild(new Text(text, 1, 0));
-			this.ui.requestRender();
-			return;
-		}
-
-		if (cmd === "model") {
-			const model = parts[1];
-			if (!model) {
-				this.chatContainer.addChild(
-					new Text(RoboticsView.renderError("Model adi gerekli: /robotics model <isim>"), 1, 0),
-				);
-				this.ui.requestRender();
-				return;
-			}
-			this.settingsManager.setRoboticsSetting("visionModel", model);
-			if (this.session.getRoboticsMode()) {
-				// Re-enable to update tool definitions
-				this.session.enableRoboticsMode();
-			}
-			this.chatContainer.addChild(new Text(RoboticsView.renderSuccess(`Vision modeli guncellendi: ${model}`), 1, 0));
-			this.ui.requestRender();
-			return;
-		}
-
-		if (cmd === "functions") {
-			const fpath = parts.slice(1).join(" ");
-			if (!fpath) {
-				this.chatContainer.addChild(
-					new Text(RoboticsView.renderError("Dosya yolu gerekli: /robotics functions <path>"), 1, 0),
-				);
-				this.ui.requestRender();
-				return;
-			}
-			this.settingsManager.setRoboticsSetting("robotApiFunctionsPath", fpath);
-			if (this.session.getRoboticsMode()) {
-				this.session.enableRoboticsMode();
-			}
-			this.chatContainer.addChild(
-				new Text(RoboticsView.renderSuccess(`Robot fonksiyon dosyasi guncellendi: ${fpath}`), 1, 0),
-			);
-			this.ui.requestRender();
-			return;
-		}
-
-		if (cmd === "image") {
-			const fpath = parts.slice(1).join(" ");
-			if (!fpath) {
-				this.chatContainer.addChild(
-					new Text(RoboticsView.renderError("Dosya yolu gerekli: /robotics image <path>"), 1, 0),
-				);
-				this.ui.requestRender();
-				return;
-			}
-			this.settingsManager.setRoboticsLastImagePath(fpath);
-			this.chatContainer.addChild(new Text(RoboticsView.renderSuccess(`Son goruntu ayarlandi: ${fpath}`), 1, 0));
-			this.ui.requestRender();
-			return;
-		}
-
-		// Analysis commands (detect, bbox, trajectory, analyze, plan)
-		const requiresImage = ["detect", "bbox", "trajectory", "analyze"].includes(cmd);
-		const imagePath = this.settingsManager.getRoboticsLastImagePath();
-
-		if (requiresImage && !imagePath) {
-			this.chatContainer.addChild(
-				new Text(RoboticsView.renderError("Once goruntu yukleyin: /robotics image <path>"), 1, 0),
-			);
-			this.ui.requestRender();
-			return;
-		}
-
-		if (requiresImage || cmd === "plan") {
-			const config = this.settingsManager.getRoboticsSettings();
-			const pipeline = new VisionPipeline({
-				model: config.visionModel,
-				baseUrl: config.visionBaseUrl,
-				drawOverlay: config.outputOverlay ?? true,
-			});
-			const capture = new ImageCapture();
-
-			try {
-				this.showWorking("Robotik gorus isleniyor...");
-				let imageBytes: Buffer | undefined;
-
-				if (imagePath && requiresImage) {
-					if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
-						imageBytes = await capture.fromUrl(imagePath);
-					} else {
-						imageBytes = capture.fromFile(imagePath);
-					}
-				}
-
-				if (cmd === "detect") {
-					const queryArgs = parts.slice(1).join(" ");
-					const queries = queryArgs ? queryArgs.split(",").map((s) => s.trim()) : undefined;
-					const result = await pipeline.detectObjects(imageBytes!, queries);
-					const text = RoboticsView.renderDetectionResults(result.objects, result.durationMs);
-					this.chatContainer.addChild(new Text(text, 1, 0));
-				} else if (cmd === "bbox") {
-					const result = await pipeline.detectBoundingBoxes(imageBytes!);
-					const text = RoboticsView.renderDetectionResults(result.objects, result.durationMs);
-					this.chatContainer.addChild(new Text(text, 1, 0));
-				} else if (cmd === "trajectory") {
-					const instruction = parts.slice(1).join(" ");
-					if (!instruction) {
-						throw new Error("Yorunge talimati gerekli. Ornek: /robotics trajectory duzenleyicinin icine");
-					}
-					const result = await pipeline.planTrajectory(imageBytes!, "nesne", instruction);
-					const text = RoboticsView.renderTrajectory(result.trajectory, result.durationMs);
-					this.chatContainer.addChild(new Text(text, 1, 0));
-				} else if (cmd === "analyze") {
-					const q = parts.slice(1).join(" ");
-					if (q) {
-						const result = await pipeline.freeformAnalyze(imageBytes!, q);
-						this.chatContainer.addChild(
-							new Text(`\n🤖 Analiz (${result.durationMs}ms):\n\n${result.response}\n`, 1, 0),
-						);
-					} else {
-						const result = await pipeline.analyzeScene(imageBytes!);
-						this.chatContainer.addChild(
-							new Text(`\n🤖 Sahne Analizi (${result.durationMs}ms):\n\n${result.description}\n`, 1, 0),
-						);
-					}
-				} else if (cmd === "plan") {
-					const instruction = parts.slice(1).join(" ");
-					if (!instruction) {
-						throw new Error("Gorev talimati gerekli.");
-					}
-					const { TaskPlanner, OllamaVision } = await import("../../core/robotics/index.js");
-					const vision = new OllamaVision(config.visionModel, config.visionBaseUrl);
-
-					const fnPath = config.robotApiFunctionsPath;
-					let fns = TaskPlanner.mockPickAndPlaceFunctions();
-					if (fnPath) {
-						const fs = await import("fs");
-						const path = await import("path");
-						if (fs.existsSync(path.resolve(fnPath))) {
-							fns = TaskPlanner.loadFunctions(path.resolve(fnPath));
-						}
-					}
-
-					const planner = new TaskPlanner(vision, fns);
-					let base64: string | undefined;
-					if (imagePath) {
-						const imgBytes = imagePath.startsWith("http")
-							? await capture.fromUrl(imagePath)
-							: capture.fromFile(imagePath);
-						base64 = capture.toBase64(imgBytes);
-					}
-
-					const result = await planner.planTask(instruction, base64);
-					const text = RoboticsView.renderTaskPlan(result.actions, result.durationMs);
-					this.chatContainer.addChild(new Text(text, 1, 0));
-				}
-			} catch (err: any) {
-				this.chatContainer.addChild(new Text(RoboticsView.renderError(err.message), 1, 0));
-			} finally {
-				this.hideWorking();
-				this.ui.requestRender();
-			}
-		} else {
-			this.chatContainer.addChild(new Text(RoboticsView.renderError(`Bilinmeyen robotics komutu: ${cmd}`), 1, 0));
-			this.ui.requestRender();
-		}
-	}
-
-	private async handleDiscordCommand(args: string): Promise<void> {
-		const normalizedArgs = args.trim().toLowerCase();
-
-		if (normalizedArgs === "off") {
-			this.settingsManager.setDiscordToken(undefined);
-			this.showStatus("Discord baglantisi kapatildi.");
-			this.showStatus("Refreshing session...");
-			await this.handleReloadCommand();
-			return;
-		}
-
-		if (normalizedArgs === "botinfo") {
-			const token = this.settingsManager.getDiscordToken();
-			if (!token) {
-				this.showStatus("Discord tokeni ayarlanmamis.");
-				this.showStatus("Kullanim: /discord <bot_token>");
-				return;
-			}
-			this.showStatus("Discord bot bilgileri cekiliyor...");
-			try {
-				const { Client, GatewayIntentBits, PresenceUpdateStatus } = await import("discord.js");
-				const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers] });
-				await client.login(token);
-
-				const user = client.user;
-				const guildCount = client.guilds.cache.size;
-				const guildsPreview = client.guilds.cache
-					.map((g) => g.name)
-					.slice(0, 10)
-					.join(", ");
-				const status = user?.presence?.status ?? PresenceUpdateStatus.Offline;
-
-				const lines = [
-					"Discord Bot Bilgisi",
-					`Tag: ${user?.tag ?? "unknown"}`,
-					`Bot ID: ${user?.id ?? "unknown"}`,
-					`Durum: ${status}`,
-					`Sunucu Sayisi: ${guildCount}`,
-					`Olusturulma: ${user?.createdAt?.toISOString?.() ?? "unknown"}`,
-					`Avatar: ${user?.displayAvatarURL?.() ?? "none"}`,
-					`Sunucular (ilk 10): ${guildsPreview || "-"}`,
-				];
-				client.destroy();
-				this.chatContainer.addChild(new Text(lines.join("\n"), 1, 0));
-				this.ui.requestRender();
-			} catch (err: any) {
-				this.showStatus(`Error: Bot bilgileri alinamadi (${err.message})`);
-			}
-			return;
-		}
-
-		if (args) {
-			this.showStatus("Token kontrol ediliyor...");
-			try {
-				const { Client, GatewayIntentBits } = await import("discord.js");
-				const testClient = new Client({ intents: [GatewayIntentBits.Guilds] });
-				await testClient.login(args);
-				const botName = testClient.user?.tag || "Bot";
-				testClient.destroy();
-
-				this.settingsManager.setDiscordToken(args);
-				this.showStatus(`Discord tokeni kaydedildi. (${botName} olarak baglanildi)`);
-				this.showStatus("Refreshing session...");
-				await this.handleReloadCommand();
-			} catch (err: any) {
-				this.showStatus(`Error: Gecersiz token veya baglanti sorunu (${err.message})`);
-			}
-			return;
-		}
-
-		const currentToken = this.settingsManager.getDiscordToken();
-		if (currentToken) {
-			this.showStatus(`Discord baglantisi aktif. (Token: ${currentToken.slice(0, 5)}...)`);
-			this.showStatus("Tokeni degistirmek icin: /discord <yeni_token>");
-			this.showStatus("Discord araclarini artik kullanabilirsiniz.");
-		} else {
-			this.showStatus("Discord tokeni ayarlanmamis.");
-			this.showStatus("Kullanim: /discord <bot_token>");
-		}
-	}
-
-	private async handleTelegramCommand(args: string): Promise<void> {
-		const [subcommand, ...rest] = args.trim().split(/\s+/).filter(Boolean);
-		const rootDir = process.cwd();
-		const envPath = path.join(rootDir, ".env");
-
-		if (!subcommand || subcommand === "help") {
-			this.showStatus("Kullanım: /telegram login <bot_token> [chat_id]");
-			this.showStatus("Chat id yoksa: bota /start yaz, sonra /telegram login <bot_token> tekrar çalıştır.");
-			this.showStatus("Başlatmak için: /telegram start");
-			return;
-		}
-
-		if (subcommand === "login") {
-			const token = rest[0];
-			let chatId = rest[1];
-			if (!token) {
-				this.showStatus("Kullanım: /telegram login <bot_token> [chat_id]");
-				return;
-			}
-
-			this.showStatus("Telegram token kontrol ediliyor...");
-			try {
-				const meResponse = await fetch(`https://api.telegram.org/bot${token}/getMe`);
-				const me = await meResponse.json();
-				if (!me.ok) throw new Error(me.description ?? "token geçersiz");
-
-				if (!chatId) {
-					const updatesResponse = await fetch(`https://api.telegram.org/bot${token}/getUpdates`);
-					const updates = await updatesResponse.json();
-					chatId = String(updates.result?.find((u: any) => u.message?.chat?.id)?.message?.chat?.id ?? "");
-				}
-
-				if (!chatId) {
-					this.showStatus(`Bot doğrulandı: @${me.result.username}`);
-					this.showStatus("Şimdi Telegram'da botuna /start yaz, sonra aynı komutu tekrar çalıştır.");
-					return;
-				}
-
-				this.upsertEnvFile(envPath, {
-					TELEGRAM_BOT_TOKEN: token,
-					TELEGRAM_ALLOWED_CHAT_IDS: chatId,
-					ASTRO_REMOTE_ROOT: path.dirname(rootDir),
-				});
-				this.showStatus(`Telegram kaydedildi: @${me.result.username}, chat id ${chatId}`);
-				this.showStatus("Remote'u açmak için: /telegram start");
-			} catch (err: any) {
-				this.showStatus(`Telegram login hatası: ${err.message}`);
-			}
-			return;
-		}
-
-		if (subcommand === "start") {
-			if (!fs.existsSync(envPath)) {
-				this.showStatus("Önce /telegram login <bot_token> çalıştır.");
-				return;
-			}
-			const child = spawn(process.execPath, [path.join(rootDir, "scripts", "telegram-remote.mjs")], {
-				cwd: rootDir,
-				detached: true,
-				stdio: "ignore",
-				windowsHide: true,
-			});
-			child.unref();
-			this.showStatus("Telegram remote arka planda başlatıldı. Telefondan /status yaz.");
-			return;
-		}
-
-		if (subcommand === "status") {
-			this.showStatus(
-				fs.existsSync(envPath) ? "Telegram ayarı var. /telegram start ile açabilirsin." : "Telegram ayarı yok.",
-			);
-			return;
-		}
-
-		this.showStatus(`Bilinmeyen telegram komutu: ${subcommand}`);
-	}
-
-	private upsertEnvFile(filePath: string, values: Record<string, string>): void {
-		const existing = fs.existsSync(filePath) ? fs.readFileSync(filePath, "utf8") : "";
-		const lines = existing.split(/\r?\n/).filter((line) => line.trim() !== "");
-		for (const [key, value] of Object.entries(values)) {
-			const line = `${key}=${value}`;
-			const index = lines.findIndex((item) => item.startsWith(`${key}=`));
-			if (index >= 0) lines[index] = line;
-			else lines.push(line);
-		}
-		fs.writeFileSync(filePath, `${lines.join("\n")}\n`);
-	}
-
 	private async handleReloadCommand(): Promise<void> {
 		if (this.session.isStreaming) {
-			this.showWarning("Yeniden yüklemeden önce mevcut yanıtın bitmesini bekleyin.");
+			this.showWarning("Wait for the current response to finish before reloading.");
 			return;
 		}
 		if (this.session.isCompacting) {
-			this.showWarning("Yeniden yüklemeden önce sıkıştırmanın bitmesini bekleyin.");
+			this.showWarning("Wait for compaction to finish before reloading.");
 			return;
 		}
 
@@ -7195,7 +5471,7 @@ export class InteractiveMode {
 		reloadBox.addChild(new Spacer(1));
 		reloadBox.addChild(
 			new Text(
-				theme.fg("muted", "Kısayollar, uzantılar, yetenekler, istemler ve temalar yeniden yükleniyor..."),
+				theme.fg("muted", "Reloading keybindings, extensions, skills, prompts, themes, and context files..."),
 				1,
 				0,
 			),
@@ -7217,20 +5493,29 @@ export class InteractiveMode {
 			this.ui.requestRender();
 		};
 
+		let chatRestoredBeforeSessionStart = false;
+		let reloadBoxDismissed = false;
+		const restoreChatBeforeSessionStart = () => {
+			if (chatRestoredBeforeSessionStart) {
+				return;
+			}
+			this.hideThinkingBlock = this.settingsManager.getHideThinkingBlock();
+			this.outputPad = this.settingsManager.getOutputPad();
+			this.rebuildChatFromMessages();
+			chatRestoredBeforeSessionStart = true;
+		};
+
 		try {
-			await this.session.reload();
+			await this.session.reload({ beforeSessionStart: restoreChatBeforeSessionStart });
+			restoreChatBeforeSessionStart();
+			configureHttpDispatcher(this.settingsManager.getHttpIdleTimeoutMs());
 			this.keybindings.reload();
 			const activeHeader = this.customHeader ?? this.builtInHeader;
 			if (isExpandable(activeHeader)) {
 				activeHeader.setExpanded(this.toolOutputExpanded);
 			}
 			setRegisteredThemes(this.session.resourceLoader.getThemes().themes);
-			this.hideThinkingBlock = this.settingsManager.getHideThinkingBlock();
-			const themeName = this.settingsManager.getTheme();
-			const themeResult = themeName ? setTheme(themeName, true) : { success: true };
-			if (!themeResult.success) {
-				this.showError(`Failed to load theme "${themeName}": ${themeResult.error}\nFell back to dark theme.`);
-			}
+			await this.themeController.applyFromSettings();
 			const editorPaddingX = this.settingsManager.getEditorPaddingX();
 			const autocompleteMaxVisible = this.settingsManager.getAutocompleteMaxVisible();
 			this.defaultEditor.setPaddingX(editorPaddingX);
@@ -7240,327 +5525,35 @@ export class InteractiveMode {
 				this.editor.setAutocompleteMaxVisible?.(autocompleteMaxVisible);
 			}
 			this.ui.setShowHardwareCursor(this.settingsManager.getShowHardwareCursor());
-			this.ui.setClearOnShrink(this.settingsManager.getClearOnShrink());
+			const clearOnShrink = this.settingsManager.getClearOnShrink();
+			this.ui.setClearOnShrink(clearOnShrink);
+			if (!clearOnShrink && !this.activeStatusIndicator) {
+				this.statusContainer.clear();
+			}
 			this.setupAutocompleteProvider();
 			const runner = this.session.extensionRunner;
 			this.setupExtensionShortcuts(runner);
-			this.rebuildChatFromMessages();
-			dismissReloadBox(this.editor as Component);
 			this.showLoadedResources({
 				force: false,
 				showDiagnosticsWhenQuiet: true,
 			});
+			const savedImplicitProjectTrust = this.maybeSaveImplicitProjectTrustAfterReload();
 			const modelsJsonError = this.session.modelRegistry.getError();
 			if (modelsJsonError) {
 				this.showError(`models.json error: ${modelsJsonError}`);
 			}
-			this.showStatus("Kisayollar, uzantilar, yetenekler, istemler ve temalar yeniden yuklendi");
+			this.showStatus(
+				savedImplicitProjectTrust
+					? "Reloaded keybindings, extensions, skills, prompts, themes, and context files; saved project trust"
+					: "Reloaded keybindings, extensions, skills, prompts, themes, and context files",
+			);
+			dismissReloadBox(this.editor as Component);
+			reloadBoxDismissed = true;
 		} catch (error) {
-			dismissReloadBox(previousEditor as Component);
+			if (!reloadBoxDismissed) {
+				dismissReloadBox(previousEditor as Component);
+			}
 			this.showError(`Reload failed: ${error instanceof Error ? error.message : String(error)}`);
-		}
-	}
-
-	private async handleIndexCommand(args: string): Promise<void> {
-		const { buildIndex, getIndexStats } = await import("../../core/codebase-index/index.js");
-		const cwd = this.sessionManager.getCwd();
-		if (args === "status") {
-			const stats = getIndexStats(cwd);
-			this.showStatus(
-				stats
-					? `Index: ${stats.fileCount} dosya, ${stats.chunkCount} chunk, ${Math.round(stats.ageMs / 1000)}sn önce`
-					: "Index yok.",
-			);
-			return;
-		}
-		this.showStatus("Index oluşturuluyor...");
-		const index = await buildIndex(cwd, args === "force");
-		this.showStatus(`Index hazır: ${index.fileCount} dosya, ${index.chunkCount} chunk.`);
-	}
-
-	private async handleGitCommand(args: string): Promise<void> {
-		const git = await import("../../core/git-utils.js");
-		const cwd = this.sessionManager.getCwd();
-		const [cmd, ...rest] = args.split(/\s+/).filter(Boolean);
-		try {
-			if (!cmd || cmd === "status") this.showStatus(await git.getGitStatus(cwd));
-			else if (cmd === "commit")
-				this.showStatus(await git.commitAll(cwd, rest.join(" ") || "chore: update via Astro-Agent"));
-			else if (cmd === "branch")
-				this.showStatus(`Branch: ${await git.createBranch(cwd, rest.join("-") || "Astro-Agent/update")}`);
-			else if (cmd === "push") this.showStatus(await git.pushBranch(cwd));
-			else this.showStatus("Kullanım: /git status | /git commit <mesaj> | /git branch <ad> | /git push");
-		} catch (err: any) {
-			this.showError(`Git hata: ${err.message}`);
-		}
-	}
-
-	private async handleShipCommand(args: string): Promise<void> {
-		const { shipChanges } = await import("../../core/git-utils.js");
-		try {
-			this.showStatus("Ship başlıyor: branch + commit + push + PR...");
-			const result = await shipChanges(this.sessionManager.getCwd(), { message: args || undefined });
-			this.showStatus(
-				[`Ship tamam: ${result.branch}`, result.diffStat, result.prUrl ? `PR: ${result.prUrl}` : ""]
-					.filter(Boolean)
-					.join("\n"),
-			);
-		} catch (err: any) {
-			this.showError(`Ship hata: ${err.message}`);
-		}
-	}
-
-	private async handleOllamaSlashCommand(args: string): Promise<void> {
-		const ollama = await import("../../core/ollama-optimizer.js");
-		const [cmd, ...rest] = args.split(/\s+/).filter(Boolean);
-		try {
-			if (!cmd || cmd === "models" || cmd === "list") {
-				const models = await ollama.getLocalModels();
-				this.showStatus(
-					models.length
-						? models.map((m: any) => `${m.name} (${m.details?.parameter_size || "?"})`).join("\n")
-						: "Yerel model yok.",
-				);
-			} else if (cmd === "pull") {
-				const model = rest.join(" ");
-				if (!model) return this.showStatus("Kullanım: /ollama pull <model>");
-				this.showStatus(`Model çekiliyor: ${model}`);
-				await ollama.pullModel(
-					model,
-					(e: any) =>
-						e.status &&
-						this.showStatus(`${e.status}${e.total ? ` ${Math.round((e.completed / e.total) * 100)}%` : ""}`),
-				);
-				this.showStatus(`Model hazır: ${model}`);
-			} else this.showStatus("Kullanım: /ollama models | /ollama pull <model>");
-		} catch (err: any) {
-			this.showError(`Ollama hata: ${err.message}`);
-		}
-	}
-
-	private async handleDiffCommand(): Promise<void> {
-		const { getFullDiff, getDiffSummary } = await import("../../core/git-utils.js");
-		try {
-			const stat = await getDiffSummary(this.sessionManager.getCwd());
-			const diff = await getFullDiff(this.sessionManager.getCwd());
-			this.showStatus(`${stat}\n\n${diff.slice(0, 12000)}`);
-		} catch (err: any) {
-			this.showError(`Diff hata: ${err.message}`);
-		}
-	}
-
-	private async handleWebCommand(): Promise<void> {
-		try {
-			const { getBrowserBridgeStatus } = await import("../../core/browser-bridge-server.js");
-			const bridgeStatus = getBrowserBridgeStatus();
-			let url = "http://127.0.0.1:3131";
-
-			if (bridgeStatus.isClientOnly) {
-				this.showStatus(`Sunucu CLIENT-ONLY modunda. Ana Web-UI'a bağlanılıyor: ${url}`);
-			} else {
-				if (!this.webUiProcess) {
-					const server = await import("../../core/web-ui-server.js");
-					this.webUiProcess = server.startWebUiServer({ port: 3131 });
-				}
-				url = this.webUiProcess.url || url;
-			}
-
-			const opener = process.platform === "win32" ? "cmd" : process.platform === "darwin" ? "open" : "xdg-open";
-			const args = process.platform === "win32" ? ["/c", "start", "", url] : [url];
-			spawnSync(opener, args, { stdio: "ignore", shell: false });
-			this.showStatus(`Web-UI açık: ${url}`);
-		} catch (err: any) {
-			this.showError(`Web-UI hata: ${err.message}`);
-		}
-	}
-
-	private async handleMarketplaceCommand(args: string): Promise<void> {
-		const marketplace = await import("../../core/marketplace.js");
-		try {
-			const [cmd, ...rest] = args.split(/\s+/).filter(Boolean);
-			const entries = await marketplace.fetchRegistry();
-			if (cmd === "install") {
-				const name = rest.join(" ");
-				const entry = entries.find((e: any) => e.name === name);
-				if (!entry) return this.showStatus(`Marketplace entry bulunamadı: ${name}`);
-				const pm = new DefaultPackageManager({
-					cwd: this.sessionManager.getCwd(),
-					engineDir: getEngineDir(),
-					settingsManager: this.settingsManager,
-				});
-				await marketplace.installMarketplaceEntry(pm, entry);
-				this.showStatus(`Kuruldu: ${entry.name}`);
-				return;
-			}
-			const query = cmd === "search" ? rest.join(" ") : args;
-			this.showStatus(marketplace.formatRegistryEntries(marketplace.searchRegistry(entries, query), 12));
-		} catch (err: any) {
-			this.showError(`Marketplace hata: ${err.message}`);
-		}
-	}
-
-	private handleHelpCommand(): void {
-		let info = `\n${theme.bold(theme.fg("accent", "╭─ Astro-Agent Premium Grouped Commands ──────────────────────╮"))}\n`;
-
-		const categories = {
-			"Session & Context": [
-				{ name: "/new", desc: "Start a clean session" },
-				{ name: "/resume", desc: "Resume saved session" },
-				{ name: "/name", desc: "Rename session" },
-				{ name: "/session", desc: "Open session browser" },
-				{ name: "/context", desc: "Show context and token usage" },
-				{ name: "/compact", desc: "Compress session context" },
-				{ name: "/fork", desc: "Fork from a message" },
-				{ name: "/clone", desc: "Clone session in current location" },
-				{ name: "/tree", desc: "Navigate session tree" },
-				{ name: "/export", desc: "Export session (.html or .jsonl)" },
-				{ name: "/import", desc: "Import a session from JSONL" },
-				{ name: "/share", desc: "Share session as a GitHub Gist" },
-				{ name: "/copy", desc: "Copy the last response" },
-			],
-			"Model & Settings": [
-				{ name: "/models", desc: "Select a model" },
-				{ name: "/scoped-models", desc: "Edit quick-switch models" },
-				{ name: "/settings", desc: "Open settings" },
-				{ name: "/autothink", desc: "Toggle automatic thinking level" },
-				{ name: "/login", desc: "Configure Provider API keys" },
-				{ name: "/brain", desc: "Open memory and reflex panel" },
-				{ name: "/clearbrain", desc: "Clear persisted memory signals" },
-			],
-			Modes: [
-				{ name: "/plan", desc: "Toggle plan mode" },
-				{ name: "/automation", desc: "Toggle automation mode" },
-				{ name: "/agentmode", desc: "Toggle agent mode" },
-				{ name: "/zen", desc: "Toggle Zen mode (hide UI elements)" },
-			],
-			"Tools & Swarm": [
-				{ name: "/init", desc: "Create project config files" },
-				{ name: "/ship", desc: "Ship changes (branch/commit/push/PR)" },
-				{ name: "/diff", desc: "Show git changes" },
-				{ name: "/index", desc: "Index codebase for semantic search" },
-				{ name: "/browser", desc: "Chrome extension status and control" },
-				{ name: "/app", desc: "Open Web Studio and lock TUI" },
-				{ name: "/interface", desc: "Open Astro-Agent Special OpenClaw OS Interface" },
-				{ name: "/videoedit", desc: "Open Astro-Agent Pro Video Studio (Browser)" },
-				{ name: "/photoedit", desc: "Open Astro-Agent Pro Photo Editor (Browser)" },
-				{ name: "/mcp", desc: "Open MCP control panel" },
-				{ name: "/swarm", desc: "Trigger Multi-Agent Swarm" },
-				{ name: "/fix", desc: "Run Autonomous Auto-Healer" },
-				{ name: "/evolve", desc: "Trigger Meta-Evolution (Self-Improvement Loop)" },
-				{
-					name: "/shark",
-					desc: "Shark Mode: Attempt unprecedented/impossible ideas (e.g. /shark earthquake predictor)",
-				},
-			],
-			"Diagnostics & System": [
-				{ name: "/status", desc: "Show detailed runtime diagnostics panel" },
-				{ name: "/metrics", desc: "Show system metrics and token usage" },
-				{ name: "/update", desc: "Update Astro-Agent to latest version" },
-				{ name: "/reload", desc: "Reload system components" },
-				{ name: "/hotkeys", desc: "List keyboard shortcuts" },
-				{ name: "/quit", desc: "Quit Astro-Agent" },
-			],
-		};
-
-		for (const [catName, list] of Object.entries(categories)) {
-			info += `  ${theme.bold(theme.fg("success", `[ ${catName} ]`))}\n`;
-			for (const cmd of list) {
-				const paddedName = cmd.name.padEnd(16);
-				info += `    ${theme.fg("accent", paddedName)} ${theme.fg("text", cmd.desc)}\n`;
-			}
-			info += `\n`;
-		}
-
-		info += `${theme.bold(theme.fg("accent", "╰──────────────────────────────────────────────────────────╯"))}\n`;
-		this.chatContainer.addChild(new Spacer(1));
-		this.chatContainer.addChild(new Text(info, 1, 0));
-		this.ui.requestRender();
-	}
-
-	private async handleStatusDiagnosticsCommand(): Promise<void> {
-		const stats = this.session.getSessionStats();
-		const currentModel = this.session.model;
-		const contextUsage = this.session.getContextUsage();
-		const memUsage = process.memoryUsage().heapUsed / 1024 / 1024;
-		const branch = this.footerDataProvider.getGitBranch() || "N/A";
-
-		let totalCost = 0;
-		for (const entry of this.session.sessionManager.getEntries()) {
-			if (entry.type === "message" && entry.message.role === "assistant") {
-				const costVal = entry.message.usage?.cost?.total;
-				if (typeof costVal === "number" && Number.isFinite(costVal)) {
-					totalCost += costVal;
-				}
-			}
-		}
-
-		let info = `\n${theme.bold(theme.fg("accent", "✦ Astro-Agent CONTROL CENTER"))}\n\n`;
-
-		info += `  ${theme.bold(theme.fg("success", "■ AGENT"))}\n`;
-		info += `    Apex Mode:          ${theme.fg("accent", "Active")}\n`;
-		info += `    DeepThink:          ${theme.fg("text", this.session.supportsThinking() ? "Enabled" : "Disabled")}\n`;
-		info += `    AutoThink:          ${theme.fg("text", this.session.getAutoThinkEnabled() ? "Enabled" : "Disabled")}\n`;
-		info += `    Thinking Level:     ${theme.fg("text", this.session.thinkingLevel || "N/A")}\n`;
-		const activeTools = this.session.getActiveToolNames().join(", ") || "None";
-		info += `    Active Tools:       ${theme.fg("text", activeTools)}\n\n`;
-
-		// Omega Kernel Section
-		const kernel = OmegaKernel.getInstance();
-		info += `  ${theme.bold(theme.fg("success", "■ Ω KERNEL (MATHEMATICAL ENGINE)"))}\n`;
-		info += `    Kernel State:       ${theme.fg("accent", "Ω Active")}\n`;
-		info += `    Intent Contract:    ${theme.fg("text", kernel.currentIntent ? "Generated" : "None")}\n`;
-		info += `    Effort Level:       ${theme.fg("text", kernel.currentIntent?.effortMode || "S0 (Direct)")}\n`;
-		info += `    Entropy / Risk:     ${theme.fg("text", kernel.currentRouter ? `${kernel.currentRouter.entropy.toFixed(2)} (${kernel.currentIntent?.riskLevel || "low"} risk)` : "0.10 (low risk)")}\n`;
-		info += `    Model Route:        ${theme.fg("text", kernel.currentRouter?.recommendedModelTier || "local")}\n`;
-		info += `    Repo Graph State:   ${theme.fg("text", kernel.repoGraph.status || "fresh")}\n`;
-		info += `    Patch Memory:       ${theme.fg("text", kernel.memoryHit ? "HIT (Edit macro retrieved)" : "MISS (Pattern indexed)")}\n`;
-		info += `    Verification:       ${theme.fg("text", kernel.currentVerification?.status || "pending")}\n`;
-		if (kernel.currentVerification?.errorHighlights) {
-			info += `    Errors Detected:    ${theme.fg("error", kernel.currentVerification.errorHighlights.join(", "))}\n`;
-		}
-		info += `\n`;
-
-		info += `  ${theme.bold(theme.fg("success", "■ MODEL & METRICS"))}\n`;
-		info += `    Provider:           ${theme.fg("text", currentModel?.provider || "N/A")}\n`;
-		info += `    Model:              ${theme.fg("text", currentModel?.id || "N/A")}\n`;
-		const ctxLimit = currentModel?.contextWindow ? currentModel.contextWindow.toLocaleString() : "N/A";
-		const ctxUsed = contextUsage ? `${contextUsage.percent.toFixed(1)}%` : "0%";
-		info += `    Context Limit:      ${theme.fg("text", ctxLimit)}\n`;
-		info += `    Context Used:       ${theme.fg("text", ctxUsed)}\n`;
-		info += `    Total Cost:         ${theme.fg("accent", `$${totalCost.toFixed(3)}`)}\n\n`;
-
-		info += `  ${theme.bold(theme.fg("success", "■ PROJECT & RUNTIME"))}\n`;
-		info += `    Working Dir:        ${theme.fg("text", this.session.sessionManager.getCwd())}\n`;
-		info += `    Git Branch:         ${theme.fg("text", branch)}\n`;
-		info += `    Memory Heap:        ${theme.fg("text", `${memUsage.toFixed(1)} MB`)}\n`;
-		const browserCount = this.session.getBrowserBridgeStatus().clients;
-		info += `    Browser Bridge:     ${theme.fg("text", `${browserCount} client${browserCount === 1 ? "" : "s"} connected`)}\n`;
-		info += `    Session Stats:      ${theme.fg("text", `${stats.userMessages} User / ${stats.assistantMessages} Assistant`)}\n`;
-
-		this.chatContainer.addChild(new Spacer(1));
-		this.chatContainer.addChild(new Text(info, 1, 0));
-		this.ui.requestRender();
-	}
-
-	private async handleUpdateCommand(args: string): Promise<void> {
-		if (this.session.isStreaming || this.session.isCompacting) {
-			this.showWarning("Guncelleme icin mevcut islemin bitmesini bekleyin.");
-			return;
-		}
-
-		const parsedArgs = args ? args.split(/\s+/).filter(Boolean) : [];
-		try {
-			this.ui.stop();
-			await handlePackageCommand(["update", ...parsedArgs]);
-			await this.ui.terminal.readKey();
-		} catch (err: any) {
-			const message = err instanceof Error ? err.message : String(err);
-			console.error(`\nError: Guncelleme basarisiz (${message})`);
-			await this.ui.terminal.readKey();
-		} finally {
-			this.ui.start();
-			this.ui.requestRender(true);
-			this.showStatus("Guncelleme islemi tamamlandi. Degisiklikler icin /reload onerilir.");
 		}
 	}
 
@@ -7576,7 +5569,7 @@ export class InteractiveMode {
 				this.showStatus(`Session exported to: ${filePath}`);
 			}
 		} catch (error: unknown) {
-			this.showError(`Session export failed: ${error instanceof Error ? error.message : "Bilinmeyen hata"}`);
+			this.showError(`Failed to export session: ${error instanceof Error ? error.message : "Unknown error"}`);
 		}
 	}
 
@@ -7593,65 +5586,63 @@ export class InteractiveMode {
 			return undefined;
 		}
 
-		// Take the rest of the string as the path, allowing spaces.
-		// If the user provided quotes, strip them so path.resolve works correctly.
-		let path = argsString;
-		if ((path.startsWith('"') && path.endsWith('"')) || (path.startsWith("'") && path.endsWith("'"))) {
-			path = path.slice(1, -1);
+		const firstChar = argsString[0];
+		if (firstChar === '"' || firstChar === "'") {
+			const closingQuoteIndex = argsString.indexOf(firstChar, 1);
+			if (closingQuoteIndex < 0) {
+				return undefined;
+			}
+			return argsString.slice(1, closingQuoteIndex);
 		}
-		return path;
+
+		const firstWhitespaceIndex = argsString.search(/\s/);
+		if (firstWhitespaceIndex < 0) {
+			return argsString;
+		}
+		return argsString.slice(0, firstWhitespaceIndex);
 	}
 
 	private async handleImportCommand(text: string): Promise<void> {
 		const inputPath = this.getPathCommandArgument(text, "/import");
 		if (!inputPath) {
-			this.showError("Kullanım: /import <dosya_yolu.jsonl>");
+			this.showError("Usage: /import <path.jsonl>");
 			return;
 		}
 
-		const confirmed = await this.showExtensionConfirm(
-			"Oturumu içe aktar",
-			`Mevcut oturum ${inputPath} ile değiştirilsin mi?`,
-		);
+		const confirmed = await this.showExtensionConfirm("Import session", `Replace current session with ${inputPath}?`);
 		if (!confirmed) {
-			this.showStatus("Ice aktarma cancel edildi");
+			this.showStatus("Import cancelled");
 			return;
 		}
 
 		try {
-			if (this.loadingAnimation) {
-				this.loadingAnimation.stop();
-				this.loadingAnimation = undefined;
-			}
-			this.statusContainer.clear();
+			this.clearStatusIndicator();
 			const result = await this.runtimeHost.importFromJsonl(inputPath);
 			if (result.cancelled) {
-				this.showStatus("Ice aktarma cancel edildi");
+				this.showStatus("Import cancelled");
 				return;
 			}
-			this.renderCurrentSessionState();
 			this.showStatus(`Session imported from: ${inputPath}`);
 		} catch (error: unknown) {
 			if (error instanceof MissingSessionCwdError) {
 				const selectedCwd = await this.promptForMissingSessionCwd(error);
 				if (!selectedCwd) {
-					this.showStatus("Ice aktarma cancel edildi");
+					this.showStatus("Import cancelled");
 					return;
 				}
 				const result = await this.runtimeHost.importFromJsonl(inputPath, selectedCwd);
 				if (result.cancelled) {
-					this.showStatus("Ice aktarma cancel edildi");
+					this.showStatus("Import cancelled");
 					return;
 				}
-				this.renderCurrentSessionState();
 				this.showStatus(`Session imported from: ${inputPath}`);
 				return;
 			}
 			if (error instanceof SessionImportFileNotFoundError) {
-				this.showError(`İçe aktarma başarısız: ${error.message}`);
+				this.showError(`Failed to import session: ${error.message}`);
 				return;
 			}
-			await this.handleFatalRuntimeError("Oturum içe aktarılamadı", error);
+			await this.handleFatalRuntimeError("Failed to import session", error);
 		}
 	}
 
@@ -7660,11 +5651,11 @@ export class InteractiveMode {
 		try {
 			const authResult = spawnSync("gh", ["auth", "status"], { encoding: "utf-8" });
 			if (authResult.status !== 0) {
-				this.showError("GitHub CLI oturumu açılmamış. Önce 'gh auth login' komutunu çalıştırın.");
+				this.showError("GitHub CLI is not logged in. Run 'gh auth login' first.");
 				return;
 			}
 		} catch {
-			this.showError("GitHub CLI (gh) kurulu değil. https://cli.github.com/ adresinden kurun.");
+			this.showError("GitHub CLI (gh) is not installed. Install it from https://cli.github.com/");
 			return;
 		}
 
@@ -7673,12 +5664,12 @@ export class InteractiveMode {
 		try {
 			await this.session.exportToHtml(tmpFile);
 		} catch (error: unknown) {
-			this.showError(`Session export failed: ${error instanceof Error ? error.message : "Bilinmeyen hata"}`);
+			this.showError(`Failed to export session: ${error instanceof Error ? error.message : "Unknown error"}`);
 			return;
 		}
 
 		// Show cancellable loader, replacing the editor
-		const loader = new BorderedLoader(this.ui, theme, "Gist oluşturuluyor...");
+		const loader = new BorderedLoader(this.ui, theme, "Creating gist...");
 		this.editorContainer.clear();
 		this.editorContainer.addChild(loader);
 		this.ui.setFocus(loader);
@@ -7702,7 +5693,7 @@ export class InteractiveMode {
 		loader.onAbort = () => {
 			proc?.kill();
 			restoreEditor();
-			this.showStatus("Paylaşım cancel edildi");
+			this.showStatus("Share cancelled");
 		};
 
 		try {
@@ -7724,8 +5715,8 @@ export class InteractiveMode {
 			restoreEditor();
 
 			if (result.code !== 0) {
-				const errorMsg = result.stderr?.trim() || "Bilinmeyen hata";
-				this.showError(`Gist oluşturulamadı: ${errorMsg}`);
+				const errorMsg = result.stderr?.trim() || "Unknown error";
+				this.showError(`Failed to create gist: ${errorMsg}`);
 				return;
 			}
 
@@ -7734,17 +5725,17 @@ export class InteractiveMode {
 			const gistUrl = result.stdout?.trim();
 			const gistId = gistUrl?.split("/").pop();
 			if (!gistId) {
-				this.showError("gh çıktısından gist ID'si alınamadı");
+				this.showError("Failed to parse gist ID from gh output");
 				return;
 			}
 
 			// Create the preview URL
 			const previewUrl = getShareViewerUrl(gistId);
-			this.showStatus(`Paylasim URL'si: ${previewUrl}\nGist: ${gistUrl}`);
+			this.showStatus(`Share URL: ${previewUrl}\nGist: ${gistUrl}`);
 		} catch (error: unknown) {
 			if (!loader.signal.aborted) {
 				restoreEditor();
-				this.showError(`Gist oluşturulamadı: ${error instanceof Error ? error.message : "Bilinmeyen hata"}`);
+				this.showError(`Failed to create gist: ${error instanceof Error ? error.message : "Unknown error"}`);
 			}
 		}
 	}
@@ -7752,46 +5743,16 @@ export class InteractiveMode {
 	private async handleCopyCommand(): Promise<void> {
 		const text = this.session.getLastAssistantText();
 		if (!text) {
-			this.showError("Henüz kopyalanacak bir mesaj yok.");
+			this.showError("No agent messages to copy yet.");
 			return;
 		}
 
 		try {
 			await copyToClipboard(text);
-			this.showStatus("Son asistan mesajı panoya kopyalandı");
+			this.showStatus("Copied last agent message to clipboard");
 		} catch (error) {
 			this.showError(error instanceof Error ? error.message : String(error));
 		}
-	}
-
-	private handleExecuteLastBash(): void {
-		const text = this.session.getLastAssistantText();
-		if (!text) {
-			this.showError("Henüz çalıştırılacak bir mesaj yok.");
-			return;
-		}
-
-		// Find the last bash or sh code block
-		const regex = /```(?:bash|sh)\n([\s\S]*?)```/gi;
-		let lastMatch: RegExpExecArray | null = null;
-		let match: RegExpExecArray | null;
-
-		match = regex.exec(text);
-		while (match !== null) {
-			lastMatch = match;
-			match = regex.exec(text);
-		}
-
-		if (lastMatch?.[1]) {
-			const command = lastMatch[1].trim();
-			if (command) {
-				this.showStatus("Son bash komutu çalıştırılıyor...");
-				this.handleBashCommand(command, false);
-				return;
-			}
-		}
-
-		this.showError("Son asistan mesajında bash kod bloğu bulunamadı.");
 	}
 
 	private handleNameCommand(text: string): void {
@@ -7802,335 +5763,96 @@ export class InteractiveMode {
 				this.chatContainer.addChild(new Spacer(1));
 				this.chatContainer.addChild(new Text(theme.fg("dim", `Session name: ${currentName}`), 1, 0));
 			} else {
-				this.showWarning("Kullanım: /name <isim>");
+				this.showWarning("Usage: /name <name>");
 			}
 			this.ui.requestRender();
 			return;
 		}
 
 		this.session.setSessionName(name);
+		const sessionName = this.sessionManager.getSessionName();
+		if (sessionName !== name) {
+			this.showWarning(`Session name was normalized from ${JSON.stringify(name)} to ${JSON.stringify(sessionName)}`);
+		}
 		this.chatContainer.addChild(new Spacer(1));
-		this.chatContainer.addChild(new Text(theme.fg("dim", `Session name ayarlandı: ${name}`), 1, 0));
+		this.chatContainer.addChild(new Text(theme.fg("dim", `Session name set: ${sessionName ?? name}`), 1, 0));
 		this.ui.requestRender();
 	}
 
 	private handleSessionCommand(): void {
 		const stats = this.session.getSessionStats();
 		const sessionName = this.sessionManager.getSessionName();
+		const entries = this.sessionManager.getEntries();
+		const cacheWaste = computeCacheWaste(entries, this.session.modelRegistry);
+
+		// Cost/token totals per provider/model actually used (e.g. OpenRouter `auto`
+		// resolves to a concrete responseModel), sorted by cost descending.
+		const perModelMap = new Map<string, { key: string; cost: number; tokens: number }>();
+		for (const entry of entries) {
+			if (entry.type !== "message" || entry.message.role !== "assistant") continue;
+			const message = entry.message;
+			const usage = message.usage;
+			const key = `${message.provider}/${message.responseModel ?? message.model}`;
+			let bucket = perModelMap.get(key);
+			if (!bucket) {
+				bucket = { key, cost: 0, tokens: 0 };
+				perModelMap.set(key, bucket);
+			}
+			bucket.cost += usage.cost.total;
+			bucket.tokens += usage.input + usage.output + usage.cacheRead + usage.cacheWrite;
+		}
+		const perModel = Array.from(perModelMap.values()).sort((a, b) => b.cost - a.cost);
 
 		let info = `${theme.bold("Session Info")}\n\n`;
 		if (sessionName) {
-			info += `${theme.fg("dim", "İsim:")} ${sessionName}\n`;
+			info += `${theme.fg("dim", "Name:")} ${sessionName}\n`;
 		}
-		info += `${theme.fg("dim", "Dosya:")} ${stats.sessionFile ?? "Bellekte"}\n`;
-		info += `${theme.fg("dim", "Kimlik:")} ${stats.sessionId}\n\n`;
-		info += `${theme.bold("Mesajlar")}\n`;
-		info += `${theme.fg("dim", "Kullanıcı:")} ${stats.userMessages}\n`;
-		info += `${theme.fg("dim", "Asistan:")} ${stats.assistantMessages}\n`;
-		info += `${theme.fg("dim", "Araç Çağrıları:")} ${stats.toolCalls}\n`;
-		info += `${theme.fg("dim", "Araç Sonuçları:")} ${stats.toolResults}\n`;
-		info += `${theme.fg("dim", "Toplam:")} ${stats.totalMessages}\n\n`;
-		info += `${theme.bold("Jetonlar")}\n`;
-		info += `${theme.fg("dim", "Giriş:")} ${stats.tokens.input.toLocaleString()}\n`;
-		info += `${theme.fg("dim", "Çıkış:")} ${stats.tokens.output.toLocaleString()}\n`;
-		if (stats.tokens.cacheRead > 0) {
-			info += `${theme.fg("dim", "Önbellek Okuma:")} ${stats.tokens.cacheRead.toLocaleString()}\n`;
+		info += `${theme.fg("dim", "File:")} ${stats.sessionFile ?? "In-memory"}\n`;
+		info += `${theme.fg("dim", "ID:")} ${stats.sessionId}\n\n`;
+		info += `${theme.bold("Messages")}\n`;
+		info += `${theme.fg("dim", "Total:")} ${stats.totalMessages}\n`;
+		info += `${theme.fg("dim", "User:")} ${stats.userMessages}\n`;
+		info += `${theme.fg("dim", "Assistant:")} ${stats.assistantMessages}\n`;
+		info += `${theme.fg("dim", "Tools:")} ${stats.toolCalls} calls, ${stats.toolResults} results\n\n`;
+		info += `${theme.bold("Tokens")}\n`;
+		// "Input" is the full prompt volume. With cache activity, split it into
+		// cached (served from cache) vs uncached (everything else) - the only
+		// provider-independent split. Cache writes, where reported, are a detail
+		// of the uncached portion.
+		const { input, cacheRead, cacheWrite } = stats.tokens;
+		const promptTokens = input + cacheRead + cacheWrite;
+		info += `${theme.fg("dim", "Input:")} ${promptTokens.toLocaleString()}\n`;
+		if (promptTokens > 0 && (cacheRead > 0 || cacheWrite > 0)) {
+			const hitRate = theme.fg("dim", `(${((cacheRead / promptTokens) * 100).toFixed(1)}%)`);
+			info += `  ${theme.fg("dim", "Cached:")} ${cacheRead.toLocaleString()} ${hitRate}\n`;
+			const written =
+				cacheWrite > 0 ? ` ${theme.fg("dim", `(${cacheWrite.toLocaleString()} written to cache)`)}` : "";
+			info += `  ${theme.fg("dim", "Uncached:")} ${(input + cacheWrite).toLocaleString()}${written}\n`;
 		}
-		if (stats.tokens.cacheWrite > 0) {
-			info += `${theme.fg("dim", "Önbellek Yazma:")} ${stats.tokens.cacheWrite.toLocaleString()}\n`;
-		}
-		info += `${theme.fg("dim", "Toplam:")} ${stats.tokens.total.toLocaleString()}\n`;
+		info += `${theme.fg("dim", "Output:")} ${stats.tokens.output.toLocaleString()}\n`;
+		info += `${theme.fg("dim", "Total:")} ${stats.tokens.total.toLocaleString()}\n`;
 
-		if (stats.cost > 0) {
-			info += `\n${theme.bold("Maliyet")}\n`;
-			info += `${theme.fg("dim", "Toplam:")} ${stats.cost.toFixed(4)}`;
+		if (stats.cost > 0 || cacheWaste.missedTokens > 0) {
+			info += `\n${theme.bold("Cost")}\n`;
+			info += `${theme.fg("dim", "Total:")} $${stats.cost.toFixed(3)}`;
+			if (perModel.length > 1) {
+				for (const entry of perModel) {
+					info += `\n  ${theme.fg("dim", `${entry.key}:`)} $${entry.cost.toFixed(3)} ${theme.fg("dim", `(${formatTokens(entry.tokens)} tokens)`)}`;
+				}
+			}
+			if (cacheWaste.missedTokens > 0) {
+				const missLabel = cacheWaste.missCount === 1 ? "1 miss" : `${cacheWaste.missCount} misses`;
+				const detail = `${cacheWaste.missedTokens.toLocaleString()} tokens, ${missLabel}`;
+				info +=
+					cacheWaste.missedCost >= 0.0001
+						? `\n${theme.fg("dim", "Cache Re-billed:")} $${cacheWaste.missedCost.toFixed(3)} ${theme.fg("dim", `(${detail})`)}`
+						: `\n${theme.fg("dim", "Cache Re-billed:")} ${detail}`;
+			}
 		}
 
 		this.chatContainer.addChild(new Spacer(1));
 		this.chatContainer.addChild(new Text(info, 1, 0));
 		this.ui.requestRender();
-	}
-
-	// -------------------------------------------------------------------------
-	// /hub — Astro-Agent Dashboard
-	// -------------------------------------------------------------------------
-	private handleHubCommand(): void {
-		const stats = this.session.getSessionStats();
-		const model = this.session.model;
-		const contextUsage = this.session.getContextUsage();
-		const memMB = (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(1);
-		const uptimeSec = Math.floor(process.uptime());
-		const uptimeStr = uptimeSec >= 60 ? `${Math.floor(uptimeSec / 60)}m ${uptimeSec % 60}s` : `${uptimeSec}s`;
-		const cwd = this.sessionManager.getCwd();
-		const branch = this.footerDataProvider.getGitBranch();
-
-		// Shadow-Git snapshot count
-		const shadowDir = path.join(cwd, ".astroagent", "shadow");
-		let shadowCount = 0;
-		try {
-			shadowCount = fs.readdirSync(shadowDir).filter((f) => f.endsWith(".bak")).length;
-		} catch {}
-
-		const ctxPct = contextUsage?.percent ?? 0;
-		const barFilled = Math.round((ctxPct / 100) * 20);
-		const ctxColor = ctxPct > 85 ? "error" : ctxPct > 65 ? "warning" : "accent";
-		const ctxBar = theme.fg(ctxColor, "■".repeat(barFilled)) + theme.fg("dim", "□".repeat(20 - barFilled));
-
-		const sep = theme.fg("dim", "─".repeat(50));
-		const lbl = (l: string) => theme.fg("muted", l.padEnd(20));
-		const v = (s: string) => theme.fg("text", s);
-		const badge = (txt: string, c = "accent") => theme.bold(theme.fg(c as any, `[ ${txt} ]`));
-
-		const info = [
-			theme.bold(theme.fg("accent", "◆ Astro-Agent HUB")),
-			sep,
-			`${lbl("Model")}${v(model ? `${model.provider}/${model.id}` : "—")}`,
-			`${lbl("Proje")}${v(path.basename(cwd))}`,
-			`${lbl("Branch")}${v(branch || "—")}`,
-			sep,
-			theme.bold("  Session"),
-			`${lbl("  Mesajlar")}${v(`${stats.userMessages}u · ${stats.assistantMessages}a`)}`,
-			`${lbl("  Token")}${v(stats.tokens.total.toLocaleString())}`,
-			`${lbl("  Maliyet")}${v(stats.cost > 0 ? `$${stats.cost.toFixed(4)}` : "—")}`,
-			sep,
-			theme.bold("  Sistem"),
-			`${lbl("  Bellek (heap)")}${v(`${memMB} MB`)}`,
-			`${lbl("  Uptime")}${v(uptimeStr)}`,
-			`${lbl("  Bağlam")}  ${ctxBar}  ${theme.fg("dim", `${ctxPct.toFixed(1)}%`)}`,
-			sep,
-			theme.bold("  Koruma"),
-			`${lbl("  Shadow-Git")}${shadowCount > 0 ? badge(`${shadowCount} snapshot`, "accent") : badge("Aktif", "success")}`,
-			`${lbl("  Plan Modu")}${this.isPlanMode ? badge("AÇIK", "warning") : theme.fg("dim", "kapalı")}`,
-			sep,
-			theme.fg("dim", "  Komutlar: /rewind  /context  /session  /diff  /plan  /compact"),
-		].join("\n");
-
-		this.chatContainer.addChild(new Spacer(1));
-		this.chatContainer.addChild(new Text(info, 1, 0));
-		this.ui.requestRender();
-	}
-
-	// -------------------------------------------------------------------------
-	// /context — Context window kullanim gosterge
-	// -------------------------------------------------------------------------
-	private handleContextCommand(): void {
-		const stats = this.session.getSessionStats();
-		const usage = stats.contextUsage;
-
-		let info = `${theme.bold("Context Window Durumu")}\n\n`;
-
-		if (usage) {
-			const usedTokens = usage.inputTokens ?? stats.tokens.input;
-			const maxTokens = usage.contextWindowSize;
-			const usedPct = maxTokens > 0 ? Math.min(100, Math.round((usedTokens / maxTokens) * 100)) : 0;
-
-			// Renk: %0-60 yesil, %60-85 sari, %85+ kirmizi
-			const barColor: ThemeColor = usedPct >= 85 ? "error" : usedPct >= 60 ? "warning" : "success";
-			const filledLen = Math.round((usedPct / 100) * 30);
-			const bar = theme.fg(barColor, "█".repeat(filledLen)) + theme.fg("dim", "░".repeat(30 - filledLen));
-
-			info += `${bar} ${theme.bold(`${usedPct}%`)}\n`;
-			info += `${theme.fg("dim", "Kullanilan:")} ${usedTokens.toLocaleString()} / ${maxTokens.toLocaleString()} token\n`;
-			info += `${theme.fg("dim", "Kalan:")}    ${(maxTokens - usedTokens).toLocaleString()} token\n\n`;
-		} else {
-			info += `${theme.fg("dim", "Giriş:")} ${stats.tokens.input.toLocaleString()} token\n`;
-			info += `${theme.fg("dim", "Cikis:")} ${stats.tokens.output.toLocaleString()} token\n`;
-			info += `${theme.fg("dim", "Toplam:")} ${stats.tokens.total.toLocaleString()} token\n\n`;
-			info += `${theme.fg("muted", "Not: Tam context window bilgisi bu model icin mevcut degil")}\n`;
-		}
-
-		info += `${theme.bold("Mesajlar")}\n`;
-		info += `${theme.fg("dim", "Kullanici:")} ${stats.userMessages}  ${theme.fg("dim", "Asistan:")} ${stats.assistantMessages}  ${theme.fg("dim", "Arac:")} ${stats.toolCalls}\n`;
-		info += `\n${theme.fg("muted", "Ipucu: Context doluyorsa /compact ile sikistrabilirsin")}\n`;
-
-		this.chatContainer.addChild(new Spacer(1));
-		this.chatContainer.addChild(new Text(info, 1, 0));
-		this.ui.requestRender();
-	}
-
-	// -------------------------------------------------------------------------
-	// /plan — Read-only analiz modu (Claude Code Plan Mode benzeri)
-	// -------------------------------------------------------------------------
-	private handlePlanCommand(arg: string): void {
-		const enable = arg === "on" ? true : arg === "off" ? false : !this.isPlanMode;
-
-		if (enable === this.isPlanMode) {
-			this.showStatus(
-				this.isPlanMode
-					? "Plan modu zaten aktif. /plan off ile kapat."
-					: "Plan modu zaten kapali. /plan on ile ac.",
-			);
-			return;
-		}
-
-		this.isPlanMode = enable;
-
-		if (enable) {
-			// Plan mode: write, edit, bash toollarini kaldir
-			this.session.setActiveToolsByName(["read", "grep", "find", "ls", "browser_tabs", "browser_page"]);
-			const msg =
-				`${theme.bold(theme.fg("accent", "Plan Modu Aktif"))}\n\n` +
-				`${theme.fg("dim", "Dosya yazma ve bash devre disi. Web erisimi sadece Browser Bridge uzerinden.")}\n` +
-				`${theme.fg("dim", "Onay vermeden hicbir degisiklik yapilmayacak.")}\n\n` +
-				`${theme.fg("muted", "/plan off ile normal moda don.")}\n`;
-			this.chatContainer.addChild(new Spacer(1));
-			this.chatContainer.addChild(new Text(msg, 1, 0));
-			this.showStatus("[PLAN] Plan modu aktif - model sadece okuyabilir");
-		} else {
-			// Normal moda don: tum toollar geri
-			this.session.setActiveToolsByName([
-				"read",
-				"bash",
-				"edit",
-				"write",
-				"grep",
-				"find",
-				"ls",
-				"git_ship",
-				"browser_tabs",
-				"browser_page",
-			]);
-			const msg =
-				`${theme.bold(theme.fg("success", "Normal Mod"))}\n\n` +
-				`${theme.fg("dim", "Tum toollar yeniden aktif. Dosya yazma, bash, git_ship ve Browser Bridge kullanilabilir.")}\n`;
-			this.chatContainer.addChild(new Spacer(1));
-			this.chatContainer.addChild(new Text(msg, 1, 0));
-			this.showStatus("Plan modu kapandi - tum toollar aktif");
-		}
-		this.footer.invalidate();
-		this.ui.requestRender();
-	}
-
-	// -------------------------------------------------------------------------
-	// /init — MOON.md workspace belgesi olustur
-	// -------------------------------------------------------------------------
-	private handleAutoThinkCommand(arg: string): void {
-		const normalized = arg.trim().toLowerCase();
-		if (normalized === "on" || normalized === "true" || normalized === "1") {
-			this.session.setAutoThinkEnabled(true);
-			this.showStatus("AutoThink acildi. Detayli islerde xhigh, uygulama adimlarinda minimal/low kullanilacak.");
-			return;
-		}
-		if (normalized === "off" || normalized === "false" || normalized === "0") {
-			this.session.setAutoThinkEnabled(false);
-			this.showStatus("AutoThink kapatildi. Dusunme seviyesi elle sectigin ayarda kalacak.");
-			return;
-		}
-		this.showStatus(`Kullanim: /autothink on|off (su an: ${this.session.getAutoThinkEnabled() ? "on" : "off"})`);
-	}
-
-	private handleRoutingCommand(arg: string): void {
-		const normalized = arg.trim().toLowerCase();
-		if (normalized === "on" || normalized === "true" || normalized === "1") {
-			this.session.setAutoEscalateModel(true);
-			this.showStatus(
-				"Model Routing acildi. Gemini/Ollama gibi hizli modeller kullanilirken, karmasik plan ve refactor islemlerinde otomatik olarak Claude'a gecilecek.",
-			);
-			return;
-		}
-		if (normalized === "off" || normalized === "false" || normalized === "0") {
-			this.session.setAutoEscalateModel(false);
-			this.showStatus("Model Routing kapatildi. Model gecisleri sadece manuel olarak yapilacak.");
-			return;
-		}
-
-		const status = this.session.getAutoEscalateModel() ? "on" : "off";
-		const smart = this.session.settingsManager.getSmartModel();
-		const smartStr = smart ? `${smart.provider}/${smart.id}` : "yok";
-		this.showStatus(`Kullanim: /routing on|off (su an: ${status}). Hedef premium model: ${smartStr}`);
-	}
-	private handleAutomationCommand(arg: string): void {
-		const normalized = arg.trim().toLowerCase();
-		if (normalized === "on" || normalized === "true" || normalized === "1") {
-			this.session.setAutomationEnabled(true);
-			this.showStatus("Automation acildi. Gorevini yaz: app/browser/terminal akisini mantikli sekilde yurutur.");
-		} else if (normalized === "off" || normalized === "false" || normalized === "0") {
-			this.session.setAutomationEnabled(false);
-			this.showStatus("Automation kapatildi.");
-		} else if (normalized === "confirm off") {
-			this.session.setAutomationRequireConfirmation(false);
-			this.showStatus("Automation onay modu kapali. Kritik islerde yine acik niyet aranir.");
-		} else if (normalized === "confirm on") {
-			this.session.setAutomationRequireConfirmation(true);
-			this.showStatus("Automation onay modu acik.");
-		} else {
-			const enabled = this.session.getAutomationEnabled() ? "acik" : "kapali";
-			const confirm = this.session.getAutomationRequireConfirmation() ? "acik" : "kapali";
-			this.showStatus(`Automation: ${enabled} | onay: ${confirm} | /automation on|off|confirm on|confirm off`);
-		}
-		this.footer.invalidate();
-		this.ui.requestRender();
-	}
-
-	private async handleInitCommand(): Promise<void> {
-		const cwd = this.sessionManager.getCwd();
-		const astroPath = path.join(cwd, "ASTRO.md");
-		const agentsPath = path.join(cwd, "AGENTS.md");
-
-		const targetPath = fs.existsSync(agentsPath) ? agentsPath : astroPath;
-		const fileName = path.basename(targetPath);
-
-		if (fs.existsSync(targetPath)) {
-			this.showStatus(`${fileName} zaten mevcut - uzerine yazilmadi`);
-			return;
-		}
-
-		const projectName = path.basename(cwd);
-		const content = [
-			`# ${projectName} — Proje Kurallari`,
-			"",
-			"## Genel Prensipler",
-			"",
-			"- Kodu kisa, okunabilir ve production-ready tut",
-			"- Over-engineering ve gereksiz abstraction'dan kacin",
-			"- Her degisiklikten once repo baglamini oku",
-			"",
-			"## Teknoloji Stack",
-			"",
-			"<!-- Proje teknolojilerini buraya ekle -->",
-			"",
-			"## UI Tasarim Varsayilani",
-			"",
-			"- Kullanici farkli bir stil istemedikce UI: shadcn/ui + Vercel dark SaaS + Linear/Raycast temizligi",
-			"- Mevcut proje design system'i ve component convention'lari onceliklidir",
-			"- Tailwind/Radix/Lucide varsa kullan; yoksa bagimlilik eklemeden ayni estetigi mevcut stack ile taklit et",
-			"- Dark-first, near-black background, neutral cards, thin borders, muted text, strong headings, rounded-xl/2xl",
-			"- Hover, focus-visible, disabled, loading, empty, error, active ve responsive state'leri dusun",
-			"",
-			"## Kod Standartlari",
-			"",
-			"<!-- Linting, formatting, test gereksinimleri -->",
-			"",
-			"## Dizin Yapisi",
-			"",
-			"<!-- Onemli dizinleri ve amaclarini acikla -->",
-			"",
-			"## Calistirmak icin",
-			"",
-			"```bash",
-			"# Gelistirme",
-			"npm run dev",
-			"",
-			"# Build",
-			"npm run build",
-			"",
-			"# Kontrol",
-			"npm run check",
-			"```",
-		].join("\n");
-
-		try {
-			fs.writeFileSync(targetPath, content, "utf-8");
-			const msg =
-				`${theme.bold(theme.fg("success", `${fileName} olusturuldu`))}\n\n` +
-				`${theme.fg("dim", targetPath)}\n\n` +
-				`${theme.fg("muted", "Proje kurallarin ve stack bilgini dosyaya ekle. Moon her oturumda okuyacak.")}\n`;
-			this.chatContainer.addChild(new Spacer(1));
-			this.chatContainer.addChild(new Text(msg, 1, 0));
-			this.ui.requestRender();
-		} catch (err) {
-			this.showError(`${fileName} olusturulamadi: ${err instanceof Error ? err.message : String(err)}`);
-		}
 	}
 
 	private handleChangelogCommand(): void {
@@ -8141,13 +5863,13 @@ export class InteractiveMode {
 			allEntries.length > 0
 				? allEntries
 						.reverse()
-						.map((e) => e.content)
+						.map((e) => normalizeChangelogLinks(e.content, e))
 						.join("\n\n")
-				: "Değişiklik günlüğü kaydı bulunamadı.";
+				: "No changelog entries found.";
 
 		this.chatContainer.addChild(new Spacer(1));
 		this.chatContainer.addChild(new DynamicBorder());
-		this.chatContainer.addChild(new Text(theme.bold(theme.fg("accent", "Yenilikler")), 1, 0));
+		this.chatContainer.addChild(new Text(theme.bold(theme.fg("accent", "What's New")), 1, 0));
 		this.chatContainer.addChild(new Spacer(1));
 		this.chatContainer.addChild(new Markdown(changelogMarkdown, 1, 1, this.getMarkdownThemeWithSettings()));
 		this.chatContainer.addChild(new DynamicBorder());
@@ -8155,32 +5877,17 @@ export class InteractiveMode {
 	}
 
 	/**
-	 * Capitalize keybinding for display (e.g., "ctrl+c" -> "Ctrl+C").
-	 */
-	private capitalizeKey(key: string): string {
-		return key
-			.split("/")
-			.map((k) =>
-				k
-					.split("+")
-					.map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-					.join("+"),
-			)
-			.join("/");
-	}
-
-	/**
 	 * Get capitalized display string for an app keybinding action.
 	 */
 	private getAppKeyDisplay(action: AppKeybinding): string {
-		return this.capitalizeKey(keyText(action));
+		return keyDisplayText(action);
 	}
 
 	/**
 	 * Get capitalized display string for an editor keybinding action.
 	 */
 	private getEditorKeyDisplay(action: Keybinding): string {
-		return this.capitalizeKey(keyText(action));
+		return keyDisplayText(action);
 	}
 
 	private handleHotkeysCommand(): void {
@@ -8222,6 +5929,7 @@ export class InteractiveMode {
 		const toggleThinking = this.getAppKeyDisplay("app.thinking.toggle");
 		const externalEditor = this.getAppKeyDisplay("app.editor.external");
 		const cycleModelBackward = this.getAppKeyDisplay("app.model.cycleBackward");
+		const copyMessage = this.getAppKeyDisplay("app.message.copy");
 		const followUp = this.getAppKeyDisplay("app.message.followUp");
 		const dequeue = this.getAppKeyDisplay("app.message.dequeue");
 		const pasteImage = this.getAppKeyDisplay("app.clipboard.pasteImage");
@@ -8230,7 +5938,7 @@ export class InteractiveMode {
 **Navigation**
 | Key | Action |
 |-----|--------|
-| \`${cursorUp}\` / \`${cursorDown}\` / \`${cursorLeft}\` / \`${cursorRight}\` | Move cursor / browse history (Up when empty) |
+| \`${cursorUp}\` / \`${cursorDown}\` / \`${cursorLeft}\` / \`${cursorRight}\` | Move cursor / browse history |
 | \`${cursorWordLeft}\` / \`${cursorWordRight}\` | Move by word |
 | \`${cursorLineStart}\` | Start of line |
 | \`${cursorLineEnd}\` | End of line |
@@ -8265,9 +5973,10 @@ export class InteractiveMode {
 | \`${expandTools}\` | Toggle tool output expansion |
 | \`${toggleThinking}\` | Toggle thinking block visibility |
 | \`${externalEditor}\` | Edit message in external editor |
+| \`${copyMessage}\` | Copy last assistant message |
 | \`${followUp}\` | Queue follow-up message |
 | \`${dequeue}\` | Restore queued messages |
-| \`${pasteImage}\` | Paste image from clipboard |
+| \`${pasteImage}\` | Paste image or text from clipboard |
 | \`/\` | Slash commands |
 | \`!\` | Run bash command |
 | \`!!\` | Run bash command (excluded from context) |
@@ -8278,20 +5987,20 @@ export class InteractiveMode {
 		const shortcuts = extensionRunner.getShortcuts(this.keybindings.getEffectiveConfig());
 		if (shortcuts.size > 0) {
 			hotkeys += `
-**Uzantılar**
-| Tuş | Eylem |
+**Extensions**
+| Key | Action |
 |-----|--------|
 `;
 			for (const [key, shortcut] of shortcuts) {
 				const description = shortcut.description ?? shortcut.extensionPath;
-				const keyDisplay = key.replace(/\b\w/g, (c) => c.toUpperCase());
+				const keyDisplay = formatKeyText(key, { capitalize: true });
 				hotkeys += `| \`${keyDisplay}\` | ${description} |\n`;
 			}
 		}
 
 		this.chatContainer.addChild(new Spacer(1));
 		this.chatContainer.addChild(new DynamicBorder());
-		this.chatContainer.addChild(new Text(theme.bold(theme.fg("accent", "Klavye Kısayolları")), 1, 0));
+		this.chatContainer.addChild(new Text(theme.bold(theme.fg("accent", "Keyboard Shortcuts")), 1, 0));
 		this.chatContainer.addChild(new Spacer(1));
 		this.chatContainer.addChild(new Markdown(hotkeys.trim(), 1, 1, this.getMarkdownThemeWithSettings()));
 		this.chatContainer.addChild(new DynamicBorder());
@@ -8299,19 +6008,14 @@ export class InteractiveMode {
 	}
 
 	private async handleClearCommand(): Promise<void> {
-		if (this.loadingAnimation) {
-			this.loadingAnimation.stop();
-			this.loadingAnimation = undefined;
-		}
-		this.statusContainer.clear();
+		this.clearStatusIndicator();
 		try {
 			const result = await this.runtimeHost.newSession();
 			if (result.cancelled) {
 				return;
 			}
-			this.renderCurrentSessionState();
 			this.chatContainer.addChild(new Spacer(1));
-			this.chatContainer.addChild(new Text(`${theme.fg("accent", "✓ Yeni oturum başlatıldı")}`, 1, 1));
+			this.chatContainer.addChild(new Text(`${theme.fg("accent", "✓ New session started")}`, 1, 1));
 			this.ui.requestRender();
 		} catch (error: unknown) {
 			await this.handleFatalRuntimeError("Failed to create session", error);
@@ -8325,18 +6029,18 @@ export class InteractiveMode {
 
 		const debugLogPath = getDebugLogPath();
 		const debugData = [
-			`Error ayıklama çıktısı: ${new Date().toISOString()}`,
+			`Debug output at ${new Date().toISOString()}`,
 			`Terminal: ${width}x${height}`,
-			`Toplam satır: ${allLines.length}`,
+			`Total lines: ${allLines.length}`,
 			"",
-			"=== Görünür genişliklere sahip tüm işlenmiş satırlar ===",
+			"=== All rendered lines with visible widths ===",
 			...allLines.map((line, idx) => {
 				const vw = visibleWidth(line);
 				const escaped = JSON.stringify(line);
 				return `[${idx}] (w=${vw}) ${escaped}`;
 			}),
 			"",
-			"=== Motor mesajları (JSONL) ===",
+			"=== Agent messages (JSONL) ===",
 			...this.session.messages.map((msg) => JSON.stringify(msg)),
 			"",
 		].join("\n");
@@ -8346,11 +6050,7 @@ export class InteractiveMode {
 
 		this.chatContainer.addChild(new Spacer(1));
 		this.chatContainer.addChild(
-			new Text(
-				`${theme.fg("accent", "✓ Error ayıklama günlüğü yazıldı")}\n${theme.fg("muted", debugLogPath)}`,
-				1,
-				1,
-			),
+			new Text(`${theme.fg("accent", "✓ Debug log written")}\n${theme.fg("muted", debugLogPath)}`, 1, 1),
 		);
 		this.ui.requestRender();
 	}
@@ -8426,11 +6126,11 @@ export class InteractiveMode {
 		this.bashComponent = new BashExecutionComponent(command, this.ui, excludeFromContext);
 
 		if (isDeferred) {
-			// Show in pending area when engine is streaming
+			// Show in pending area when agent is streaming
 			this.pendingMessagesContainer.addChild(this.bashComponent);
 			this.pendingBashComponents.push(this.bashComponent);
 		} else {
-			// Show in chat immediately when engine is idle
+			// Show in chat immediately when agent is idle
 			this.chatContainer.addChild(this.bashComponent);
 		}
 		this.ui.requestRender();
@@ -8455,22 +6155,11 @@ export class InteractiveMode {
 					result.fullOutputPath,
 				);
 			}
-
-			// AUTO-FIX PROMPT
-			if (result.exitCode !== 0 && result.exitCode !== undefined && !result.cancelled) {
-				this.showStatus("⚠️ Komut hata verdi. Düzeltmek için Enter'a basın (Auto-Fix).");
-				this.editor.setValue(
-					`Az önce çalıştırdığım \`${command}\` komutu şu hatayı verdi:\n\n\`\`\`\n${result.output?.trim()}\n\`\`\`\n\nLütfen bu hatayı analiz et ve nasıl çözeceğimizi söyle.`,
-				);
-			}
 		} catch (error) {
 			if (this.bashComponent) {
 				this.bashComponent.setComplete(undefined, false);
 			}
-			this.showError(`Bash komutu başarısız oldu: ${error instanceof Error ? error.message : "Bilinmeyen hata"}`);
-			// AUTO-FIX PROMPT
-			this.editor.setValue(`Lütfen az önce çalıştırdığım \`${command}\` komutunun hatasını düzelt.`);
-			this.showStatus("Otomatik düzeltme (Auto-Fix) için Enter'a basabilirsiniz.");
+			this.showError(`Bash command failed: ${error instanceof Error ? error.message : "Unknown error"}`);
 		}
 
 		this.bashComponent = undefined;
@@ -8478,19 +6167,7 @@ export class InteractiveMode {
 	}
 
 	private async handleCompactCommand(customInstructions?: string): Promise<void> {
-		const entries = this.sessionManager.getEntries();
-		const messageCount = entries.filter((e) => e.type === "message").length;
-
-		if (messageCount < 2) {
-			this.showWarning("Sıkıştırılacak bir şey yok (henüz mesaj yok)");
-			return;
-		}
-
-		if (this.loadingAnimation) {
-			this.loadingAnimation.stop();
-			this.loadingAnimation = undefined;
-		}
-		this.statusContainer.clear();
+		this.clearStatusIndicator();
 
 		try {
 			await this.session.compact(customInstructions);
@@ -8500,291 +6177,21 @@ export class InteractiveMode {
 	}
 
 	stop(): void {
-		if (this.webUiProcess) {
-			try {
-				if (process.platform === "win32") {
-					spawn("taskkill", ["/F", "/T", "/PID", String(this.webUiProcess.pid)], { shell: true });
-				} else {
-					process.kill(-this.webUiProcess.pid);
-				}
-			} catch {
-				// Ignore cleanup errors
-			}
-		}
-		this.unregisterSignalHandlers();
 		if (this.settingsManager.getShowTerminalProgress()) {
 			this.ui.terminal.setProgress(false);
 		}
-		if (this.loadingAnimation) {
-			this.loadingAnimation.stop();
-			this.loadingAnimation = undefined;
-		}
+		this.clearStatusIndicator();
+		this.themeController.disableAutoSync();
 		this.clearExtensionTerminalInputListeners();
-		if (this.builtInHeader && "dispose" in this.builtInHeader && typeof this.builtInHeader.dispose === "function") {
-			this.builtInHeader.dispose();
-		}
 		this.footer.dispose();
 		this.footerDataProvider.dispose();
 		if (this.unsubscribe) {
 			this.unsubscribe();
 		}
-		if (this.activeMetricsChart) {
-			this.activeMetricsChart.stop();
-			this.activeMetricsChart = undefined;
-		}
 		if (this.isInitialized) {
 			this.ui.stop();
 			this.isInitialized = false;
 		}
-	}
-
-	private async handleMcpCommand(): Promise<void> {
-		await this.handleWebPanelRoute("/mcp", "MCP control panel");
-	}
-
-	private getBlenderMcpConfig(port?: string) {
-		const args = ["--python", "3.12", "blender-mcp"];
-		const targetPort = port && port.trim() !== "" ? port.trim() : "1050";
-		args.push("--port", targetPort);
-		return {
-			command: "uvx",
-			args,
-			env: { DISABLE_TELEMETRY: "true", UV_PYTHON: "3.12", BLENDER_PORT: targetPort },
-			autoStart: false,
-		};
-	}
-
-	private getScratchMcpConfig() {
-		const candidateRoots = [
-			process.env.ASTRO_SCRATCH_MCP_ROOT,
-			path.join(process.cwd(), "scmcp"),
-			path.join(os.homedir(), "scmcp"),
-			path.join(getPackageDir(), "..", "..", "scmcp"),
-		].filter((root): root is string => typeof root === "string" && root.length > 0);
-		const scratchRoot = candidateRoots.find((root) => fs.existsSync(path.join(root, "server", "scratch-mcp.js")));
-		if (!scratchRoot) return undefined;
-		return {
-			command: "node",
-			args: [path.join(scratchRoot, "server", "scratch-mcp.js")],
-			cwd: scratchRoot,
-			env: { DISABLE_TELEMETRY: "true" },
-			autoStart: false,
-		};
-	}
-
-	private async activateMcpServer(
-		name: string,
-		config: { command: string; args?: string[]; cwd?: string; env?: Record<string, string> },
-	) {
-		this.settingsManager.setMcpServer(name, config);
-		await this.settingsManager.flush();
-		return await this.session.connectConfiguredMcpServers(name);
-	}
-
-	private buildMcpPanelState(): any {
-		const configured = this.settingsManager.getMcpServers();
-		const clients = this.session.mcpManager ? [...this.session.mcpManager.getClients().keys()] : [];
-		const servers = Object.entries(configured).map(([name, config]: [string, any]) => ({
-			name,
-			command: config.command,
-			args: config.args || [],
-			cwd: config.cwd,
-			connected: clients.includes(name),
-		}));
-		return {
-			servers,
-			clients,
-			tools: this.session.getActiveToolNames().filter((tool) => tool.includes("_")).length,
-			market: ["https://mcp.so/?tab=latest", "https://mcpmarket.com/search"],
-		};
-	}
-
-	private registerMcpPanel(server: any): void {
-		if (server?.setMcpPanelStateProvider) {
-			server.setMcpPanelStateProvider(() => this.buildMcpPanelState());
-		}
-		if (this.mcpPanelListenerRegistered || !server?.webUiMcpActionListeners) return;
-		this.mcpPanelListenerRegistered = true;
-		server.webUiMcpActionListeners.add(async (action: any) => {
-			const name = String(action?.name || "").trim();
-			if (action?.action === "connect_builtin") {
-				if (name === "blender") {
-					const cfg = this.getBlenderMcpConfig(action?.port);
-					await this.activateMcpServer("blender", cfg);
-					return;
-				}
-				if (name === "scratch") {
-					const config = this.getScratchMcpConfig();
-					if (!config) {
-						throw new Error(
-							"Scratch MCP not configured. Set ASTRO_SCRATCH_MCP_ROOT or place a scmcp folder next to the repo with server/scratch-mcp.js.",
-						);
-					}
-					await this.activateMcpServer("scratch", config);
-					return;
-				}
-				throw new Error("Unknown built-in MCP provider.");
-			}
-			if (action?.action === "connect") {
-				if (!name) throw new Error("Server name is required.");
-				await this.session.connectConfiguredMcpServers(name);
-				return;
-			}
-			if (action?.action === "restart") {
-				if (!this.session.mcpManager) throw new Error("MCP manager is not available.");
-				await this.session.mcpManager.restart();
-				return;
-			}
-			if (action?.action === "remove") {
-				if (!name) throw new Error("Server name is required.");
-				this.settingsManager.removeMcpServer(name);
-				await this.settingsManager.flush();
-				if (this.session.mcpManager) await this.session.mcpManager.restart();
-				return;
-			}
-			if (action?.action === "add_custom") {
-				if (!name) throw new Error("Server name is required.");
-				const config = action?.config;
-				if (!config?.command) throw new Error("MCP config must include a command.");
-				this.settingsManager.setMcpServer(name, config);
-				await this.settingsManager.flush();
-				await this.session.connectConfiguredMcpServers();
-				return;
-			}
-			throw new Error("Unknown MCP panel action.");
-		});
-	}
-
-	private async handleSwarmCommand(task: string): Promise<void> {
-		if (!task) {
-			this.showError("Lütfen bir görev belirtin. Örn: /swarm Bir API endpoint yaz.");
-			return;
-		}
-		this.showStatus("🤖 Swarm (Multi-Agent) Intelligence başlatılıyor...");
-
-		try {
-			// Dynamically import to avoid cyclic dependencies
-			const { SwarmManager } = await import("astro-engine");
-
-			const swarm = new SwarmManager(this.session.model, {
-				streamFn: this.session.engine.streamFn,
-				getApiKey: async (provider: string) => {
-					return await this.session.modelRegistry.getApiKeyForProvider(provider);
-				},
-			});
-
-			swarm.on("swarm:start", (data: any) => this.showStatus(`[Swarm] Başladı: ${data.taskDescription}`));
-			swarm.on("agent:start", (data: any) => this.showStatus(`[Swarm Agent] ${data.role} çalışıyor...`));
-			swarm.on("agent:complete", (data: any) => this.showStatus(`[Swarm Agent] ${data.role} tamamlandı.`));
-
-			const result = await swarm.executeParallelTask(task, []);
-
-			// Feed result back into editor or prompt
-			this.editor.setText(result);
-			this.ui.requestRender();
-			this.showStatus("✅ Swarm görevi başarıyla tamamladı! Sonucu inceleyip gönderebilirsiniz.");
-		} catch (error: any) {
-			this.showError(`Swarm hatası: ${error.message || error}`);
-		}
-	}
-
-	private async handleFixCommand(arg?: string): Promise<void> {
-		this.showStatus("Auto-Healer başlatılıyor...");
-		try {
-			const { AutoHealer } = await import("astro-engine");
-			const healer = new AutoHealer(this.session);
-			await healer.run(arg);
-			this.showStatus("Auto-Healer tamamlandı.");
-		} catch (e: any) {
-			this.showError(`Auto-Healer henüz tam yüklenmedi veya hata verdi: ${e.message}`);
-		}
-	}
-
-	private async handleEvolveCommand(): Promise<void> {
-		this.showStatus("🧬 Meta-Evolution Engine başlatılıyor...");
-		try {
-			const { MetaEvolver } = await import("astro-engine");
-			const evolver = new MetaEvolver(this.session);
-			await evolver.evolve();
-			this.showStatus("🧬 Meta-Evolution döngüsü tetiklendi.");
-		} catch (e: any) {
-			this.showError(`Meta-Evolver yüklenemedi: ${e.message}`);
-		}
-	}
-
-	private async handleSharkCommand(idea?: string): Promise<void> {
-		if (!idea) {
-			this.showError("Lütfen bir fikir belirtin. Örn: /shark depremi önceden tahmin eden bir sismik analiz motoru");
-			return;
-		}
-		this.showStatus("🦈 Shark Mode (Learned Helplessness Buster) başlatılıyor...");
-		try {
-			const { SharkMode } = await import("astro-engine");
-			const shark = new SharkMode(this.session);
-			await shark.unleash(idea);
-			this.showStatus("🦈 Shark Mode initialized! Attempting complex reasoning...");
-		} catch (e: any) {
-			this.showError(`Failed to initialize Shark Mode: ${e.message}`);
-		}
-	}
-
-	// ── Fusion Mode ──
-	private showFusionModeSelector(): void {
-		const fusionState = this.settingsManager.getFusionMode();
-		if (fusionState.enabled) {
-			// Already enabled - toggle off
-			this.settingsManager.setFusionModeEnabled(false);
-			this.showStatus("Fusion Mode kapatıldı. Tek model moduna dönüldü.");
-			return;
-		}
-		// Step 1: Select Think model
-		this.showStatus("Fusion Mode: Düşünme (Think) modeli seçin...");
-		this.showSelector((done1) => {
-			const selector1 = new ModelSelectorComponent(
-				this.ui,
-				this.session.model,
-				this.settingsManager,
-				this.session.modelRegistry,
-				this.session.scopedModels,
-				(thinkModel) => {
-					done1();
-					this.settingsManager.setFusionThinkModel(thinkModel.provider, thinkModel.id);
-					this.showStatus(`Think modeli seçildi: ${thinkModel.id}. Şimdi Code modeli seçin...`);
-					// Step 2: Select Code model
-					setTimeout(() => {
-						this.showSelector((done2) => {
-							const selector2 = new ModelSelectorComponent(
-								this.ui,
-								this.session.model,
-								this.settingsManager,
-								this.session.modelRegistry,
-								this.session.scopedModels,
-								async (codeModel) => {
-									this.settingsManager.setFusionCodeModel(codeModel.provider, codeModel.id);
-									this.settingsManager.setFusionModeEnabled(true);
-									done2();
-									// Set the code model as active model
-									try {
-										await this.session.setModel(codeModel);
-									} catch {}
-									this.footer.invalidate();
-									this.showStatus(`🔥 Fusion Mode aktif! Think: ${thinkModel.id} | Code: ${codeModel.id}`);
-								},
-								() => {
-									done2();
-									this.showStatus("Fusion Mode iptal edildi.");
-								},
-							);
-							return { component: selector2, focus: selector2 };
-						});
-					}, 100);
-				},
-				() => {
-					done1();
-					this.showStatus("Fusion Mode iptal edildi.");
-				},
-			);
-			return { component: selector1, focus: selector1 };
-		});
+		this.unregisterSignalHandlers();
 	}
 }
