@@ -1059,7 +1059,7 @@ export class TUI extends Container {
 		newLines = this.applyLineResets(this.clampLinesToWidth(newLines, width, 0), 0);
 
 		let buffer = "";
-		const useSync = process.env.PI_SYNC_OUTPUT !== "0" && !isTermuxSession();
+		const useSync = false;
 		if (useSync) buffer += "\x1b[?2026h";
 
 		const fullRender = (clearScreen: boolean) => {
@@ -1130,9 +1130,11 @@ export class TUI extends Container {
 
 		const firstVisibleChanged = Math.max(firstChanged, this.previousLines.length - height);
 
-		const moveUp = prevBottomRow - firstVisibleChanged;
-		if (moveUp > 0) {
-			buffer += `\x1b[${moveUp}A`;
+		const delta = prevBottomRow - firstVisibleChanged;
+		if (delta > 0) {
+			buffer += `\x1b[${delta}A`;
+		} else if (delta < 0) {
+			buffer += `\x1b[${-delta}B`;
 		}
 
 		buffer += "\x1b[J"; // Clear screen from cursor down
