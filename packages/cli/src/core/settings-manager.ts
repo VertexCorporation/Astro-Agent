@@ -103,6 +103,8 @@ export type PackageSource =
 			themes?: string[];
 	  };
 
+export type DefaultProjectTrust = "ask" | "always" | "never";
+
 export interface Settings {
 	lastChangelogVersion?: string;
 	defaultProvider?: string;
@@ -163,6 +165,12 @@ export interface Settings {
 		enabled: boolean;
 		tier?: "opus" | "sonnet" | "haiku";
 	};
+	outputPad?: 0 | 1; // Additional padding between output sections (default: 0)
+	showCacheMissNotices?: boolean; // Show cache miss debug notices in UI (default: false)
+	defaultProjectTrust?: DefaultProjectTrust; // Default trust mode for new projects
+	httpIdleTimeoutMs?: number; // HTTP idle timeout for dispatcher (default: 300000)
+	externalEditorCommand?: string; // External editor command (e.g. "code -w")
+	projectTrusted?: boolean; // Whether the current project has been trusted
 }
 
 export interface McpServerConfig {
@@ -1371,6 +1379,92 @@ export class SettingsManager {
 		this.globalSettings.warnings = { ...warnings };
 		this.markModified("warnings");
 		this.save();
+	}
+
+	// =========================================================================
+	// Output Padding
+	// =========================================================================
+
+	getOutputPad(): 0 | 1 {
+		return this.settings.outputPad ?? 0;
+	}
+
+	setOutputPad(padding: 0 | 1): void {
+		this.globalSettings.outputPad = padding;
+		this.markModified("outputPad");
+		this.save();
+	}
+
+	// =========================================================================
+	// Cache Miss Notices
+	// =========================================================================
+
+	getShowCacheMissNotices(): boolean {
+		return this.settings.showCacheMissNotices ?? false;
+	}
+
+	setShowCacheMissNotices(show: boolean): void {
+		this.globalSettings.showCacheMissNotices = show;
+		this.markModified("showCacheMissNotices");
+		this.save();
+	}
+
+	// =========================================================================
+	// Default Project Trust
+	// =========================================================================
+
+	getDefaultProjectTrust(): DefaultProjectTrust {
+		return this.settings.defaultProjectTrust ?? "ask";
+	}
+
+	setDefaultProjectTrust(defaultProjectTrust: DefaultProjectTrust): void {
+		this.globalSettings.defaultProjectTrust = defaultProjectTrust;
+		this.markModified("defaultProjectTrust");
+		this.save();
+	}
+
+	// =========================================================================
+	// HTTP Idle Timeout
+	// =========================================================================
+
+	getHttpIdleTimeoutMs(): number {
+		return this.settings.httpIdleTimeoutMs ?? 300000;
+	}
+
+	setHttpIdleTimeoutMs(timeoutMs: number): void {
+		this.globalSettings.httpIdleTimeoutMs = timeoutMs;
+		this.markModified("httpIdleTimeoutMs");
+		this.save();
+	}
+
+	// =========================================================================
+	// External Editor Command
+	// =========================================================================
+
+	getExternalEditorCommand(): string | undefined {
+		return this.settings.externalEditorCommand;
+	}
+
+	// =========================================================================
+	// Project Trust
+	// =========================================================================
+
+	isProjectTrusted(): boolean {
+		return this.settings.projectTrusted ?? false;
+	}
+
+	setProjectTrusted(trusted: boolean): void {
+		this.globalSettings.projectTrusted = trusted;
+		this.markModified("projectTrusted");
+		this.save();
+	}
+
+	// =========================================================================
+	// Theme Setting (alias for getTheme)
+	// =========================================================================
+
+	getThemeSetting(): string | undefined {
+		return this.settings.theme;
 	}
 
 	// =========================================================================
