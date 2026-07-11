@@ -642,6 +642,8 @@ function loadTheme(name: string, mode?: ColorMode): Theme {
 	return createTheme(themeJson, mode);
 }
 
+export type TerminalTheme = "dark" | "light";
+
 export function getThemeByName(name: string): Theme | undefined {
 	try {
 		return loadTheme(name);

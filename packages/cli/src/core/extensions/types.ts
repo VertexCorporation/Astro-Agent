@@ -47,6 +47,7 @@ import type { EventBus } from "../event-bus.js";
 import type { ExecOptions, ExecResult } from "../exec.js";
 import type { ReadonlyFooterDataProvider } from "../footer-data-provider.js";
 import type { KeybindingsManager } from "../keybindings.js";
+import type { CustomEntry } from "../session-manager.js";
 import type { CustomMessage } from "../messages.js";
 import type { ModelRegistry } from "../model-registry.js";
 import type {
@@ -1051,6 +1052,16 @@ export interface MessageRenderOptions {
 export type MessageRenderer<T = unknown> = (
 	message: CustomMessage<T>,
 	options: MessageRenderOptions,
+	theme: Theme,
+) => Component | undefined;
+
+export interface EntryRenderOptions {
+	expanded: boolean;
+}
+
+export type EntryRenderer<T = unknown> = (
+	entry: CustomEntry<T>,
+	options: EntryRenderOptions,
 	theme: Theme,
 ) => Component | undefined;
 
