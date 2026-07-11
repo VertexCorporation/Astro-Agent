@@ -9,6 +9,10 @@ export type AuthSelectorProvider = {
 	authType: "oauth" | "api_key";
 };
 
+export function formatAuthSelectorProviderType(authType: AuthSelectorProvider["authType"]): string {
+	return authType === "oauth" ? "subscription" : "API key";
+}
+
 /**
  * Component that renders an auth provider selector
  */
