@@ -45,7 +45,7 @@ import { SessionManager } from "./core/session-manager.js";
 import { SettingsManager } from "./core/settings-manager.js";
 import { printTimings, resetTimings, time } from "./core/timings.js";
 import { runMigrations, showDeprecationWarnings } from "./migrations.js";
-import { runHeadlessMode, runPrintMode, runRpcMode, StudioMode } from "./modes/index.js";
+import { InteractiveMode, runHeadlessMode, runPrintMode, runRpcMode } from "./modes/index.js";
 import { ExtensionSelectorComponent } from "./modes/interactive/components/extension-selector.js";
 import { initTheme, stopThemeWatcher } from "./modes/interactive/theme/theme.js";
 import { handleConfigCommand, handlePackageCommand } from "./package-manager-cli.js";
@@ -985,8 +985,7 @@ export async function main(args: string[], options?: MainOptions) {
 		restoreStdout();
 		if (exitCode !== 0) process.exitCode = exitCode;
 		return;
-	} else if (appMode === "interactive") {
-		// Portal/dashboard bypass - direkt chat
+	} else 	if (appMode === "interactive") {
 
 		if (scopedModels.length > 0 && (parsed.verbose || !settingsManager.getQuietStartup())) {
 			const _modelList = scopedModels
@@ -997,7 +996,7 @@ export async function main(args: string[], options?: MainOptions) {
 				.join(", ");
 		}
 
-		const appModeInstance = new StudioMode(runtime, {
+		const appModeInstance = new InteractiveMode(runtime, {
 			migratedProviders,
 			modelFallbackMessage,
 			initialMessage,
@@ -1009,7 +1008,6 @@ export async function main(args: string[], options?: MainOptions) {
 			await appModeInstance.init();
 			time("appModeInstance.init");
 			printTimings();
-			// appModeInstance.stop();
 			stopThemeWatcher();
 			if (process.stdout.writableLength > 0) {
 				await new Promise<void>((resolve) => process.stdout.once("drain", resolve));
@@ -1021,7 +1019,6 @@ export async function main(args: string[], options?: MainOptions) {
 		}
 
 		printTimings();
-		await appModeInstance.init();
 		await appModeInstance.run();
 	} else {
 		printTimings();

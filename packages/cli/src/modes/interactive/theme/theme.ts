@@ -146,6 +146,7 @@ export type ThemeColor =
 
 export type ThemeBg =
 	| "selectedBg"
+	| "surfaceBg"
 	| "userMessageBg"
 	| "customMessageBg"
 	| "toolPendingBg"
@@ -318,11 +319,15 @@ function resolveVarRefs(
 	if (visited.has(value)) {
 		throw new Error(`Circular variable reference detected: ${value}`);
 	}
-	if (!(value in vars)) {
+	// Strip "var(--name)" → "name" for lookup
+	const lookupKey = typeof value === "string" && value.startsWith("var(--") && value.endsWith(")")
+		? value.slice(6, -1)
+		: value;
+	if (!(lookupKey in vars)) {
 		throw new Error(`Variable reference not found: ${value}`);
 	}
 	visited.add(value);
-	return resolveVarRefs(vars[value], vars, visited);
+	return resolveVarRefs(vars[lookupKey], vars, visited);
 }
 
 function resolveThemeColors<T extends Record<string, ColorValue>>(
@@ -450,7 +455,7 @@ let BUILTIN_THEMES: Record<string, ThemeJson> | undefined;
 function getBuiltinThemes(): Record<string, ThemeJson> {
 	if (!BUILTIN_THEMES) {
 		const themesDir = getThemesDir();
-		const builtinThemeFiles = ["github-light.json", "github-dark.json", "tokyo-midnight.json"];
+		const builtinThemeFiles = ["aurora.json", "violet.json", "crimson.json", "github-light.json", "github-dark.json", "tokyo-midnight.json"];
 		BUILTIN_THEMES = {};
 		for (const file of builtinThemeFiles) {
 			const themePath = path.join(themesDir, file);
@@ -596,6 +601,7 @@ function createTheme(themeJson: ThemeJson, mode?: ColorMode, sourcePath?: string
 	const bgColors: Record<ThemeBg, string | number> = {} as Record<ThemeBg, string | number>;
 	const bgColorKeys: Set<string> = new Set([
 		"selectedBg",
+		"surfaceBg",
 		"userMessageBg",
 		"customMessageBg",
 		"toolPendingBg",
@@ -654,7 +660,7 @@ function _detectTerminalBackground(): "dark" | "light" {
 }
 
 function getDefaultTheme(): string {
-	return "github-dark";
+	return "aurora";
 }
 
 function normalizeThemeName(name: string | undefined): string {

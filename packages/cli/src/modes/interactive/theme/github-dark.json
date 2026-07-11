@@ -23,6 +23,7 @@
 		"text": "var(--fg)",
 		"thinkingText": "#8b949e",
 		"selectedBg": "#1f6feb",
+		"surfaceBg": "#161b22",
 		"userMessageBg": "#1f6feb",
 		"userMessageText": "#ffffff",
 		"customMessageBg": "#161b22",

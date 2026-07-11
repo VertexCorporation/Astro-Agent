@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useCallback, useEffect, type React
 import type { Message, Conversation, StatusInfo, ModelInfo, AuthStatus, McpPanelState, TodoItem, AppSettings, SubAgent, BrowserToolStatus } from '../types';
 import { api } from '../lib/api';
 import { useSSE } from '../hooks/useSSE';
+import { stripFableBlock } from '../lib/utils';
 
 interface AppState {
   messages: Message[];
@@ -67,6 +68,9 @@ const defaultSettings: AppSettings = {
 const AppContext = createContext<AppContextType | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
+  function cleanMessages(msgs: Message[]): Message[] {
+    return msgs.map(m => ({ ...m, content: stripFableBlock(m.content || '') }));
+  }
   const [messages, setMessages] = useState<Message[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
@@ -161,7 +165,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
     },
     message_end: () => {
-      api.getHistory().then(setMessages).catch(() => {});
+      api.getHistory().then(msgs => setMessages(cleanMessages(msgs))).catch(() => {});
     },
     engine_end: (data: any) => {
       setLoading(false);
@@ -170,7 +174,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setError(data.error);
       }
       api.getHistory().then(msgs => {
-        setMessages(msgs || []);
+        setMessages(cleanMessages(msgs || []));
         // If last assistant message is empty/error, surface it
         if (msgs && msgs.length > 0) {
           const last = msgs[msgs.length - 1];
@@ -199,7 +203,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // Load messages when active conversation changes
   useEffect(() => {
     if (activeConversationId) {
-      api.getHistory().then(setMessages).catch(() => {});
+      api.getHistory().then(msgs => setMessages(cleanMessages(msgs))).catch(() => {});
     }
   }, [activeConversationId]);
 
@@ -229,7 +233,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setMessages([]);
       await api.switchConversation(id);
       const msgs = await api.getHistory();
-      setMessages(msgs || []);
+      setMessages(cleanMessages(msgs || []));
     } catch (e: any) {
       setError(e.message);
     }

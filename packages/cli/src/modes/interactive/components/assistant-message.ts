@@ -20,12 +20,13 @@ class ThinkingBlock extends Container {
 
 	override render(width: number): string[] {
 		if (width < 6) return super.render(width);
-		const lines = super.render(width - 4);
+		const lines = super.render(width - 6);
 		if (lines.length === 0) return [];
+		const accent = theme.fg("dim", "┊");
 		return [
-			theme.fg("dim", " ╭── Thinking ──"),
-			...lines.map((line) => theme.fg("dim", " │  ") + line),
-			theme.fg("dim", " ╰──────────────"),
+			theme.fg("dim", " ┊") + theme.italic(theme.fg("thinkingText", " thinking")),
+			...lines.map((line) => `${accent} ${line}`),
+			accent,
 		];
 	}
 
@@ -34,9 +35,6 @@ class ThinkingBlock extends Container {
 	}
 }
 
-/**
- * Component that renders a complete assistant message
- */
 export class AssistantMessageComponent extends Container {
 	private contentContainer: Container;
 	private hideThinkingBlock: boolean;
@@ -60,9 +58,8 @@ export class AssistantMessageComponent extends Container {
 		this.hideThinkingBlock = hideThinkingBlock;
 		this.markdownTheme = markdownTheme;
 		this.hiddenThinkingLabel = hiddenThinkingLabel;
-		this.isFusionMode = isFusionMode;
+		(this as any).isFusionMode = isFusionMode;
 
-		// Container for text/thinking content
 		this.contentContainer = new Container();
 		this.addChild(this.contentContainer);
 
@@ -103,14 +100,19 @@ export class AssistantMessageComponent extends Container {
 			return this.cachedLines;
 		}
 
-		const lines = super.render(width);
+		const lines = super.render(Math.max(1, width - 1));
 		if (this.hasToolCalls || lines.length === 0) {
 			this.cachedWidth = width;
 			this.cachedLines = lines;
 			return lines;
 		}
 
-		const result = [...lines];
+		const accentBar = theme.fg("accent", "┃");
+		const result = lines.map((line, i) => {
+			const isEmpty = line.replace(/\x1b\[[0-9;]*m/g, "").trim() === "";
+			if (isEmpty) return `${accentBar}`;
+			return `${accentBar}${line}`;
+		});
 		result[0] = OSC133_ZONE_START + result[0];
 		result[result.length - 1] = OSC133_ZONE_END + OSC133_ZONE_FINAL + result[result.length - 1];
 		this.cachedWidth = width;
@@ -123,11 +125,6 @@ export class AssistantMessageComponent extends Container {
 		this.cachedWidth = undefined;
 		this.cachedLines = undefined;
 
-		const _hasVisibleContent = message.content.some(
-			(c) => (c.type === "text" && c.text.trim()) || (c.type === "thinking" && c.thinking.trim()),
-		);
-
-		// Keep track of which content blocks we've rendered
 		let childIndex = 0;
 
 		for (let i = 0; i < message.content.length; i++) {
@@ -135,15 +132,12 @@ export class AssistantMessageComponent extends Container {
 
 			if (content.type === "text" && content.text.trim()) {
 				let text = content.text.trim();
-
-				// Transform Ryuko protocol strings to be completely hidden in UI
 				text = text.replace(/§\[(.*?)\]§/g, "");
 				text = text.replace(/∄asistan, ∃AGI\./g, "");
 
 				let component = this.contentContainer.children[childIndex] as Markdown | undefined;
 
 				if (!(component instanceof Markdown) || (component as any).isThinking) {
-					// Need a new text Markdown component
 					component = new Markdown(text, 0, 0, this.markdownTheme);
 					this.contentContainer.children[childIndex] = component;
 				} else {
@@ -173,13 +167,10 @@ export class AssistantMessageComponent extends Container {
 			}
 		}
 
-		// Remove any extra children if content shrank
 		if (this.contentContainer.children.length > childIndex) {
 			this.contentContainer.children.splice(childIndex);
 		}
 
-		// Check if aborted - show after partial content
-		// But only if there are no tool calls (tool execution components will show the error)
 		const hasToolCalls = message.content.some((c) => c.type === "toolCall");
 		this.hasToolCalls = hasToolCalls;
 		if (!hasToolCalls) {

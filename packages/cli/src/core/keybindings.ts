@@ -13,6 +13,11 @@ import { getEngineDir } from "../config.js";
 export interface AppKeybindings {
 	"app.interrupt": true;
 	"app.clear": true;
+	"app.chat.scrollUp": true;
+	"app.chat.scrollDown": true;
+	"app.chat.scrollPageUp": true;
+	"app.chat.scrollPageDown": true;
+	"app.chat.scrollToBottom": true;
 	"app.exit": true;
 	"app.suspend": true;
 	"app.thinking.cycle": true;
@@ -27,6 +32,7 @@ export interface AppKeybindings {
 	"app.message.dequeue": true;
 	"app.message.executeBash": true;
 	"app.clipboard.pasteImage": true;
+	"app.clipboard.copy": true;
 	"app.session.new": true;
 	"app.session.tree": true;
 	"app.session.fork": true;
@@ -111,6 +117,10 @@ export const KEYBINDINGS = {
 	"app.clipboard.pasteImage": {
 		defaultKeys: process.platform === "win32" ? "alt+v" : "ctrl+v",
 		description: "Paste image from clipboard",
+	},
+	"app.clipboard.copy": {
+		defaultKeys: ["shift+ctrl+c"],
+		description: "Copy last response",
 	},
 	"app.session.new": { defaultKeys: [], description: "Start a new session" },
 	"app.session.tree": { defaultKeys: [], description: "Open session tree" },
@@ -203,6 +213,26 @@ export const KEYBINDINGS = {
 	"app.tree.filter.cycleBackward": {
 		defaultKeys: "shift+ctrl+o",
 		description: "Tree filter: cycle backward",
+	},
+	"app.chat.scrollUp": {
+		defaultKeys: ["shift+up"],
+		description: "Scroll chat up",
+	},
+	"app.chat.scrollDown": {
+		defaultKeys: ["shift+down"],
+		description: "Scroll chat down",
+	},
+	"app.chat.scrollPageUp": {
+		defaultKeys: ["pageUp", "shift+pageUp"],
+		description: "Scroll chat page up",
+	},
+	"app.chat.scrollPageDown": {
+		defaultKeys: ["pageDown", "shift+pageDown"],
+		description: "Scroll chat page down",
+	},
+	"app.chat.scrollToBottom": {
+		defaultKeys: "end",
+		description: "Scroll chat to bottom",
 	},
 } as const satisfies KeybindingDefinitions;
 

@@ -399,6 +399,7 @@ export class EngineSession {
 	// Base system prompt (without extension appends) - used to apply fresh appends each turn
 	private _baseSystemPrompt = "";
 	private _baseSystemPromptOptions!: BuildSystemPromptOptions;
+	private _lastToolSetKey = "";
 
 	private _noMemory = true;
 	// Astro Fractal Context Engine
@@ -1052,6 +1053,14 @@ export class EngineSession {
 		}
 		this.engine.state.tools = tools;
 
+		// Skip rebuild if the tool set hasn't changed (saves fractal tree + file I/O each turn)
+		const toolKey = [...validToolNames].sort().join(",");
+		if (toolKey === this._lastToolSetKey && this._baseSystemPrompt) {
+			this.engine.state.systemPrompt = this._baseSystemPrompt;
+			return;
+		}
+		this._lastToolSetKey = toolKey;
+
 		// Rebuild base system prompt with new tool set
 		this._baseSystemPrompt = this._rebuildSystemPrompt(validToolNames);
 		this.engine.state.systemPrompt = this._baseSystemPrompt;
@@ -1290,7 +1299,7 @@ export class EngineSession {
 		const designMode = this._detectDesignMode();
 
 		// Memory system instructions (Claude Fable 5 inspired)
-		const memoryInstructions = buildMemoryInstructions();
+		const memoryInstructions = this._noMemory ? "" : buildMemoryInstructions();
 
 		// Astro Fractal Context Engine: Build compact Merkle Tree codebase skeleton
 		let fractalContextSummary: string | undefined;
@@ -1303,13 +1312,18 @@ export class EngineSession {
 			// Gracefully fail if tree build fails
 		}
 
+		const totalAppend = [appendSystemPrompt, fractalContextSummary, memoryInstructions].filter(Boolean).join("\n\n");
+		const MAX_APPEND_CHARS = 8000;
+		const cappedAppend = totalAppend.length > MAX_APPEND_CHARS
+			? totalAppend.slice(0, MAX_APPEND_CHARS) + `\n…[${totalAppend.length - MAX_APPEND_CHARS}ch trimmed]…`
+			: totalAppend;
+
 		this._baseSystemPromptOptions = {
 			cwd: this._cwd,
 			skills: loadedSkills,
 			contextFiles: loadedContextFiles,
 			customPrompt: loaderSystemPrompt,
-			appendSystemPrompt:
-				[appendSystemPrompt, fractalContextSummary, memoryInstructions].filter(Boolean).join("\n\n") || undefined,
+			appendSystemPrompt: cappedAppend || undefined,
 			selectedTools: validToolNames,
 			toolSnippets,
 			promptGuidelines,
@@ -3813,10 +3827,38 @@ export class EngineSession {
 		}
 
 		const estimate = estimateContextTokens(this.messages);
-		const percent = (estimate.tokens / contextWindow) * 100;
+
+		// Cross-check: provider-reported totalTokens can be inflated by prompt caching
+		// (cacheRead + cacheWrite counted each turn). Compute a simple char-based ceiling
+		// so the displayed % doesn't falsely explode from cache accounting.
+		let charEstimate = 0;
+		for (const msg of this.messages) {
+			if (typeof msg.content === "string") {
+				charEstimate += msg.content.length;
+			} else if (Array.isArray(msg.content)) {
+				for (const part of msg.content) {
+					if (part.type === "text" && typeof part.text === "string") {
+						charEstimate += part.text.length;
+					}
+				}
+			}
+		}
+		// Bash execution messages store output separately
+		for (const msg of this.messages) {
+			if ((msg as any).role === "bashExecution") {
+				charEstimate += ((msg as any).output?.length ?? 0);
+			}
+		}
+		const systemPromptLen = this.engine.state.systemPrompt?.length ?? 0;
+		charEstimate += systemPromptLen;
+		// Conservative estimate: 1 token ≈ 4 chars. Add history overhead margin (2x).
+		const contentBasedEstimate = Math.ceil(charEstimate / 2);
+		const clampedTokens = Math.min(estimate.tokens, contentBasedEstimate);
+
+		const percent = (clampedTokens / contextWindow) * 100;
 
 		return {
-			tokens: estimate.tokens,
+			tokens: clampedTokens,
 			contextWindow,
 			percent,
 		};

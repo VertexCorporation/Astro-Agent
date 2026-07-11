@@ -2,21 +2,12 @@ import { type ThemeColor, theme } from "../theme/theme.js";
 
 export type ToolFrameState = "running" | "success" | "error" | "cancelled" | "pending";
 
-const _BOX = {
-	tl: "╭",
-	tr: "╮",
-	bl: "╰",
-	br: "╯",
-	h: "─",
-	v: "│",
-};
-
 const STATE_PREFIX: Record<ToolFrameState, string> = {
-	running: "⏳",
-	pending: "⏳",
-	success: "✅",
-	error: "❌",
-	cancelled: "⚠️",
+	running: "◇",
+	pending: "◇",
+	success: "✓",
+	error: "✗",
+	cancelled: "△",
 };
 
 const STATE_COLOR: Record<ToolFrameState, ThemeColor> = {
@@ -38,19 +29,14 @@ export function renderToolFrame(
 	const prefix = STATE_PREFIX[state];
 	const prefixColor = STATE_COLOR[state];
 
-	const header = theme.fg(prefixColor, "┌") + theme.bold(theme.fg("toolTitle", `  ${prefix} ${toolName}`));
+	const header = theme.fg(prefixColor, ` ${prefix} `) + theme.bold(theme.fg("toolTitle", toolName));
 
-	const body = contentLines
-		.filter((l) => l.trim().length > 0)
-		.slice(0, 20) // show up to 20 lines inside
-		.map((line) => {
-			return theme.fg(prefixColor, "│ ") + theme.fg("dim", line);
-		});
+	const filteredLines = contentLines.filter((l) => l.trim().length > 0).slice(0, 20);
 
-	if (body.length === 0) {
-		const emptyLine = theme.fg(prefixColor, "│ ") + theme.fg("dim", "...");
-		return [header, emptyLine, theme.fg(prefixColor, "└")];
+	const result: string[] = [header];
+	for (const line of filteredLines) {
+		result.push(theme.fg("dim", `  ${line}`));
 	}
 
-	return [header, ...body, theme.fg(prefixColor, "└")];
+	return result;
 }

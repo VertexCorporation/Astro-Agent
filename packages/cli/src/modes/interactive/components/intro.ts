@@ -1,18 +1,29 @@
 import type { Component } from "astro-tui";
+import { theme } from "../theme/theme.js";
+import { VERSION } from "../../../config.js";
 
-const dim = (s: string) => `\x1b[38;2;70;70;70m${s}\x1b[39m`;
-const muted = (s: string) => `\x1b[38;2;130;130;130m${s}\x1b[39m`;
+export function buildIntroLines(width: number): string[] {
+	if (width < 30) return [theme.fg("dim", "astro-agent")];
 
-export function buildIntroLines(width: number, _phase = 0): string[] {
-	const pad = Math.max(0, Math.floor(width / 2) - 10);
-	const indent = " ".repeat(pad);
-	return ["", indent + muted("ryuko"), indent + dim("type to begin"), ""];
+	const indent = Math.max(0, Math.floor((width - 40) / 2));
+	const pad = " ".repeat(indent);
+
+	const logo = theme.fg("accent", "  ◆  Astro-Agent");
+	const version = theme.fg("dim", ` v${VERSION}`);
+
+	const line1 = pad + logo + version;
+
+	const line2 = pad + theme.fg("muted", "  type /help for commands · / to begin");
+
+	const line3 = pad + theme.fg("dim", "  ─".repeat(Math.min(15, Math.floor((width - indent - 4) / 2))));
+
+	return ["", line1, line3, line2, ""];
 }
 
 export class AstroAgentIntroComponent implements Component {
 	invalidate(): void {}
 	dispose(): void {}
 	render(width: number): string[] {
-		return buildIntroLines(width, 0);
+		return buildIntroLines(width);
 	}
 }

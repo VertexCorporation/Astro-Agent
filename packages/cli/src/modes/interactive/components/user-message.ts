@@ -6,19 +6,16 @@ const OSC133_ZONE_START = "\x1b]133;A\x07";
 const OSC133_ZONE_END = "\x1b]133;B\x07";
 const OSC133_ZONE_FINAL = "\x1b]133;C\x07";
 
-/**
- * Component that renders a user message in a highly elegant, elevated input bar.
- */
 export class UserMessageComponent extends Container {
 	private cachedWidth?: number;
 	private cachedLines?: string[];
 
 	constructor(text: string, markdownTheme: MarkdownTheme = getMarkdownTheme()) {
 		super();
-		this.addChild(new Text("you", 0, 0)); // keep dummy child for compatibility
+		this.addChild(new Text("", 0, 0));
 		this.addChild(
 			new Markdown(text, 0, 0, markdownTheme, {
-				color: (content: string) => theme.fg("userMessageText", content),
+				color: (content: string) => theme.fg("text", content),
 			}),
 		);
 	}
@@ -35,19 +32,19 @@ export class UserMessageComponent extends Container {
 		}
 
 		const child = this.children[1] || this.children[0];
-		const childLines = child ? child.render(width - 6) : [];
-
-		const _steelBlueStripe = ` `;
-		const _userMessageBgCode = ``;
-		const textWhiteCode = `\x1b[38;2;255;255;255m`;
-		const resetCode = `\x1b[0m`;
+		const childLines = child ? child.render(width - 8) : [];
+		const accentLine = theme.fg("accent", "┃");
+		const resetCode = "\x1b[0m";
 
 		const lines: string[] = [];
 
-		for (const line of childLines) {
-			const cleanLine = line.replace(/\x1b\[[0-9;]*m/g, "");
-			const lineBg = `${textWhiteCode} ${cleanLine} ${resetCode}`;
-			lines.push(` ${lineBg}`);
+		for (let i = 0; i < childLines.length; i++) {
+			const cleanLine = childLines[i].replace(/\x1b\[[0-9;]*m/g, "");
+			const painter = i === 0
+				? (s: string) => theme.bold(s)
+				: (s: string) => s;
+			const content = painter(theme.fg("text", ` ${cleanLine}`));
+			lines.push(`${accentLine}${content}`);
 		}
 
 		const result = [...lines];

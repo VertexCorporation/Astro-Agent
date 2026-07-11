@@ -71,3 +71,7 @@ export function clamp(value: number, min: number, max: number): number {
 export function escapeHtml(text: string): string {
   return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
+
+export function stripFableBlock(text: string): string {
+  return text.replace(/<fable-mode>[\s\S]*?<\/fable-mode>\s*/g, '');
+}

@@ -233,16 +233,16 @@ export function convertToLlm(messages: EngineMessage[]): Message[] {
 	return messages
 		.map((m): Message | undefined => {
 			switch (m.role) {
-				case "bashExecution":
-					// Skip messages excluded from context (!! prefix)
-					if (m.excludeFromContext) {
-						return undefined;
-					}
-					return {
-						role: "user",
-						content: [{ type: "text", text: bashExecutionToText(m) }],
-						timestamp: m.timestamp,
-					};
+			case "bashExecution":
+				// Skip messages excluded from context (!! prefix)
+				if (m.excludeFromContext) {
+					return undefined;
+				}
+				return {
+					role: "user",
+					content: [{ type: "text", text: compactContextText(bashExecutionToText(m), TOOL_RESULT_CONTEXT_MAX_CHARS) }],
+					timestamp: m.timestamp,
+				};
 				case "custom": {
 					const content =
 						typeof m.content === "string"

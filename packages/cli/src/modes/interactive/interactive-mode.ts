@@ -194,11 +194,40 @@ class VirtualizedChatContainer extends Container {
 	staticOverhead = 10;
 	staticMaxChildren = 900;
 	staticPruneToChildren = 650;
+	/** 0 = bottom (newest), higher = scrolled up toward older messages */
+	private _scrollOffset = 0;
+	/** Total content lines from last render */
+	private _totalContentLines = 0;
+	/** Viewport lines from last render */
+	private _viewportLines = 0;
+	/** If true, auto-scroll on new content */
+	private _autoScroll = true;
+
+	get scrollOffset(): number { return this._scrollOffset; }
+
+	/** Scroll by delta lines (negative = up, positive = down toward bottom). */
+	scrollBy(delta: number): void {
+		const maxOff = Math.max(0, this._totalContentLines - this._viewportLines);
+		this._scrollOffset = Math.max(0, Math.min(maxOff, this._scrollOffset + delta));
+		this._autoScroll = this._scrollOffset <= 0;
+		this.cachedLines = undefined;
+		this.cachedHeight = undefined;
+	}
+
+	scrollToBottom(): void {
+		this._scrollOffset = 0;
+		this._autoScroll = true;
+		this.cachedLines = undefined;
+		this.cachedHeight = undefined;
+	}
 
 	override addChild(child: Component): void {
 		super.addChild(child);
 		if (isChatMessageComponent(child)) {
 			this.chatItemCount++;
+			if (this._autoScroll) {
+				this.scrollToBottom();
+			}
 		}
 		this.pruneOldChildrenForTuiSpeed();
 	}
@@ -243,11 +272,32 @@ class VirtualizedChatContainer extends Container {
 			}
 		}
 
-		// Calculate how many lines we need to fill the terminal height
-		const fillLines = terminalHeight - this.staticOverhead - lines.length;
+		this._totalContentLines = lines.length;
+		this._viewportLines = terminalHeight - this.staticOverhead;
+
+		const fillLines = this._viewportLines - lines.length;
 		if (fillLines > 0) {
 			for (let i = 0; i < fillLines; i++) {
-				lines.unshift(""); // Pad top so new messages appear at bottom
+				lines.unshift("");
+			}
+		}
+
+		// Apply scroll offset: when content exceeds viewport, show a window
+		if (lines.length > this._viewportLines) {
+			const maxOff = lines.length - this._viewportLines;
+			if (this._scrollOffset > maxOff) {
+				this._scrollOffset = maxOff;
+			}
+			const start = maxOff - this._scrollOffset;
+			lines = lines.slice(start, start + this._viewportLines);
+
+			// Add scroll indicator at top if scrolled up
+			if (this._scrollOffset > 0 && lines.length > 0) {
+				lines[0] = " [^] " + lines[0];
+			}
+			// Add scroll indicator at bottom if not at bottom
+			if (this._scrollOffset < maxOff && lines.length > 1) {
+				lines[lines.length - 1] = lines[lines.length - 1] + " [v]";
 			}
 		}
 
@@ -376,6 +426,8 @@ export class InteractiveMode {
 	// Status line tracking (for mutating immediately-sequential status updates)
 	private lastStatusSpacer: Spacer | undefined = undefined;
 	private lastStatusText: Text | undefined = undefined;
+	private _statusText: Text | undefined = undefined;
+	private _displayUserText: string | undefined = undefined;
 
 	// Streaming message tracking
 	private streamingComponent: AssistantMessageComponent | undefined = undefined;
@@ -433,6 +485,7 @@ export class InteractiveMode {
 	private editorActionListenerRegistered = false;
 	private authPanelListenerRegistered = false;
 	private mcpPanelListenerRegistered = false;
+
 
 	// Extension UI state
 	private extensionSelector: ExtensionSelectorComponent | undefined = undefined;
@@ -916,7 +969,6 @@ export class InteractiveMode {
 			this.ui.addChild(this.headerContainer);
 		}
 
-		// Update main layout contents
 		this.mainLayout.clear();
 		this.mainLayout.addChild(this.chatAndPendingContainer);
 		if (this.currentSteps.length > 0 && !this.isZenMode) {
@@ -928,13 +980,11 @@ export class InteractiveMode {
 
 		this.ui.addChild(this.mainLayout);
 		if (!this.isZenMode) {
-			if (this.subagentStatus) this.ui.addChild(this.subagentStatus);
 			this.ui.addChild(this.statusContainer);
 		}
 		this.renderWidgets();
 		this.ui.addChild(this.widgetContainerAbove);
 		this.ui.addChild(this.widgetContainerBelow);
-		// Composer FIRST (üstte), footer BAR ALTTA
 		this.ui.addChild(this.editorContainer);
 		if (!this.isZenMode) {
 			this.ui.addChild(this.customFooter ?? this.footer);
@@ -1145,6 +1195,9 @@ export class InteractiveMode {
 					}
 					promptInput = `[Sistem: Kullanıcının talebi üzerine Scratch/TurboWarp MCP entegrasyonu (scratch_*) otomatik olarak bağlandı/aktif edildi. Lütfen projedeki sprite'ları, sahneleri, blokları, değişkenleri ve listeleri scratch_* araçları ile kontrol et ve düzenlemeleri yap. Chrome extension'ın yüklü ve aktif olduğundan emin olun.]\n\n${userInput}`;
 				}
+
+				// Store original user text before Fable/Fusion modify promptInput
+				this._displayUserText = userInput;
 
 				// --- FABLE MODE PLAN GENERATION ---
 				const fableSettings = this.settingsManager.getFableMode();
@@ -2906,6 +2959,29 @@ export class InteractiveMode {
 		this.defaultEditor.onAction("app.message.followUp", () => this.handleFollowUp());
 		this.defaultEditor.onAction("app.message.dequeue", () => this.handleDequeue());
 		this.defaultEditor.onAction("app.message.executeBash", () => this.handleExecuteLastBash());
+		this.defaultEditor.onAction("app.clipboard.copy", () => this.handleCopyCommand());
+		this.defaultEditor.onAction("app.chat.scrollUp", () => {
+			this.chatContainer.scrollBy(-1);
+			this.ui.requestRender();
+		});
+		this.defaultEditor.onAction("app.chat.scrollDown", () => {
+			this.chatContainer.scrollBy(1);
+			this.ui.requestRender();
+		});
+		this.defaultEditor.onAction("app.chat.scrollPageUp", () => {
+			const pageSize = Math.max(1, (process.stdout.rows || 40) - this.chatContainer.staticOverhead - 5);
+			this.chatContainer.scrollBy(-pageSize);
+			this.ui.requestRender();
+		});
+		this.defaultEditor.onAction("app.chat.scrollPageDown", () => {
+			const pageSize = Math.max(1, (process.stdout.rows || 40) - this.chatContainer.staticOverhead - 5);
+			this.chatContainer.scrollBy(pageSize);
+			this.ui.requestRender();
+		});
+		this.defaultEditor.onAction("app.chat.scrollToBottom", () => {
+			this.chatContainer.scrollToBottom();
+			this.ui.requestRender();
+		});
 		this.defaultEditor.onAction("app.session.new", () => this.handleClearCommand());
 		this.defaultEditor.onAction("app.session.tree", () => this.showTreeSelector());
 		this.defaultEditor.onAction("app.session.fork", () => this.showUserMessageSelector());
@@ -3977,28 +4053,22 @@ export class InteractiveMode {
 	}
 
 	/**
-	 * Show a status message in the chat.
+	 * Show a status message in the status bar area (above the editor, not in the chat).
 	 *
-	 * If multiple status messages are emitted back-to-back (without anything else being added to the chat),
-	 * we update the previous status line instead of appending new ones to avoid log spam.
+	 * If multiple status messages are emitted back-to-back, we update the previous status line
+	 * instead of appending new ones to avoid log spam.
 	 */
 	private showStatus(message: string): void {
-		const children = this.chatContainer.children;
-		const last = children.length > 0 ? children[children.length - 1] : undefined;
-		const secondLast = children.length > 1 ? children[children.length - 2] : undefined;
-
-		if (last && secondLast && last === this.lastStatusText && secondLast === this.lastStatusSpacer) {
-			this.lastStatusText.setText(theme.fg("dim", message));
+		if (this._statusText && this._statusText.parent === this.statusContainer) {
+			this._statusText.setText(theme.fg("dim", message));
 			this.ui.requestRender();
 			return;
 		}
 
-		const spacer = new Spacer(1);
+		this.statusContainer.clear();
 		const text = new Text(theme.fg("dim", message), 1, 0);
-		this.chatContainer.addChild(spacer);
-		this.chatContainer.addChild(text);
-		this.lastStatusSpacer = spacer;
-		this.lastStatusText = text;
+		this.statusContainer.addChild(text);
+		this._statusText = text;
 		this.ui.requestRender();
 	}
 
@@ -4042,7 +4112,9 @@ export class InteractiveMode {
 				break;
 			}
 			case "user": {
-				const textContent = this.getUserMessageText(message);
+				// Use stored original user text if available (e.g., after Fable/Fusion modified promptInput)
+				const textContent = this._displayUserText ?? this.getUserMessageText(message);
+				this._displayUserText = undefined;
 				if (textContent) {
 					if (this.chatContainer.children.length > 0) {
 						this.chatContainer.addChild(new Spacer(1));

@@ -470,10 +470,6 @@ export class StudioMode {
 					clearTimeout(timer);
 					const address = this.server!.address() as any;
 					this.port = address.port;
-					const url = `http://127.0.0.1:${this.port}`;
-					const startCmd =
-						process.platform === "win32" ? "start" : process.platform === "darwin" ? "open" : "xdg-open";
-					exec(`${startCmd} ${url}`, () => {});
 					done();
 				});
 			};
