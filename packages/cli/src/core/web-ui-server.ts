@@ -13,8 +13,8 @@ import type { AddressInfo } from "node:net";
 import { dirname, extname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { getEngineDir, getSessionsDir } from "../config.js";
-import { getTodoSnapshot } from "./tools/todo.js";
 import { log } from "./logger.js";
+import { getTodoSnapshot } from "./tools/todo.js";
 
 const INDEX_HTML = `
 <!doctype html>

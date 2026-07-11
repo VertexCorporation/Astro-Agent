@@ -32,6 +32,7 @@
 			"!**/test-sessions.ts",
 			"!**/models.generated.ts",
 			"!packages/engine/data/**/*",
+			"!**/.astroagent/**/*",
 			"!!**/node_modules"
 		]
 	}

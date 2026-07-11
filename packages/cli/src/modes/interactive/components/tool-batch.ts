@@ -68,20 +68,23 @@ export class ToolBatchComponent extends Container {
 
 		const allDone = this.toolComponents.every((t) => !(t as any).isPartial);
 		const hasError = this.toolComponents.some((t) => (t as any).result?.isError);
-		const running = this.toolComponents.some((t) => (t as any).isPartial && (t as any).executionStarted);
+		const _running = this.toolComponents.some((t) => (t as any).isPartial && (t as any).executionStarted);
 
 		let statusColor: string;
-		if (hasError) { statusColor = "error"; }
-		else if (allDone) { statusColor = "success"; }
-		else { statusColor = "accent"; }
+		if (hasError) {
+			statusColor = "error";
+		} else if (allDone) {
+			statusColor = "success";
+		} else {
+			statusColor = "accent";
+		}
 
 		const arrow = this.collapsed ? "▸" : "▾";
 		const summary = nameCounts.join(", ");
 		const countLabel = `${this.toolComponents.length} tools`;
 
-		const headerLine = theme.fg(statusColor as any, ` ${arrow} `)
-			+ theme.fg("dim", `${countLabel}: `)
-			+ theme.fg("muted", summary);
+		const headerLine =
+			theme.fg(statusColor as any, ` ${arrow} `) + theme.fg("dim", `${countLabel}: `) + theme.fg("muted", summary);
 
 		if (this.collapsed) {
 			return [headerLine];

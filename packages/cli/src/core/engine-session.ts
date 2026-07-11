@@ -1314,9 +1314,10 @@ export class EngineSession {
 
 		const totalAppend = [appendSystemPrompt, fractalContextSummary, memoryInstructions].filter(Boolean).join("\n\n");
 		const MAX_APPEND_CHARS = 8000;
-		const cappedAppend = totalAppend.length > MAX_APPEND_CHARS
-			? totalAppend.slice(0, MAX_APPEND_CHARS) + `\n…[${totalAppend.length - MAX_APPEND_CHARS}ch trimmed]…`
-			: totalAppend;
+		const cappedAppend =
+			totalAppend.length > MAX_APPEND_CHARS
+				? `${totalAppend.slice(0, MAX_APPEND_CHARS)}\n…[${totalAppend.length - MAX_APPEND_CHARS}ch trimmed]…`
+				: totalAppend;
 
 		this._baseSystemPromptOptions = {
 			cwd: this._cwd,
@@ -3846,7 +3847,7 @@ export class EngineSession {
 		// Bash execution messages store output separately
 		for (const msg of this.messages) {
 			if ((msg as any).role === "bashExecution") {
-				charEstimate += ((msg as any).output?.length ?? 0);
+				charEstimate += (msg as any).output?.length ?? 0;
 			}
 		}
 		const systemPromptLen = this.engine.state.systemPrompt?.length ?? 0;

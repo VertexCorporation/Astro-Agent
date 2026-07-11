@@ -66,10 +66,14 @@ export class BashExecutionComponent extends Container {
 		}
 		const lines = super.render(Math.max(1, width - 3));
 		const result: string[] = [];
-		const borderColor = this.status === "running" ? "accent"
-			: this.status === "error" ? "error"
-			: this.status === "cancelled" ? "warning"
-			: "success";
+		const borderColor =
+			this.status === "running"
+				? "accent"
+				: this.status === "error"
+					? "error"
+					: this.status === "cancelled"
+						? "warning"
+						: "success";
 
 		for (let i = 0; i < lines.length; i++) {
 			if (i === 0) {

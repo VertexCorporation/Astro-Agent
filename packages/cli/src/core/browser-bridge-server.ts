@@ -262,7 +262,10 @@ export function startBrowserBridgeServer(options: { port?: number; keepAlive?: b
 					masterStatus = status;
 					startClientPolling(preferredPort, options.keepAlive);
 					if (!process.env.PI_TUI_MODE) {
-						log.warn("bridge", `Ports ${preferredPort}-${p} in use. Running in CLIENT-ONLY mode proxying to master on port ${preferredPort}.`);
+						log.warn(
+							"bridge",
+							`Ports ${preferredPort}-${p} in use. Running in CLIENT-ONLY mode proxying to master on port ${preferredPort}.`,
+						);
 					}
 				} else {
 					startupError = `Ports ${preferredPort}-${p} are already in use by non-Astro-Agent processes or unresponsive servers.`;

@@ -153,7 +153,8 @@ export async function generateFablePlan(
 		onStatus?: (msg: string) => void;
 	},
 ): Promise<FablePlan | null> {
-	const plannerModel = resolveModelForTier("opus", opts.modelRegistry) || resolveModelForTier("sonnet", opts.modelRegistry);
+	const plannerModel =
+		resolveModelForTier("opus", opts.modelRegistry) || resolveModelForTier("sonnet", opts.modelRegistry);
 	if (!plannerModel) {
 		opts.onStatus?.("⚠️ Fable: No suitable model found for planning");
 		return null;

@@ -70,7 +70,11 @@ export class Logger {
 		if (LEVEL_NUM[level] < this.minLevel) return;
 
 		const ts = this.formatTime();
-		const errorStr = err ? (err instanceof Error ? `${err.message}\n${err.stack?.slice(0, 200) ?? ""}` : String(err)) : undefined;
+		const errorStr = err
+			? err instanceof Error
+				? `${err.message}\n${err.stack?.slice(0, 200) ?? ""}`
+				: String(err)
+			: undefined;
 
 		// Console output with color
 		const levelStr = `${LEVEL_COLOR[level]}${level.toUpperCase().padEnd(5)}\x1b[0m`;
@@ -135,10 +139,18 @@ export class CategoryLogger extends Logger {
 		super(minLevel ?? "info", true);
 		this.fixedCategory = category;
 	}
-	debug(message: string, err?: unknown): void { super.emit("debug", this.fixedCategory, message, err); }
-	info(message: string, err?: unknown): void { super.emit("info", this.fixedCategory, message, err); }
-	warn(message: string, err?: unknown): void { super.emit("warn", this.fixedCategory, message, err); }
-	error(message: string, err?: unknown): void { super.emit("error", this.fixedCategory, message, err); }
+	debug(message: string, err?: unknown): void {
+		super.emit("debug", this.fixedCategory, message, err);
+	}
+	info(message: string, err?: unknown): void {
+		super.emit("info", this.fixedCategory, message, err);
+	}
+	warn(message: string, err?: unknown): void {
+		super.emit("warn", this.fixedCategory, message, err);
+	}
+	error(message: string, err?: unknown): void {
+		super.emit("error", this.fixedCategory, message, err);
+	}
 }
 
 /** Create a module-specific child logger */

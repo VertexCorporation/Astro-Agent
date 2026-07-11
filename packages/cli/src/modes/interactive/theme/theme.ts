@@ -320,9 +320,8 @@ function resolveVarRefs(
 		throw new Error(`Circular variable reference detected: ${value}`);
 	}
 	// Strip "var(--name)" → "name" for lookup
-	const lookupKey = typeof value === "string" && value.startsWith("var(--") && value.endsWith(")")
-		? value.slice(6, -1)
-		: value;
+	const lookupKey =
+		typeof value === "string" && value.startsWith("var(--") && value.endsWith(")") ? value.slice(6, -1) : value;
 	if (!(lookupKey in vars)) {
 		throw new Error(`Variable reference not found: ${value}`);
 	}
@@ -455,7 +454,14 @@ let BUILTIN_THEMES: Record<string, ThemeJson> | undefined;
 function getBuiltinThemes(): Record<string, ThemeJson> {
 	if (!BUILTIN_THEMES) {
 		const themesDir = getThemesDir();
-		const builtinThemeFiles = ["aurora.json", "violet.json", "crimson.json", "github-light.json", "github-dark.json", "tokyo-midnight.json"];
+		const builtinThemeFiles = [
+			"aurora.json",
+			"violet.json",
+			"crimson.json",
+			"github-light.json",
+			"github-dark.json",
+			"tokyo-midnight.json",
+		];
 		BUILTIN_THEMES = {};
 		for (const file of builtinThemeFiles) {
 			const themePath = path.join(themesDir, file);

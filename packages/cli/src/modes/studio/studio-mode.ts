@@ -8,16 +8,16 @@ import { fileURLToPath } from "url";
 import { getEngineDir, getPackageDir, VERSION } from "../../config.js";
 import { getBrowserBridgeStatus, startBrowserBridgeServer } from "../../core/browser-bridge-server.js";
 import type { EngineSessionRuntime } from "../../core/engine-session-runtime.js";
+import { runFable } from "../../core/fable-mode-engine.js";
 import { runFusionThink } from "../../core/fusion.js";
+import { log } from "../../core/logger.js";
+import { realtimeBus } from "../../core/realtime-bus.js";
 import { buildSessionInfo, listSessionsFromDir, SessionManager } from "../../core/session-manager.js";
 import { BUILTIN_SLASH_COMMANDS } from "../../core/slash-commands.js";
-import { runFable, type FablePlan } from "../../core/fable-mode-engine.js";
 import { subagentEventEmitter } from "../../core/tools/invoke_subagent.js";
 import { applyTodoAction, getTodoSnapshot } from "../../core/tools/todo.js";
 import { getMcpPanelState, setMcpPanelStateProvider, webUiMcpActionListeners } from "../../core/web-ui-server.js";
 import type { InteractiveModeOptions } from "../interactive/interactive-mode.js";
-import { realtimeBus } from "../../core/realtime-bus.js";
-import { log } from "../../core/logger.js";
 
 const execAsync = promisify(exec);
 
@@ -229,16 +229,14 @@ export class StudioMode {
 		const clientNames = mcpManager ? [...mcpManager.getClients().keys()] : [];
 		const allToolNames = this.runtime.session.getActiveToolNames();
 		// Filter only MCP tools (those with underscore prefix matching a server name)
-		const mcpToolNames = allToolNames.filter((t) =>
-			Object.keys(configured).some((s) => t.startsWith(s + "_")),
-		);
+		const mcpToolNames = allToolNames.filter((t) => Object.keys(configured).some((s) => t.startsWith(`${s}_`)));
 		const servers = Object.entries(configured).map(([name, config]: [string, any]) => ({
 			name,
 			command: config.command,
 			args: config.args || [],
 			cwd: config.cwd,
 			connected: clientNames.includes(name),
-			tools: mcpToolNames.filter((t) => t.startsWith(name + "_")),
+			tools: mcpToolNames.filter((t) => t.startsWith(`${name}_`)),
 			port: config.port || undefined,
 		}));
 		return {
@@ -282,17 +280,17 @@ export class StudioMode {
 				}
 				throw new Error("Unknown built-in MCP provider.");
 			}
-		if (action?.action === "connect") {
-			if (!name) throw new Error("Server name is required.");
-			const toolNames = await this.runtime.session.connectConfiguredMcpServers(name);
-			if (toolNames.length > 0) {
-				this.broadcastEvent({
-					type: "terminal_log",
-					data: `🔌 MCP tools connected: ${toolNames.join(", ")}\n`,
-				});
+			if (action?.action === "connect") {
+				if (!name) throw new Error("Server name is required.");
+				const toolNames = await this.runtime.session.connectConfiguredMcpServers(name);
+				if (toolNames.length > 0) {
+					this.broadcastEvent({
+						type: "terminal_log",
+						data: `🔌 MCP tools connected: ${toolNames.join(", ")}\n`,
+					});
+				}
+				return;
 			}
-			return;
-		}
 			if (action?.action === "restart") {
 				if (!this.runtime.session.mcpManager) throw new Error("MCP manager is not available.");
 				await this.runtime.session.mcpManager.restart();
@@ -305,31 +303,31 @@ export class StudioMode {
 				if (this.runtime.session.mcpManager) await this.runtime.session.mcpManager.restart();
 				return;
 			}
-		if (action?.action === "add_custom") {
-			const config = action.config || {};
-			const command = action.command || config.command;
-			const args = action.args || config.args;
-			const env = action.env || config.env;
-			const cwd = action.cwd || config.cwd;
-			const autoStart = config.autoStart !== false;
-			if (!name || !command) throw new Error("Name and command are required.");
-			this.runtime.services.settingsManager.setMcpServer(name, {
-				command,
-				args,
-				cwd,
-				env,
-				autoStart,
-			});
-			await this.runtime.services.settingsManager.flush();
-			const toolNames = await this.runtime.session.connectConfiguredMcpServers(name);
-			if (toolNames.length > 0) {
-				this.broadcastEvent({
-					type: "terminal_log",
-					data: `✅ MCP server "${name}" connected. Tools: ${toolNames.join(", ")}\n`,
+			if (action?.action === "add_custom") {
+				const config = action.config || {};
+				const command = action.command || config.command;
+				const args = action.args || config.args;
+				const env = action.env || config.env;
+				const cwd = action.cwd || config.cwd;
+				const autoStart = config.autoStart !== false;
+				if (!name || !command) throw new Error("Name and command are required.");
+				this.runtime.services.settingsManager.setMcpServer(name, {
+					command,
+					args,
+					cwd,
+					env,
+					autoStart,
 				});
+				await this.runtime.services.settingsManager.flush();
+				const toolNames = await this.runtime.session.connectConfiguredMcpServers(name);
+				if (toolNames.length > 0) {
+					this.broadcastEvent({
+						type: "terminal_log",
+						data: `✅ MCP server "${name}" connected. Tools: ${toolNames.join(", ")}\n`,
+					});
+				}
+				return;
 			}
-			return;
-		}
 			if (action?.action === "disconnect") {
 				throw new Error("Disconnect not supported via UI yet.");
 			}
@@ -398,14 +396,6 @@ export class StudioMode {
 				},
 			};
 		}
-	}
-
-	private broadcastMobileStatus() {
-		realtimeBus.broadcast({
-			type: "mobile_status",
-			mobileConnected: realtimeBus.getMobileClientCount() > 0,
-			mobileCount: realtimeBus.getMobileClientCount(),
-		});
 	}
 
 	private broadcastEvent(event: any) {
@@ -831,7 +821,7 @@ export class StudioMode {
 			res.setHeader("Content-Type", "text/event-stream");
 			res.setHeader("Cache-Control", "no-cache");
 			res.setHeader("Connection", "keep-alive");
-			const isMobile = url.searchParams.get("mobile") === "1";
+			const _isMobile = url.searchParams.get("mobile") === "1";
 			// Use a temporary SSE client via bus
 			const clientId = `sse-direct-${Date.now()}-${Math.random().toString(36).substr(2, 8)}`;
 			// This fallback just keeps the connection open
@@ -984,7 +974,7 @@ export class StudioMode {
 						const tierArg = parts[1] as "opus" | "sonnet" | "haiku" | undefined;
 						const taskArg = parts.slice(2).join(" ");
 						const sm = this.runtime.session.settingsManager;
-						const fableSettings = sm.getFableMode();
+						const _fableSettings = sm.getFableMode();
 						if (cmd === "/fable off" || cmd === "/fable disable") {
 							sm.setFableModeEnabled(false);
 							this.broadcastEvent({ type: "terminal_log", data: "Fable mode disabled.\n" });
@@ -1850,26 +1840,33 @@ export class StudioMode {
 					enabled = !!cfg.enabled;
 				}
 			} catch {}
-			res.end(JSON.stringify({
-				enabled,
-				port: bridgeStatus.port,
-				connected: bridgeStatus.running && bridgeStatus.clients > 0,
-				clients: bridgeStatus.clients,
-				extensionPath: extDir,
-				sharedPortFile,
-			}));
+			res.end(
+				JSON.stringify({
+					enabled,
+					port: bridgeStatus.port,
+					connected: bridgeStatus.running && bridgeStatus.clients > 0,
+					clients: bridgeStatus.clients,
+					extensionPath: extDir,
+					sharedPortFile,
+				}),
+			);
 			return;
 		}
 
 		if (method === "POST" && url.pathname === "/api/browser-tool/enabled") {
 			let body = "";
-			req.on("data", (chunk) => { body += chunk; });
+			req.on("data", (chunk) => {
+				body += chunk;
+			});
 			req.on("end", async () => {
 				try {
 					const { enabled } = JSON.parse(body);
 					const astroAgentDir = path.join(os.homedir(), ".astro-agent");
 					if (!fs.existsSync(astroAgentDir)) fs.mkdirSync(astroAgentDir, { recursive: true });
-					fs.writeFileSync(path.join(astroAgentDir, "browser-tool.json"), JSON.stringify({ enabled: !!enabled }, null, 2));
+					fs.writeFileSync(
+						path.join(astroAgentDir, "browser-tool.json"),
+						JSON.stringify({ enabled: !!enabled }, null, 2),
+					);
 					res.setHeader("Content-Type", "application/json");
 					res.end(JSON.stringify({ success: true }));
 				} catch (e: any) {
@@ -1943,13 +1940,15 @@ export class StudioMode {
 
 		if (method === "POST" && url.pathname === "/api/skills/load") {
 			let body = "";
-			req.on("data", (chunk) => { body += chunk; });
+			req.on("data", (chunk) => {
+				body += chunk;
+			});
 			req.on("end", async () => {
 				try {
 					const { name } = JSON.parse(body);
 					if (!name) throw new Error("Skill name required");
 					const skillsDir = path.join(this.runtime.cwd, ".opencode", "skills");
-					const filePath = path.join(skillsDir, name + ".md");
+					const filePath = path.join(skillsDir, `${name}.md`);
 					if (!fs.existsSync(filePath)) throw new Error(`Skill "${name}" not found`);
 					const content = fs.readFileSync(filePath, "utf-8");
 					// Send skill content to the AI as a system instruction

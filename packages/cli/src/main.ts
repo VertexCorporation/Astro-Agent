@@ -985,8 +985,7 @@ export async function main(args: string[], options?: MainOptions) {
 		restoreStdout();
 		if (exitCode !== 0) process.exitCode = exitCode;
 		return;
-	} else 	if (appMode === "interactive") {
-
+	} else if (appMode === "interactive") {
 		if (scopedModels.length > 0 && (parsed.verbose || !settingsManager.getQuietStartup())) {
 			const _modelList = scopedModels
 				.map((sm) => {

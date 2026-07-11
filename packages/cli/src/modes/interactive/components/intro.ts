@@ -1,6 +1,6 @@
 import type { Component } from "astro-tui";
-import { theme } from "../theme/theme.js";
 import { VERSION } from "../../../config.js";
+import { theme } from "../theme/theme.js";
 
 export function buildIntroLines(width: number): string[] {
 	if (width < 30) return [theme.fg("dim", "astro-agent")];

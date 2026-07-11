@@ -186,9 +186,10 @@ You think in first principles, optimize for minimum tokens, maximum correctness.
 	if (ctxFiles.length > 0) {
 		const MAX_CTX_FILE_CHARS = 4000;
 		const capped = ctxFiles.map((f) => {
-			const content = f.content.length > MAX_CTX_FILE_CHARS
-				? f.content.slice(0, MAX_CTX_FILE_CHARS) + `\n…[${f.content.length - MAX_CTX_FILE_CHARS}ch trimmed]…`
-				: f.content;
+			const content =
+				f.content.length > MAX_CTX_FILE_CHARS
+					? `${f.content.slice(0, MAX_CTX_FILE_CHARS)}\n…[${f.content.length - MAX_CTX_FILE_CHARS}ch trimmed]…`
+					: f.content;
 			return `<f p="${f.path}">\n${content}\n</f>`;
 		});
 		prompt += `\n\n<Context>\n${capped.join("\n")}\n</Context>`;

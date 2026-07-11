@@ -1,7 +1,7 @@
 import type { Component } from "astro-tui";
-import { theme } from "../theme/theme.js";
 import type { EngineSession } from "../../../core/engine-session.js";
 import type { ReadonlyFooterDataProvider } from "../../../core/footer-data-provider.js";
+import { theme } from "../theme/theme.js";
 
 const ANSI_RE = /\x1b\[[0-9;]*m/g;
 

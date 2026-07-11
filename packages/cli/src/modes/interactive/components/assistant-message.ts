@@ -108,7 +108,7 @@ export class AssistantMessageComponent extends Container {
 		}
 
 		const accentBar = theme.fg("accent", "┃");
-		const result = lines.map((line, i) => {
+		const result = lines.map((line, _i) => {
 			const isEmpty = line.replace(/\x1b\[[0-9;]*m/g, "").trim() === "";
 			if (isEmpty) return `${accentBar}`;
 			return `${accentBar}${line}`;

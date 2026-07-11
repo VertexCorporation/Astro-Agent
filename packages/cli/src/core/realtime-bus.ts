@@ -1,6 +1,6 @@
-import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
-import { WebSocketServer, WebSocket } from "ws";
+import { createServer, type ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
+import { WebSocket, WebSocketServer } from "ws";
 
 export type BusEventType =
 	| "message_start"
@@ -113,12 +113,12 @@ class RealtimeBus {
 			}
 
 			if (req.url === "/events" || req.url?.startsWith("/events?")) {
-				const isMobile = (req.url?.includes("mobile=1") ?? false);
+				const isMobile = req.url?.includes("mobile=1") ?? false;
 				const clientId = `sse-${Date.now()}-${Math.random().toString(36).substr(2, 8)}`;
 				res.writeHead(200, {
 					"Content-Type": "text/event-stream",
 					"Cache-Control": "no-cache",
-					"Connection": "keep-alive",
+					Connection: "keep-alive",
 					"Access-Control-Allow-Origin": "*",
 				});
 
@@ -182,11 +182,15 @@ class RealtimeBus {
 		this.sseClients.clear();
 		this.wsClients.clear();
 		this.wsServer?.close();
-		try { this.httpServer.close(); } catch { /* already closed */ }
+		try {
+			this.httpServer.close();
+		} catch {
+			/* already closed */
+		}
 	}
 
 	broadcast(event: BusEvent): void {
-		const json = JSON.stringify(event);
+		const _json = JSON.stringify(event);
 		// SSE clients
 		for (const client of this.sseClients.values()) {
 			try {

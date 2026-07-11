@@ -34,15 +34,13 @@ export class UserMessageComponent extends Container {
 		const child = this.children[1] || this.children[0];
 		const childLines = child ? child.render(width - 8) : [];
 		const accentLine = theme.fg("accent", "┃");
-		const resetCode = "\x1b[0m";
+		const _resetCode = "\x1b[0m";
 
 		const lines: string[] = [];
 
 		for (let i = 0; i < childLines.length; i++) {
 			const cleanLine = childLines[i].replace(/\x1b\[[0-9;]*m/g, "");
-			const painter = i === 0
-				? (s: string) => theme.bold(s)
-				: (s: string) => s;
+			const painter = i === 0 ? (s: string) => theme.bold(s) : (s: string) => s;
 			const content = painter(theme.fg("text", ` ${cleanLine}`));
 			lines.push(`${accentLine}${content}`);
 		}

@@ -203,7 +203,9 @@ class VirtualizedChatContainer extends Container {
 	/** If true, auto-scroll on new content */
 	private _autoScroll = true;
 
-	get scrollOffset(): number { return this._scrollOffset; }
+	get scrollOffset(): number {
+		return this._scrollOffset;
+	}
 
 	/** Scroll by delta lines (negative = up, positive = down toward bottom). */
 	scrollBy(delta: number): void {
@@ -286,11 +288,11 @@ class VirtualizedChatContainer extends Container {
 
 			// Add scroll indicator at top if scrolled up
 			if (this._scrollOffset > 0 && lines.length > 0) {
-				lines[0] = " [^] " + lines[0];
+				lines[0] = ` [^] ${lines[0]}`;
 			}
 			// Add scroll indicator at bottom if not at bottom
 			if (this._scrollOffset < maxOff && lines.length > 1) {
-				lines[lines.length - 1] = lines[lines.length - 1] + " [v]";
+				lines[lines.length - 1] = `${lines[lines.length - 1]} [v]`;
 			}
 		}
 
@@ -415,10 +417,6 @@ export class InteractiveMode {
 	private lastEscapeTime = 0;
 	private startupNoticesShown = false;
 	private anthropicSubscriptionWarningShown = false;
-
-	// Status line tracking (for mutating immediately-sequential status updates)
-	private lastStatusSpacer: Spacer | undefined = undefined;
-	private lastStatusText: Text | undefined = undefined;
 	private _statusText: Text | undefined = undefined;
 	private _displayUserText: string | undefined = undefined;
 
@@ -478,7 +476,6 @@ export class InteractiveMode {
 	private editorActionListenerRegistered = false;
 	private authPanelListenerRegistered = false;
 	private mcpPanelListenerRegistered = false;
-
 
 	// Extension UI state
 	private extensionSelector: ExtensionSelectorComponent | undefined = undefined;
@@ -3226,7 +3223,7 @@ export class InteractiveMode {
 					this.editor.setText("");
 					const parts = text.split(/\s+/);
 					const tier = parts[1] as "opus" | "sonnet" | "haiku" | undefined;
-					const fableSettings = this.settingsManager.getFableMode();
+					const _fableSettings = this.settingsManager.getFableMode();
 					if (text === "/fable off" || text === "/fable disable") {
 						this.settingsManager.setFableModeEnabled(false);
 						this.showInfo("Fable mode disabled.");
