@@ -3,6 +3,12 @@ import { getAstroUserEngine } from "./astro-user-engine.js";
 const LATEST_VERSION_URL = "https://github.com/theayzek01/Astro-Agent/api/latest-version";
 const DEFAULT_VERSION_CHECK_TIMEOUT_MS = 10000;
 
+export interface LatestAstroAgentRelease {
+	version: string;
+	packageName?: string;
+	note?: string;
+}
+
 interface ParsedVersion {
 	major: number;
 	minor: number;
@@ -66,11 +72,11 @@ export async function getLatestAstroAgentVersion(
 	return typeof data.version === "string" && data.version.trim() ? data.version.trim() : undefined;
 }
 
-export async function checkForNewAstroAgentVersion(currentVersion: string): Promise<string | undefined> {
+export async function checkForNewAstroAgentVersion(currentVersion: string): Promise<LatestAstroAgentRelease | undefined> {
 	try {
 		const latestVersion = await getLatestAstroAgentVersion(currentVersion);
 		if (latestVersion && isNewerPackageVersion(latestVersion, currentVersion)) {
-			return latestVersion;
+			return { version: latestVersion };
 		}
 		return undefined;
 	} catch {

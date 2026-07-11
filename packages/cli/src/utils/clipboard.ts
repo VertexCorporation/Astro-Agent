@@ -32,6 +32,34 @@ function emitOsc52(text: string): boolean {
 	return true;
 }
 
+/** Read plain text from the system clipboard, if native clipboard access is available. */
+export async function readClipboardText(): Promise<string | null> {
+	// Native clipboard module doesn't support getText; use platform tools instead
+	const p = platform();
+	try {
+		if (p === "darwin") {
+			return execSync("pbpaste", { encoding: "utf-8", timeout: 5000, stdio: ["ignore", "pipe", "ignore"] }).trim() || null;
+		}
+		if (p === "win32") {
+			return execSync("powershell -command Get-Clipboard", { encoding: "utf-8", timeout: 5000, stdio: ["ignore", "pipe", "ignore"] }).trim() || null;
+		}
+		// Linux: try xclip, xsel, or wl-paste
+		if (process.env.WAYLAND_DISPLAY) {
+			return execSync("wl-paste", { encoding: "utf-8", timeout: 5000, stdio: ["ignore", "pipe", "ignore"] }).trim() || null;
+		}
+		if (process.env.DISPLAY) {
+			try {
+				return execSync("xclip -selection clipboard -o", { encoding: "utf-8", timeout: 5000, stdio: ["ignore", "pipe", "ignore"] }).trim() || null;
+			} catch {
+				return execSync("xsel --clipboard --output", { encoding: "utf-8", timeout: 5000, stdio: ["ignore", "pipe", "ignore"] }).trim() || null;
+			}
+		}
+	} catch {
+		return null;
+	}
+	return null;
+}
+
 export async function copyToClipboard(text: string): Promise<void> {
 	let copied = false;
 

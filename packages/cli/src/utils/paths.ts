@@ -1,4 +1,5 @@
 import { realpathSync } from "node:fs";
+import { isAbsolute, relative, resolve, sep } from "node:path";
 
 /**
  * Resolve a path to its canonical (real) form, following symlinks.
@@ -19,6 +20,16 @@ export function canonicalizePath(path: string): string {
  * or a URL protocol. Bare names and relative paths without ./ prefix
  * are considered local.
  */
+export function getCwdRelativePath(filePath: string, cwd: string): string | undefined {
+	const resolvedCwd = resolve(cwd);
+	const resolvedPath = resolve(filePath);
+	const relativePath = relative(resolvedCwd, resolvedPath);
+	const isInsideCwd =
+		relativePath === "" ||
+		(relativePath !== ".." && !relativePath.startsWith(`..${sep}`) && !isAbsolute(relativePath));
+	return isInsideCwd ? relativePath || "." : undefined;
+}
+
 export function isLocalPath(value: string): boolean {
 	const trimmed = value.trim();
 	// Known non-local prefixes

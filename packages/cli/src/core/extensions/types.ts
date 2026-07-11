@@ -507,6 +507,19 @@ export interface ResourcesDiscoverResult {
 }
 
 // ============================================================================
+// Project Trust
+// ============================================================================
+
+export type ExtensionMode = "tui" | "rpc" | "json" | "print";
+
+export interface ProjectTrustContext {
+	cwd: string;
+	mode: ExtensionMode;
+	hasUI: boolean;
+	ui: Pick<ExtensionUIContext, "select" | "confirm" | "input" | "notify">;
+}
+
+// ============================================================================
 // Session Events
 // ============================================================================
 
