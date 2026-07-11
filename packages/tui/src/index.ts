@@ -61,6 +61,14 @@ export {
 export { StdinBuffer, type StdinBufferEventMap, type StdinBufferOptions } from "./stdin-buffer.js";
 // Terminal interface and implementations
 export { ProcessTerminal, type Terminal } from "./terminal.js";
+// Terminal colors
+export {
+	isOsc11BackgroundColorResponse,
+	parseOsc11BackgroundColor,
+	parseTerminalColorSchemeReport,
+	type RgbColor,
+	type TerminalColorScheme,
+} from "./terminal-colors.js";
 // Terminal image support
 export {
 	allocateImageId,
@@ -99,6 +107,7 @@ export {
 	type OverlayHandle,
 	type OverlayMargin,
 	type OverlayOptions,
+	type OverlayUnfocusOptions,
 	type SizeValue,
 	TUI,
 } from "./tui.js";
