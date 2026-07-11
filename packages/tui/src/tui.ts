@@ -1059,7 +1059,7 @@ export class TUI extends Container {
 		newLines = this.applyLineResets(this.clampLinesToWidth(newLines, width, 0), 0);
 
 		let buffer = "";
-		const useSync = false; // Disabled: synchronized output interferes with native terminal text selection
+		const useSync = process.env.PI_SYNC_OUTPUT !== "0" && !isTermuxSession();
 		if (useSync) buffer += "\x1b[?2026h";
 
 		const fullRender = (clearScreen: boolean) => {

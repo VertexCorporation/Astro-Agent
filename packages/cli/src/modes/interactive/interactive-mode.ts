@@ -275,13 +275,6 @@ class VirtualizedChatContainer extends Container {
 		this._totalContentLines = lines.length;
 		this._viewportLines = terminalHeight - this.staticOverhead;
 
-		const fillLines = this._viewportLines - lines.length;
-		if (fillLines > 0) {
-			for (let i = 0; i < fillLines; i++) {
-				lines.unshift("");
-			}
-		}
-
 		// Apply scroll offset: when content exceeds viewport, show a window
 		if (lines.length > this._viewportLines) {
 			const maxOff = lines.length - this._viewportLines;
